@@ -1,3 +1,3 @@
 # Shapefile
 
-[![Build Status](https://travis-ci.org/loladiro/Shapefile.jl.png)](https://travis-ci.org/loladiro/Shapefile.jl)
+[![Build Status](https://travis-ci.org/Keno/Shapefile.jl.png)](https://travis-ci.org/Keno/Shapefile.jl)
