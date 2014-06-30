@@ -132,5 +132,8 @@ module Shapefile
             push!(shapes,read(io,ESRIShape))
         end
         file
-    end 
+    end
+    
+    #If Compose.jl is present, define useful interconversion functions
+    isdefined(:Compose) && isa(Compose, Module) && include("compose.jl")
 end # module
