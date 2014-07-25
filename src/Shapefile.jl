@@ -92,9 +92,9 @@ module Shapefile
         numparts = read(io,Int32)
         numpoints = read(io,Int32)
         parts = Array(Int32,numparts)
-        read(io, parts)
+        read!(io, parts)
         points = Array(Point{T},numpoints)
-        read(io, points)
+        read!(io, points)
         Polygon{T}(box,parts,points)
     end
  
