@@ -1,6 +1,6 @@
 module Shapefile
-    import Base.read, Base.show, Base.ref, Base.+, Base.(/), Base.(./)
-    
+    import Base: read, show, +, /, ./
+
     export Handle, RGBGradient, LogLinearRGBGradient, LinearRGBGradient
  
     type Rect{T}
