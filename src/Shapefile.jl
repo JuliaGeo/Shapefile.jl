@@ -77,13 +77,13 @@ module Shapefile
     end
  
     function read{T}(io::IO,::Type{Polyline{T}})
-        box = read(IO,Rect{Float64})
-        numparts = read(IO,Int32)
-        numpoints = read(IO,Int32)
+        box = read(io,Rect{T})
+        numparts = read(io,Int32)
+        numpoints = read(io,Int32)
         parts = Array(Int32,numparts)
-        read(io, parts)
-        points = Array(Point{T},num)
-        read(io, points)
+        read!(io, parts)
+        points = Array(Point{T},numpoints)
+        read!(io, points)
         Polyline{T}(box,parts,points)
     end
  
