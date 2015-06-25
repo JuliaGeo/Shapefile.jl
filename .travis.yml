@@ -1,13 +1,12 @@
-language: cpp
-compiler:
-  - clang
+language: julia
+os:
+  - linux
+  - osx
+julia:
+  - release
+  - nightly
 notifications:
   email: false
-before_install:
-  - sudo add-apt-repository ppa:staticfloat/julia-deps -y
-  - sudo add-apt-repository ppa:staticfloat/julianightlies -y
-  - sudo apt-get update -qq -y
-  - sudo apt-get install libpcre3-dev julia -y
 script:
-  - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir("Shapefile"))`); Pkg.pin("Shapefile"); Pkg.resolve()'
-  - julia -e 'using Shapefile; @assert isdefined(:Shapefile); @assert typeof(Shapefile) === Module'
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.test("Shapefile"; coverage=true)'
