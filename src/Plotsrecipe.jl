@@ -1,4 +1,4 @@
-import RecipesBase
+using RecipesBase
 
 function shapefile_coords(poly::Shapefile.ESRIShape)
     start_indices = poly.parts+1
