@@ -34,7 +34,7 @@ function shapefile_coords{T<:Shapefile.ESRIShape}(polys::AbstractMatrix{T})
     end
 end
 
-@recipe f(poly::Shapefile.ESRIShape) = (seriestype --> :shape; shapefile_coords(poly))
-@recipe f{T<:Shapefile.ESRIShape}(polys::AbstractVector{T}) = (seriestype --> :shape; shapefile_coords(polys))
-@recipe f{T<:Shapefile.ESRIShape}(polys::AbstractMatrix{T}) = (seriestype --> :shape; shapefile_coords(polys))
+@recipe f(poly::Shapefile.ESRIShape) = (seriestype --> :shape; linecolor --> :black; shapefile_coords(poly))
+@recipe f{T<:Shapefile.ESRIShape}(polys::AbstractVector{T}) = (seriestype --> :shape; linecolor --> :black; shapefile_coords(polys))
+@recipe f{T<:Shapefile.ESRIShape}(polys::AbstractMatrix{T}) = (seriestype --> :shape; linecolor --> :black; shapefile_coords(polys))
 @recipe f{T<:Shapefile.Handle}(::Type{T}, handle::T) = handle.shapes
