@@ -1,7 +1,7 @@
 module Shapefile
     import Base: read, show, +, /, ./
 
-    export Handle, RGBGradient, LogLinearRGBGradient, LinearRGBGradient, apply_recipe
+    export Handle, RGBGradient, LogLinearRGBGradient, LinearRGBGradient
 
     type Rect{T}
         top::T
@@ -360,6 +360,6 @@ module Shapefile
 
     #If Compose.jl is present, define useful interconversion functions
     isdefined(:Compose) && isa(Compose, Module) && include("compose.jl")
-    include("Plotsrecipe.jl")
+    isdefined(:RecipesBase) && is(RecipesBase, Module) && include("Plotsrecipe.jl")
 
 end # module
