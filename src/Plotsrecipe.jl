@@ -1,6 +1,5 @@
 import RecipesBase
 
-using RecipesBase
 function shapefile_coords(poly::Shapefile.ESRIShape)
     start_indices = poly.parts+1
     end_indices = vcat(poly.parts[2:end], length(poly.points))
@@ -38,4 +37,4 @@ end
 @recipe f(poly::Shapefile.ESRIShape) = (seriestype --> :shape; shapefile_coords(poly))
 @recipe f{T<:Shapefile.ESRIShape}(polys::AbstractVector{T}) = (seriestype --> :shape; shapefile_coords(polys))
 @recipe f{T<:Shapefile.ESRIShape}(polys::AbstractMatrix{T}) = (seriestype --> :shape; shapefile_coords(polys))
-@recipe f{T<:Shapefile.Handle}(::Type{T}, handle::T) = handle.shapes'
+@recipe f{T<:Shapefile.Handle}(::Type{T}, handle::T) = handle.shapes

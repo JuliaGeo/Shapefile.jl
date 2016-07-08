@@ -1,7 +1,7 @@
 module Shapefile
     import Base: read, show, +, /, ./
 
-    export Handle, RGBGradient, LogLinearRGBGradient, LinearRGBGradient, f
+    export Handle, RGBGradient, LogLinearRGBGradient, LinearRGBGradient, apply_recipe
 
     type Rect{T}
         top::T
