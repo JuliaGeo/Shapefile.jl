@@ -2,29 +2,29 @@ module Shapefile
     import Base: read, show, +, /, ./
 
     export Handle, RGBGradient, LogLinearRGBGradient, LinearRGBGradient
- 
+
     type Rect{T}
         top::T
         left::T
         bottom::T
         right::T
     end
- 
+
     abstract ESRIShape
- 
+
     type NullShape <: ESRIShape
     end
- 
+
     type Interval{T}
         left::T
         right::T
     end
- 
+
     type Point{T} <: ESRIShape
         x::T
         y::T
     end
- 
+
     +{T}(a::Point{T},b::Point{T}) = Point{T}(a.x+b.x,a.y+b.y)
     /{T}(a::Point{T},val::Real) = Point{T}(a.x/val,a.y/val)
     ./{T}(a::Point{T},val::Real) = Point{T}(a.x./val,a.y./val)
@@ -41,7 +41,7 @@ module Shapefile
         z::T
         m::M # measure
     end
- 
+
     type Polyline{T} <: ESRIShape
         MBR::Rect{T}
         parts::Vector{Int32}
@@ -62,13 +62,13 @@ module Shapefile
         zvalues::Vector{T}
         measures::Vector{M}
     end
- 
+
     type Polygon{T} <: ESRIShape
         MBR::Rect{T}
         parts::Vector{Int32}
         points::Vector{Point{T}}
     end
- 
+
     show{T}(io::IO,p::Polygon{T}) = print(io,"Polygon(",length(p.points)," ",T," Points)")
 
     type PolygonM{T,M} <: ESRIShape
@@ -85,7 +85,7 @@ module Shapefile
         zvalues::Vector{T}
         measures::Vector{M}
     end
- 
+
     type MultiPoint{T} <: ESRIShape
         MBR::Rect{T}
         points::Vector{Point{T}}
@@ -123,7 +123,7 @@ module Shapefile
         mrange::Interval{Float64}
         shapes::Vector{ESRIShape}
     end
- 
+
     function read{T}(io::IO,::Type{Rect{T}})
         minx = read(io,T)
         miny = read(io,T)
@@ -133,7 +133,7 @@ module Shapefile
     end
 
     read(io::IO,::Type{NullShape}) = NullShape()
- 
+
     function read{T}(io::IO,::Type{Point{T}})
         x = read(io,T)
         y = read(io,T)
@@ -154,7 +154,7 @@ module Shapefile
         m = read(io,M)
         PointZ{T,M}(x,y,z,m)
     end
- 
+
     function read{T}(io::IO,::Type{Polyline{T}})
         box = read(io,Rect{T})
         numparts = read(io,Int32)
@@ -199,7 +199,7 @@ module Shapefile
         read!(io, measures)
         PolylineZ{T,M}(box,parts,points,zvalues,measures)
     end
- 
+
     function read{T}(io::IO,::Type{Polygon{T}})
         box = read(io,Rect{Float64})
         numparts = read(io,Int32)
@@ -301,7 +301,7 @@ module Shapefile
         # read!(io, measures)
         MultiPatch{T,M}(box,parts,parttypes,points,zvalues) #,measures)
     end
- 
+
     function read(io::IO,::Type{ESRIShape})
         num = bswap(read(io,Int32))
         rlength = bswap(read(io,Int32))
@@ -338,7 +338,7 @@ module Shapefile
             error("Unknown shape type $shapeType")
         end
     end
- 
+
     function read(io::IO,::Type{Handle})
         code = bswap(read(io,Int32))
         read(io,Int32,5)
@@ -357,7 +357,8 @@ module Shapefile
         end
         file
     end
-    
+
     #If Compose.jl is present, define useful interconversion functions
     isdefined(:Compose) && isa(Compose, Module) && include("compose.jl")
+    isdefined(:Plots) && isa(Plots, Module) && include("Plotsrecipe.jl")
 end # module
