@@ -22,8 +22,8 @@ for test_file in readdir(joinpath(dirname(@__FILE__), "shapelib_testcases"))
             read(fd,Shapefile.Handle)
         end
         shapes = unique(map(typeof,shp.shapes))
-        @fact length(shapes) => 1
+        @fact length(shapes) --> 1
         push!(seen_types, shapes[1])
     end
 end
-@fact seen_types => test_types
+@fact seen_types --> test_types
