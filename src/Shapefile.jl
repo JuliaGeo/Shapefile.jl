@@ -362,4 +362,6 @@ module Shapefile
 
     #If Compose.jl is present, define useful interconversion functions
     isdefined(:Compose) && isa(Compose, Module) && include("compose.jl")
+    isdefined(:RecipesBase) && is(RecipesBase, Module) && include("Plotsrecipe.jl")
+
 end # module
