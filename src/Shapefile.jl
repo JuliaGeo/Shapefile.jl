@@ -44,20 +44,20 @@ module Shapefile
         m::M # measure
     end
  
-    type Polyline{T} <: GeoInterface.AbstractLineString
+    type Polyline{T} <: GeoInterface.AbstractMultiLineString
         MBR::Rect{T}
         parts::Vector{Int32}
         points::Vector{Point{T}}
     end
 
-    type PolylineM{T,M} <: GeoInterface.AbstractLineString
+    type PolylineM{T,M} <: GeoInterface.AbstractMultiLineString
         MBR::Rect{T}
         parts::Vector{Int32}
         points::Vector{Point{T}}
         measures::Vector{M}
     end
 
-    type PolylineZ{T,M} <: GeoInterface.AbstractLineString
+    type PolylineZ{T,M} <: GeoInterface.AbstractMultiLineString
         MBR::Rect{T}
         parts::Vector{Int32}
         points::Vector{Point{T}}
@@ -65,7 +65,7 @@ module Shapefile
         measures::Vector{M}
     end
  
-    type Polygon{T} <: GeoInterface.AbstractPolygon
+    type Polygon{T} <: GeoInterface.AbstractMultiPolygon
         MBR::Rect{T}
         parts::Vector{Int32}
         points::Vector{Point{T}}
@@ -73,14 +73,14 @@ module Shapefile
  
     show{T}(io::IO,p::Polygon{T}) = print(io,"Polygon(",length(p.points)," ",T," Points)")
 
-    type PolygonM{T,M} <: GeoInterface.AbstractPolygon
+    type PolygonM{T,M} <: GeoInterface.AbstractMultiPolygon
         MBR::Rect{T}
         parts::Vector{Int32}
         points::Vector{Point{T}}
         measures::Vector{M}
     end
 
-    type PolygonZ{T,M} <: GeoInterface.AbstractPolygon
+    type PolygonZ{T,M} <: GeoInterface.AbstractMultiPolygon
         MBR::Rect{T}
         parts::Vector{Int32}
         points::Vector{Point{T}}
@@ -344,6 +344,7 @@ module Shapefile
         file
     end
     
+    include("geo_interface.jl")
     #If Compose.jl is present, define useful interconversion functions
     isdefined(:Compose) && isa(Compose, Module) && include("compose.jl")
 end # module
