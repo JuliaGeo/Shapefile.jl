@@ -59,6 +59,7 @@ end
 
 # Only supports 2D geometries for now
 # pt is [x,y] and ring is [[x,y], [x,y],..]
+# ported from https://github.com/Turfjs/turf/blob/3d0efd96d59878f82c6d6baf8ed75695e0b6dbc0/packages/turf-inside/index.js#L76-L91
 function inring{T}(pt::Vector{T}, ring::Vector{Vector{T}})
     intersect(i::Vector{T},j::Vector{T}) =
         (i[2] >= pt[2]) != (j[2] >= pt[2]) && (pt[1] <= (j[1] - i[1]) * (pt[2] - i[2]) / (j[2] - i[2]) + i[1])
@@ -109,7 +110,7 @@ function GeoInterface.coordinates{T}(obj::Polygon{T})
     coords
 end
 
-# copied from GeoInterface.coordinates{T}(obj::Polygon{T})
+# copied from GeoInterface.coordinates{T}(obj::Polygon{T}) to match signature here
 function GeoInterface.coordinates{T, M}(obj::PolygonM{T,M})
     npoints = length(obj.points)
     nparts = length(obj.parts)
@@ -149,7 +150,7 @@ function GeoInterface.coordinates{T, M}(obj::PolygonM{T,M})
     coords
 end
 
-# copied from GeoInterface.coordinates{T}(obj::Polygon{T})
+# copied from GeoInterface.coordinates{T}(obj::Polygon{T}) to match signature here
 function GeoInterface.coordinates{T, M}(obj::PolygonZ{T,M})
     npoints = length(obj.points)
     nparts = length(obj.parts)
