@@ -3,7 +3,7 @@ __precompile__()
 module Shapefile
 
     import GeoInterface
-    import Base: read, show, +, /, ./
+    import Base: read, show, +, /
 
     export Handle, RGBGradient, LogLinearRGBGradient, LinearRGBGradient
 
@@ -29,7 +29,6 @@ module Shapefile
 
     +{T}(a::Point{T},b::Point{T}) = Point{T}(a.x+b.x,a.y+b.y)
     /{T}(a::Point{T},val::Real) = Point{T}(a.x/val,a.y/val)
-    ./{T}(a::Point{T},val::Real) = Point{T}(a.x./val,a.y./val)
 
     type PointM{T,M} <: GeoInterface.AbstractPoint
         x::T
