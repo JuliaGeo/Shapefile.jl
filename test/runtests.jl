@@ -1,4 +1,5 @@
-using Shapefile, FactCheck
+using Shapefile
+using Base.Test
 
 test_types = Set([Shapefile.NullShape,
                   Shapefile.Point{Float64},
@@ -33,16 +34,16 @@ coords = Dict{String, Any}(
 
 seen_types = Set(DataType[])
 for test_file in readdir(joinpath(dirname(@__FILE__), "shapelib_testcases"))
-    if test_file[end-3:end] == ".shp"
+    if splitext(test_file)[2] == ".shp"
         shp = open(joinpath(dirname(@__FILE__), "shapelib_testcases", test_file)) do fd
             read(fd,Shapefile.Handle)
         end
         shapes = unique(map(typeof,shp.shapes))
-        @fact length(shapes) --> 1
+        @test length(shapes) == 1
         push!(seen_types, shapes[1])
         if test_file in keys(coords)
-            @fact map(GeoInterface.coordinates, shp.shapes) --> coords[test_file]
+            @test map(GeoInterface.coordinates, shp.shapes) == coords[test_file]
         end
     end
 end
-@fact seen_types --> test_types
+@test seen_types == test_types
