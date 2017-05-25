@@ -338,6 +338,8 @@ module Shapefile
     end
 
     include("geo_interface.jl")
-    #If Compose.jl is present, define useful interconversion functions
+    # If Compose.jl is present, define useful interconversion functions.
+    # Note that in julia v0.6 this is never true, it should be isdefined(Main, :Compose).
+    # This does't interact well with precompilation.
     isdefined(:Compose) && isa(Compose, Module) && include("compose.jl")
 end # module
