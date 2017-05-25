@@ -4,8 +4,6 @@ module Shapefile
 
     import GeoInterface
 
-    export Handle, RGBGradient, LogLinearRGBGradient, LinearRGBGradient
-
     type Rect{T}
         top::T
         left::T
