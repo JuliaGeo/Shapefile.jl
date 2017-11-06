@@ -3,7 +3,7 @@
 
 #Convert Shapefile rectangle to Compose rectangle
 import Compose: rectangle
-rectangle{T<:Real}(R::Shapefile.Rect{T}) = rectangle(R.left,R.top,R.right-R.left,R.bottom-R.top)
+rectangle(R::Shapefile.Rect{T}) where {T<:Real} = rectangle(R.left,R.top,R.right-R.left,R.bottom-R.top)
 
 #Compose polygons cannot be disjoint but Shapefile.Polygons can
 #Need to convert Shapefile.Polygon to list of Compose polygons
