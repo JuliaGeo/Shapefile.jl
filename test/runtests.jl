@@ -1,4 +1,4 @@
-using Shapefile
+using Shapefile, GeoInterface
 using Base.Test
 
 test_types = Set([Shapefile.NullShape,
