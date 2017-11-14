@@ -4,76 +4,53 @@ module Shapefile
 
     import GeoInterface
 
-    type Rect{T}
+    mutable struct Rect{T}
         top::T
         left::T
         bottom::T
         right::T
     end
 
-    type NullShape <: GeoInterface.AbstractGeometry
+    mutable struct NullShape <: GeoInterface.AbstractGeometry
     end
 
-    type Interval{T}
+    mutable struct Interval{T}
         left::T
         right::T
     end
 
-    type Point{T} <: GeoInterface.AbstractPoint
+    mutable struct Point{T} <: GeoInterface.AbstractPoint
         x::T
         y::T
     end
 
-    type PointM{T,M} <: GeoInterface.AbstractPoint
+    mutable struct PointM{T,M} <: GeoInterface.AbstractPoint
         x::T
         y::T
         m::M # measure
     end
 
-    type PointZ{T,M} <: GeoInterface.AbstractPoint
+    mutable struct PointZ{T,M} <: GeoInterface.AbstractPoint
         x::T
         y::T
         z::T
         m::M # measure
     end
 
-    type Polyline{T} <: GeoInterface.AbstractMultiLineString
+    mutable struct Polyline{T} <: GeoInterface.AbstractMultiLineString
         MBR::Rect{T}
         parts::Vector{Int32}
         points::Vector{Point{T}}
     end
 
-    type PolylineM{T,M} <: GeoInterface.AbstractMultiLineString
-        MBR::Rect{T}
-        parts::Vector{Int32}
-        points::Vector{Point{T}}
-        measures::Vector{M}
-    end
-
-    type PolylineZ{T,M} <: GeoInterface.AbstractMultiLineString
-        MBR::Rect{T}
-        parts::Vector{Int32}
-        points::Vector{Point{T}}
-        zvalues::Vector{T}
-        measures::Vector{M}
-    end
-
-    type Polygon{T} <: GeoInterface.AbstractMultiPolygon
-        MBR::Rect{T}
-        parts::Vector{Int32}
-        points::Vector{Point{T}}
-    end
-
-    Base.show{T}(io::IO,p::Polygon{T}) = print(io,"Polygon(",length(p.points)," ",T," Points)")
-
-    type PolygonM{T,M} <: GeoInterface.AbstractMultiPolygon
+    mutable struct PolylineM{T,M} <: GeoInterface.AbstractMultiLineString
         MBR::Rect{T}
         parts::Vector{Int32}
         points::Vector{Point{T}}
         measures::Vector{M}
     end
 
-    type PolygonZ{T,M} <: GeoInterface.AbstractMultiPolygon
+    mutable struct PolylineZ{T,M} <: GeoInterface.AbstractMultiLineString
         MBR::Rect{T}
         parts::Vector{Int32}
         points::Vector{Point{T}}
@@ -81,25 +58,48 @@ module Shapefile
         measures::Vector{M}
     end
 
-    type MultiPoint{T} <: GeoInterface.AbstractMultiPoint
+    mutable struct Polygon{T} <: GeoInterface.AbstractMultiPolygon
+        MBR::Rect{T}
+        parts::Vector{Int32}
+        points::Vector{Point{T}}
+    end
+
+    Base.show(io::IO,p::Polygon{T}) where {T} = print(io,"Polygon(",length(p.points)," ",T," Points)")
+
+    mutable struct PolygonM{T,M} <: GeoInterface.AbstractMultiPolygon
+        MBR::Rect{T}
+        parts::Vector{Int32}
+        points::Vector{Point{T}}
+        measures::Vector{M}
+    end
+
+    mutable struct PolygonZ{T,M} <: GeoInterface.AbstractMultiPolygon
+        MBR::Rect{T}
+        parts::Vector{Int32}
+        points::Vector{Point{T}}
+        zvalues::Vector{T}
+        measures::Vector{M}
+    end
+
+    mutable struct MultiPoint{T} <: GeoInterface.AbstractMultiPoint
         MBR::Rect{T}
         points::Vector{Point{T}}
     end
 
-    type MultiPointM{T,M} <: GeoInterface.AbstractMultiPoint
+    mutable struct MultiPointM{T,M} <: GeoInterface.AbstractMultiPoint
         MBR::Rect{T}
         points::Vector{Point{T}}
         measures::Vector{M}
     end
 
-    type MultiPointZ{T,M} <: GeoInterface.AbstractMultiPoint
+    mutable struct MultiPointZ{T,M} <: GeoInterface.AbstractMultiPoint
         MBR::Rect{T}
         points::Vector{Point{T}}
         zvalues::Vector{T}
         measures::Vector{M}
     end
 
-    type MultiPatch{T,M} <: GeoInterface.AbstractGeometry
+    mutable struct MultiPatch{T,M} <: GeoInterface.AbstractGeometry
         MBR::Rect{T}
         parts::Vector{Int32}
         parttypes::Vector{Int32}
@@ -125,7 +125,7 @@ module Shapefile
         31 => MultiPatch{Float64,Float64}
     )
 
-    type Handle{T <: GeoInterface.AbstractGeometry}
+    mutable struct Handle{T <: GeoInterface.AbstractGeometry}
         code::Int32
         length::Int32
         version::Int32
@@ -136,7 +136,7 @@ module Shapefile
         shapes::Vector{T}
     end
 
-    function Base.read{T}(io::IO,::Type{Rect{T}})
+    function Base.read(io::IO,::Type{Rect{T}}) where T
         minx = read(io,T)
         miny = read(io,T)
         maxx = read(io,T)
@@ -146,20 +146,20 @@ module Shapefile
 
     Base.read(io::IO,::Type{NullShape}) = NullShape()
 
-    function Base.read{T}(io::IO,::Type{Point{T}})
+    function Base.read(io::IO,::Type{Point{T}}) where T
         x = read(io,T)
         y = read(io,T)
         Point{T}(x,y)
     end
 
-    function Base.read{T,M}(io::IO,::Type{PointM{T,M}})
+    function Base.read(io::IO,::Type{PointM{T,M}}) where {T,M}
         x = read(io,T)
         y = read(io,T)
         m = read(io,M)
         PointM{T,M}(x,y,m)
     end
 
-    function Base.read{T,M}(io::IO,::Type{PointZ{T,M}})
+    function Base.read(io::IO,::Type{PointZ{T,M}}) where {T,M}
         x = read(io,T)
         y = read(io,T)
         z = read(io,T)
@@ -167,7 +167,7 @@ module Shapefile
         PointZ{T,M}(x,y,z,m)
     end
 
-    function Base.read{T}(io::IO,::Type{Polyline{T}})
+    function Base.read(io::IO,::Type{Polyline{T}}) where T
         box = read(io,Rect{T})
         numparts = read(io,Int32)
         numpoints = read(io,Int32)
@@ -178,7 +178,7 @@ module Shapefile
         Polyline{T}(box,parts,points)
     end
 
-    function Base.read{T,M}(io::IO,::Type{PolylineM{T,M}})
+    function Base.read(io::IO,::Type{PolylineM{T,M}}) where {T,M}
         box = read(io,Rect{T})
         numparts = read(io,Int32)
         numpoints = read(io,Int32)
@@ -193,7 +193,7 @@ module Shapefile
         PolylineM{T,M}(box,parts,points,measures)
     end
 
-    function Base.read{T,M}(io::IO,::Type{PolylineZ{T,M}})
+    function Base.read(io::IO,::Type{PolylineZ{T,M}}) where {T,M}
         box = read(io,Rect{T})
         numparts = read(io,Int32)
         numpoints = read(io,Int32)
@@ -212,7 +212,7 @@ module Shapefile
         PolylineZ{T,M}(box,parts,points,zvalues,measures)
     end
 
-    function Base.read{T}(io::IO,::Type{Polygon{T}})
+    function Base.read(io::IO,::Type{Polygon{T}}) where T
         box = read(io,Rect{Float64})
         numparts = read(io,Int32)
         numpoints = read(io,Int32)
@@ -223,7 +223,7 @@ module Shapefile
         Polygon{T}(box,parts,points)
     end
 
-    function Base.read{T,M}(io::IO,::Type{PolygonM{T,M}})
+    function Base.read(io::IO,::Type{PolygonM{T,M}}) where {T,M}
         box = read(io,Rect{Float64})
         numparts = read(io,Int32)
         numpoints = read(io,Int32)
@@ -238,7 +238,7 @@ module Shapefile
         PolygonM{T,M}(box,parts,points,measures)
     end
 
-    function Base.read{T,M}(io::IO,::Type{PolygonZ{T,M}})
+    function Base.read(io::IO,::Type{PolygonZ{T,M}}) where {T,M}
         box = read(io,Rect{Float64})
         numparts = read(io,Int32)
         numpoints = read(io,Int32)
@@ -257,7 +257,7 @@ module Shapefile
         PolygonZ{T,M}(box,parts,points,zvalues,measures)
     end
 
-    function Base.read{T}(io::IO,::Type{MultiPoint{T}})
+    function Base.read(io::IO,::Type{MultiPoint{T}}) where T
         box = read(io,Rect{Float64})
         numpoints = read(io,Int32)
         points = Array{Point{T}}(numpoints)
@@ -265,7 +265,7 @@ module Shapefile
         MultiPoint{T}(box,points)
     end
 
-    function Base.read{T,M}(io::IO,::Type{MultiPointM{T,M}})
+    function Base.read(io::IO,::Type{MultiPointM{T,M}}) where {T,M}
         box = read(io,Rect{Float64})
         numpoints = read(io,Int32)
         points = Array{Point{T}}(numpoints)
@@ -277,7 +277,7 @@ module Shapefile
         MultiPointM{T,M}(box,points,measures)
     end
 
-    function Base.read{T,M}(io::IO,::Type{MultiPointZ{T,M}})
+    function Base.read(io::IO,::Type{MultiPointZ{T,M}}) where {T,M}
         box = read(io,Rect{Float64})
         numpoints = read(io,Int32)
         points = Array{Point{T}}(numpoints)
@@ -293,7 +293,7 @@ module Shapefile
         MultiPointZ{T,M}(box,points,zvalues,measures)
     end
 
-    function Base.read{T,M}(io::IO,::Type{MultiPatch{T,M}})
+    function Base.read(io::IO,::Type{MultiPatch{T,M}}) where {T,M}
         box = read(io,Rect{Float64})
         numparts = read(io,Int32)
         numpoints = read(io,Int32)
@@ -338,8 +338,4 @@ module Shapefile
     end
 
     include("geo_interface.jl")
-    # If Compose.jl is present, define useful interconversion functions.
-    # Note that in julia v0.6 this is never true, it should be isdefined(Main, :Compose).
-    # This does't interact well with precompilation.
-    isdefined(:Compose) && isa(Compose, Module) && include("compose.jl")
 end # module

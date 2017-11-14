@@ -1,4 +1,4 @@
-using Shapefile
+using Shapefile, GeoInterface
 using Base.Test
 
 test_types = Set([Shapefile.NullShape,
@@ -33,9 +33,9 @@ coords = Dict{String, Any}(
 )
 
 seen_types = Set(DataType[])
-for test_file in readdir(joinpath(dirname(@__FILE__), "shapelib_testcases"))
+for test_file in readdir(joinpath(@__DIR__, "shapelib_testcases"))
     if splitext(test_file)[2] == ".shp"
-        shp = open(joinpath(dirname(@__FILE__), "shapelib_testcases", test_file)) do fd
+        shp = open(joinpath(@__DIR__, "shapelib_testcases", test_file)) do fd
             read(fd,Shapefile.Handle)
         end
         shapes = unique(map(typeof,shp.shapes))

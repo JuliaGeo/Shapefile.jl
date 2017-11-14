@@ -1,15 +1,15 @@
-GeoInterface.coordinates{T <: Real}(obj::Point{T}) = T[obj.x, obj.y]
-GeoInterface.coordinates{T <: Real}(obj::PointM{T}) = T[obj.x, obj.y]
-GeoInterface.coordinates{T <: Real}(obj::PointZ{T}) = T[obj.x, obj.y, obj.z]
+GeoInterface.coordinates(obj::Point{T}) where {T <: Real} = T[obj.x, obj.y]
+GeoInterface.coordinates(obj::PointM{T}) where {T <: Real} = T[obj.x, obj.y]
+GeoInterface.coordinates(obj::PointZ{T}) where {T <: Real} = T[obj.x, obj.y, obj.z]
 
-GeoInterface.coordinates{T <: Real}(obj::MultiPoint{T}) =
+GeoInterface.coordinates(obj::MultiPoint{T}) where {T <: Real} =
     Vector{T}[GeoInterface.coordinates(p) for p in obj.points]
-GeoInterface.coordinates{T,M}(obj::MultiPointM{T,M}) =
+GeoInterface.coordinates(obj::MultiPointM{T,M}) where {T,M} =
     Vector{T}[GeoInterface.coordinates(p) for p in obj.points]
-GeoInterface.coordinates{T,M}(obj::MultiPointZ{T,M}) =
+GeoInterface.coordinates(obj::MultiPointZ{T,M}) where {T,M} =
     Vector{T}[GeoInterface.coordinates(p) for p in obj.points]
 
-function GeoInterface.coordinates{T}(obj::Polyline{T})
+function GeoInterface.coordinates(obj::Polyline{T}) where T
     npoints = length(obj.points)
     nparts = length(obj.parts)
     @assert obj.parts[nparts] <= npoints
@@ -25,7 +25,7 @@ function GeoInterface.coordinates{T}(obj::Polyline{T})
     coords
 end
 
-function GeoInterface.coordinates{T, M}(obj::PolylineM{T,M})
+function GeoInterface.coordinates(obj::PolylineM{T,M}) where {T, M}
     npoints = length(obj.points)
     nparts = length(obj.parts)
     @assert obj.parts[nparts] <= npoints
@@ -41,7 +41,7 @@ function GeoInterface.coordinates{T, M}(obj::PolylineM{T,M})
     coords
 end
 
-function GeoInterface.coordinates{T, M}(obj::PolylineZ{T,M})
+function GeoInterface.coordinates(obj::PolylineZ{T,M}) where {T, M}
     npoints = length(obj.points)
     nparts = length(obj.parts)
     @assert obj.parts[nparts] <= npoints
@@ -60,7 +60,7 @@ end
 # Only supports 2D geometries for now
 # pt is [x,y] and ring is [[x,y], [x,y],..]
 # ported from https://github.com/Turfjs/turf/blob/3d0efd96d59878f82c6d6baf8ed75695e0b6dbc0/packages/turf-inside/index.js#L76-L91
-function inring{T}(pt::Vector{T}, ring::Vector{Vector{T}})
+function inring(pt::Vector{T}, ring::Vector{Vector{T}}) where T
     intersect(i::Vector{T},j::Vector{T}) =
         (i[2] >= pt[2]) != (j[2] >= pt[2]) && (pt[1] <= (j[1] - i[1]) * (pt[2] - i[2]) / (j[2] - i[2]) + i[1])
     isinside = intersect(ring[1], ring[end])
@@ -71,7 +71,7 @@ function inring{T}(pt::Vector{T}, ring::Vector{Vector{T}})
 end
 
 # ported from https://github.com/Esri/terraformer-arcgis-parser/blob/master/terraformer-arcgis-parser.js#L168-L253
-function GeoInterface.coordinates{T}(obj::Polygon{T})
+function GeoInterface.coordinates(obj::Polygon{T}) where T
     npoints = length(obj.points)
     nparts = length(obj.parts)
     @assert obj.parts[end] <= npoints
@@ -111,7 +111,7 @@ function GeoInterface.coordinates{T}(obj::Polygon{T})
 end
 
 # copied from GeoInterface.coordinates{T}(obj::Polygon{T}) to match signature here
-function GeoInterface.coordinates{T, M}(obj::PolygonM{T,M})
+function GeoInterface.coordinates(obj::PolygonM{T,M}) where {T, M}
     npoints = length(obj.points)
     nparts = length(obj.parts)
     @assert obj.parts[end] <= npoints
@@ -151,7 +151,7 @@ function GeoInterface.coordinates{T, M}(obj::PolygonM{T,M})
 end
 
 # copied from GeoInterface.coordinates{T}(obj::Polygon{T}) to match signature here
-function GeoInterface.coordinates{T, M}(obj::PolygonZ{T,M})
+function GeoInterface.coordinates(obj::PolygonZ{T,M}) where {T, M}
     npoints = length(obj.points)
     nparts = length(obj.parts)
     @assert obj.parts[end] <= npoints
