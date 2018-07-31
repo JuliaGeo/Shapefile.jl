@@ -1,5 +1,5 @@
 using Shapefile, GeoInterface
-using Base.Test
+using Test
 
 test_types = Set([Shapefile.NullShape,
                   Shapefile.Point{Float64},
