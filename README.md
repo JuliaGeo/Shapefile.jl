@@ -25,7 +25,7 @@ The `Shapefile.Handle` structure contains shapes and metadata.
 List of the `Shapefile.Handle` field names:
 
 ```julia
-julia> fieldnames(handle)
+julia> fieldnames(typeof(handle))
 8-element Array{Symbol,1}:
  :code
  :length
