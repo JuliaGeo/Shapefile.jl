@@ -14,7 +14,7 @@ Basic example of reading a shapefile from test cases:
 ```julia
 using Shapefile
 
-path = Pkg.dir("Shapefile", "test", "shapelib_testcases", "test.shp")
+path = joinpath(dirname(pathof(Shapefile)),"..","test","shapelib_testcases","test.shp")
 
 handle = open(path, "r") do io
     read(io, Shapefile.Handle)
