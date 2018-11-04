@@ -3,10 +3,10 @@ module Shapefile
     import GeoInterface
 
     mutable struct Rect{T}
-        top::T
         left::T
         bottom::T
         right::T
+        top::T
     end
 
     mutable struct NullShape <: GeoInterface.AbstractGeometry
@@ -139,7 +139,7 @@ module Shapefile
         miny = read(io,T)
         maxx = read(io,T)
         maxy = read(io,T)
-        Rect{T}(miny,minx,maxy,maxx)
+        Rect{T}(minx,miny,maxx,maxy)
     end
 
     Base.read(io::IO,::Type{NullShape}) = NullShape()
