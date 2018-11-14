@@ -1,5 +1,6 @@
 module Shapefile
 
+    import Base.==
     import GeoInterface
 
     mutable struct Rect{T}
@@ -333,6 +334,13 @@ module Shapefile
             push!(shapes, read(io, jltype))
         end
         file
+    end
+
+    function ==(a::Rect, b::Rect)
+        a.left == b.left &&
+            a.bottom == b.bottom &&
+            a.right == b.right &&
+            a.top == b.top
     end
 
     include("geo_interface.jl")
