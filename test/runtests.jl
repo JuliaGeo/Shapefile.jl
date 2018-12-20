@@ -96,4 +96,43 @@ for test in test_tuples
     @test shp.MBR == test.bbox
 end
 
+# Test all .shx files; the values in .shx must match the .shp offsets
+for test in test_tuples
+    
+    offsets = Int32[]
+    contentlens = Int32[]
+
+    # Get the shapefile's record offsets and contentlens
+    shp = open(joinpath(@__DIR__, test.path)) do fd
+        seek(fd,32)
+        shapeType = read(fd,Int32)
+        seek(fd,100)
+        jltype = Shapefile.SHAPETYPE[shapeType]
+        
+        push!(offsets, position(fd))
+        while(!eof(fd))
+            
+            num = bswap(read(fd,Int32))
+            rlength = bswap(read(fd,Int32))
+            shapeType = read(fd,Int32)
+            read(fd, jltype)
+
+            # records the offest after this geometry record
+            push!(offsets, position(fd))
+        end
+    end
+    contentlens = diff(offsets)
+    offsets = offsets[1:end-1]
+
+    # Match the Index values to Shapefile offsets
+    shx = open(joinpath(@__DIR__, replace(test.path, r".shp$"=>".shx"))) do fd
+        shx = read(fd, Shapefile.IndexHandle)
+        for sIdx = 1:lastindex(shx.indices)
+            @test shx.indices[sIdx].offset*2       == offsets[sIdx]
+            @test shx.indices[sIdx].contentLen*2+8 == contentlens[sIdx]
+        end
+    end
+
+end
+
 end  # @testset "Shapefile"
