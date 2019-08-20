@@ -89,6 +89,7 @@ for test in test_tuples
     shapes = unique(map(typeof, shp.shapes))
     @test length(shapes) == 1
     @test shapes[1] == test.geomtype
+    @test eltype(shp.shapes) == Union{test.geomtype, Missing}
     # missing and MultiPatch are not covered by the GeoInterface
     if !(test.geomtype <: Union{Missing, Shapefile.MultiPatch})
         @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
