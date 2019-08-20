@@ -9,9 +9,6 @@ mutable struct Rect{T}
     top::T
 end
 
-mutable struct NullShape <: GeoInterface.AbstractGeometry
-end
-
 mutable struct Interval{T}
     left::T
     right::T
@@ -107,7 +104,7 @@ mutable struct MultiPatch{T,M} <: GeoInterface.AbstractGeometry
 end
 
 const SHAPETYPE = Dict{Int32, Any}(
-    0  => NullShape,
+    0  => Missing,
     1  => Point{Float64},
     3  => Polyline{Float64},
     5  => Polygon{Float64},
@@ -123,7 +120,7 @@ const SHAPETYPE = Dict{Int32, Any}(
     31 => MultiPatch{Float64,Float64}
 )
 
-mutable struct Handle{T <: GeoInterface.AbstractGeometry}
+mutable struct Handle{T <: Union{<:GeoInterface.AbstractGeometry, Missing}}
     code::Int32
     length::Int32
     version::Int32
@@ -141,8 +138,6 @@ function Base.read(io::IO,::Type{Rect{T}}) where T
     maxy = read(io,T)
     Rect{T}(minx,miny,maxx,maxy)
 end
-
-Base.read(io::IO,::Type{NullShape}) = NullShape()
 
 function Base.read(io::IO,::Type{Point{T}}) where T
     x = read(io,T)
@@ -324,13 +319,17 @@ function Base.read(io::IO,::Type{Handle})
     mmin = read(io,Float64)
     mmax = read(io,Float64)
     jltype = SHAPETYPE[shapeType]
-    shapes = Vector{jltype}(undef, 0)
+    shapes = Vector{Union{jltype, Missing}}(undef, 0)
     file = Handle(code,fileSize,version,shapeType,MBR,Interval(zmin,zmax),Interval(mmin,mmax),shapes)
     while(!eof(io))
         num = bswap(read(io,Int32))
         rlength = bswap(read(io,Int32))
         shapeType = read(io,Int32)
-        push!(shapes, read(io, jltype))
+        if shapeType === Int32(0)
+            push!(shapes, missing)
+        else
+            push!(shapes, read(io, jltype))
+        end
     end
     file
 end
