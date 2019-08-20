@@ -9,7 +9,7 @@ test_tuples = [
         bbox=Shapefile.Rect{Float64}(0.0, 0.0, 180.0, 170.0),
         ),(
         path="shapelib_testcases/test0.shp",
-        geomtype=Shapefile.NullShape,
+        geomtype=Missing,
         coordinates=nothing,
         bbox=Shapefile.Rect{Float64}(0.0, 0.0, 10.0, 20.0),
     ),(
@@ -89,8 +89,8 @@ for test in test_tuples
     shapes = unique(map(typeof, shp.shapes))
     @test length(shapes) == 1
     @test shapes[1] == test.geomtype
-    # NullShape and MultiPatch are not covered by the GeoInterface
-    if !(test.geomtype <: Union{Shapefile.NullShape, Shapefile.MultiPatch})
+    # missing and MultiPatch are not covered by the GeoInterface
+    if !(test.geomtype <: Union{Missing, Shapefile.MultiPatch})
         @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
     end
     @test shp.MBR == test.bbox
@@ -115,7 +115,9 @@ for test in test_tuples
             num = bswap(read(fd,Int32))
             rlength = bswap(read(fd,Int32))
             shapeType = read(fd,Int32)
-            read(fd, jltype)
+            if shapeType !== Int32(0)
+                read(fd, jltype)
+            end
 
             # records the offest after this geometry record
             push!(offsets, position(fd))
