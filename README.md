@@ -1,8 +1,6 @@
 # Shapefile
 
 [![Build Status](https://travis-ci.org/JuliaGeo/Shapefile.jl.svg)](https://travis-ci.org/JuliaGeo/Shapefile.jl)
-[![Shapefile](https://pkg.julialang.org/badges/Shapefile_0.6.svg)](https://pkg.julialang.org/detail/Shapefile)
-[![Shapefile](https://pkg.julialang.org/badges/Shapefile_0.7.svg)](https://pkg.julialang.org/detail/Shapefile)
 
 This library supports reading ESRI Shapefiles in pure Julia. Note that currently only
 the `.shp` is read, not `.shx` or `.dbf`. This means the feature geometry can be read,
