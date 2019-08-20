@@ -98,7 +98,7 @@ end
 
 # Test all .shx files; the values in .shx must match the .shp offsets
 for test in test_tuples
-    
+
     offsets = Int32[]
     contentlens = Int32[]
 
@@ -108,10 +108,10 @@ for test in test_tuples
         shapeType = read(fd,Int32)
         seek(fd,100)
         jltype = Shapefile.SHAPETYPE[shapeType]
-        
+
         push!(offsets, position(fd))
         while(!eof(fd))
-            
+
             num = bswap(read(fd,Int32))
             rlength = bswap(read(fd,Int32))
             shapeType = read(fd,Int32)
