@@ -1,6 +1,5 @@
 module Shapefile
 
-import Base.==
 import GeoInterface
 
 mutable struct Rect{T}
@@ -336,7 +335,7 @@ function Base.read(io::IO,::Type{Handle})
     file
 end
 
-function ==(a::Rect, b::Rect)
+function Base.:(==)(a::Rect, b::Rect)
     a.left == b.left &&
         a.bottom == b.bottom &&
         a.right == b.right &&
