@@ -17,9 +17,9 @@ struct IndexHandle
     length::Int32
     version::Int32
     shapeType::Int32
-    MBR::Rect{Float64}
-    zrange::Interval{Float64}
-    mrange::Interval{Float64}
+    MBR::Rect
+    zrange::Interval
+    mrange::Interval
     indices::Vector{IndexRecord}
 end
 
@@ -29,7 +29,7 @@ function Base.read(io::IO,::Type{IndexHandle})
     fileSize = ntoh(read(io,Int32))
     version = read(io,Int32)
     shapeType = read(io,Int32)
-    MBR = read(io,Rect{Float64})
+    MBR = read(io,Rect)
     zmin = read(io,Float64)
     zmax = read(io,Float64)
     mmin = read(io,Float64)
