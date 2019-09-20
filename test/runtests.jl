@@ -89,9 +89,9 @@ for test in test_tuples
     shapes = unique(map(typeof, shp.shapes))
     @test length(shapes) == 1
     @test shapes[1] == test.geomtype
-    @test eltype(shp.shapes) == Union{test.geomtype, Missing}
+    @test eltype(shp.shapes) == Union{test.geomtype,Missing}
     # missing and MultiPatch are not covered by the GeoInterface
-    if !(test.geomtype <: Union{Missing, Shapefile.MultiPatch})
+    if !(test.geomtype <: Union{Missing,Shapefile.MultiPatch})
         @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
     end
     @test shp.MBR == test.bbox
@@ -105,17 +105,17 @@ for test in test_tuples
 
     # Get the shapefile's record offsets and contentlens
     shp = open(joinpath(@__DIR__, test.path)) do fd
-        seek(fd,32)
-        shapeType = read(fd,Int32)
-        seek(fd,100)
+        seek(fd, 32)
+        shapeType = read(fd, Int32)
+        seek(fd, 100)
         jltype = Shapefile.SHAPETYPE[shapeType]
 
         push!(offsets, position(fd))
-        while(!eof(fd))
+        while (!eof(fd))
 
-            num = bswap(read(fd,Int32))
-            rlength = bswap(read(fd,Int32))
-            shapeType = read(fd,Int32)
+            num = bswap(read(fd, Int32))
+            rlength = bswap(read(fd, Int32))
+            shapeType = read(fd, Int32)
             if shapeType !== Int32(0)
                 read(fd, jltype)
             end
@@ -128,13 +128,14 @@ for test in test_tuples
     offsets = offsets[1:end-1]
 
     # Match the Index values to Shapefile offsets
-    shx = open(joinpath(@__DIR__, replace(test.path, r".shp$"=>".shx"))) do fd
-        shx = read(fd, Shapefile.IndexHandle)
-        for sIdx = 1:lastindex(shx.indices)
-            @test shx.indices[sIdx].offset*2       == offsets[sIdx]
-            @test shx.indices[sIdx].contentLen*2+8 == contentlens[sIdx]
+    shx =
+        open(joinpath(@__DIR__, replace(test.path, r".shp$" => ".shx"))) do fd
+            shx = read(fd, Shapefile.IndexHandle)
+            for sIdx = 1:lastindex(shx.indices)
+                @test shx.indices[sIdx].offset * 2 == offsets[sIdx]
+                @test shx.indices[sIdx].contentLen * 2 + 8 == contentlens[sIdx]
+            end
         end
-    end
 
 end
 
