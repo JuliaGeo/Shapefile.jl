@@ -1,0 +1,15 @@
+name = "Shapefile"
+uuid = "8e980c4a-a4fe-5da2-b3a7-4b4b0353a2f4"
+
+[deps]
+GeoInterface = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
+
+[compat]
+GeoInterface = "≥ 0.4.0"
+julia = "≥ 1.0.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
