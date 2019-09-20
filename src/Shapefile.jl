@@ -3,50 +3,50 @@ module Shapefile
 import GeoInterface
 using DBFTables, DataFrames
 
-mutable struct Rect
+struct Rect
     left::Float64
     bottom::Float64
     right::Float64
     top::Float64
 end
 
-mutable struct Interval
+struct Interval
     left::Float64
     right::Float64
 end
 
-mutable struct Point <: GeoInterface.AbstractPoint
+struct Point <: GeoInterface.AbstractPoint
     x::Float64
     y::Float64
 end
 
-mutable struct PointM <: GeoInterface.AbstractPoint
+struct PointM <: GeoInterface.AbstractPoint
     x::Float64
     y::Float64
     m::Float64  # measure
 end
 
-mutable struct PointZ <: GeoInterface.AbstractPoint
+struct PointZ <: GeoInterface.AbstractPoint
     x::Float64
     y::Float64
     z::Float64
     m::Float64  # measure
 end
 
-mutable struct Polyline <: GeoInterface.AbstractMultiLineString
+struct Polyline <: GeoInterface.AbstractMultiLineString
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
 end
 
-mutable struct PolylineM <: GeoInterface.AbstractMultiLineString
+struct PolylineM <: GeoInterface.AbstractMultiLineString
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
     measures::Vector{Float64}
 end
 
-mutable struct PolylineZ <: GeoInterface.AbstractMultiLineString
+struct PolylineZ <: GeoInterface.AbstractMultiLineString
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
@@ -54,7 +54,7 @@ mutable struct PolylineZ <: GeoInterface.AbstractMultiLineString
     measures::Vector{Float64}
 end
 
-mutable struct Polygon <: GeoInterface.AbstractMultiPolygon
+struct Polygon <: GeoInterface.AbstractMultiPolygon
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
@@ -62,14 +62,14 @@ end
 
 Base.show(io::IO,p::Polygon) = print(io,"Polygon(",length(p.points)," ",T," Points)")
 
-mutable struct PolygonM <: GeoInterface.AbstractMultiPolygon
+struct PolygonM <: GeoInterface.AbstractMultiPolygon
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
     measures::Vector{Float64}
 end
 
-mutable struct PolygonZ <: GeoInterface.AbstractMultiPolygon
+struct PolygonZ <: GeoInterface.AbstractMultiPolygon
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
@@ -77,25 +77,25 @@ mutable struct PolygonZ <: GeoInterface.AbstractMultiPolygon
     measures::Vector{Float64}
 end
 
-mutable struct MultiPoint <: GeoInterface.AbstractMultiPoint
+struct MultiPoint <: GeoInterface.AbstractMultiPoint
     MBR::Rect
     points::Vector{Point}
 end
 
-mutable struct MultiPointM <: GeoInterface.AbstractMultiPoint
+struct MultiPointM <: GeoInterface.AbstractMultiPoint
     MBR::Rect
     points::Vector{Point}
     measures::Vector{Float64}
 end
 
-mutable struct MultiPointZ <: GeoInterface.AbstractMultiPoint
+struct MultiPointZ <: GeoInterface.AbstractMultiPoint
     MBR::Rect
     points::Vector{Point}
     zvalues::Vector{Float64}
     measures::Vector{Float64}
 end
 
-mutable struct MultiPatch <: GeoInterface.AbstractGeometry
+struct MultiPatch <: GeoInterface.AbstractGeometry
     MBR::Rect
     parts::Vector{Int32}
     parttypes::Vector{Int32}
