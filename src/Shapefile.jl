@@ -59,7 +59,8 @@ struct Polygon <: GeoInterface.AbstractMultiPolygon
     points::Vector{Point}
 end
 
-Base.show(io::IO,p::Polygon) = print(io,"Polygon(",length(p.points)," ",T," Points)")
+Base.show(io::IO, p::Polygon) =
+    print(io, "Polygon(", length(p.points), " ", T, " Points)")
 
 struct PolygonM <: GeoInterface.AbstractMultiPolygon
     MBR::Rect
@@ -103,12 +104,12 @@ struct MultiPatch <: GeoInterface.AbstractGeometry
     # measures::Vector{Float64}  # (optional)
 end
 
-const SHAPETYPE = Dict{Int32, DataType}(
-    0  => Missing,
-    1  => Point,
-    3  => Polyline,
-    5  => Polygon,
-    8  => MultiPoint,
+const SHAPETYPE = Dict{Int32,DataType}(
+    0 => Missing,
+    1 => Point,
+    3 => Polyline,
+    5 => Polygon,
+    8 => MultiPoint,
     11 => PointZ,
     13 => PolylineZ,
     15 => PolygonZ,
@@ -117,10 +118,10 @@ const SHAPETYPE = Dict{Int32, DataType}(
     23 => PolylineM,
     25 => PolygonM,
     28 => MultiPointM,
-    31 => MultiPatch
+    31 => MultiPatch,
 )
 
-mutable struct Handle{T <: Union{<:GeoInterface.AbstractGeometry, Missing}}
+mutable struct Handle{T<:Union{<:GeoInterface.AbstractGeometry,Missing}}
     code::Int32
     length::Int32
     version::Int32
@@ -131,95 +132,50 @@ mutable struct Handle{T <: Union{<:GeoInterface.AbstractGeometry, Missing}}
     shapes::Vector{T}
 end
 
-function Base.read(io::IO,::Type{Rect})
-    minx = read(io,Float64)
-    miny = read(io,Float64)
-    maxx = read(io,Float64)
-    maxy = read(io,Float64)
-    Rect(minx,miny,maxx,maxy)
+function Base.read(io::IO, ::Type{Rect})
+    minx = read(io, Float64)
+    miny = read(io, Float64)
+    maxx = read(io, Float64)
+    maxy = read(io, Float64)
+    Rect(minx, miny, maxx, maxy)
 end
 
-function Base.read(io::IO,::Type{Point})
-    x = read(io,Float64)
-    y = read(io,Float64)
-    Point(x,y)
+function Base.read(io::IO, ::Type{Point})
+    x = read(io, Float64)
+    y = read(io, Float64)
+    Point(x, y)
 end
 
-function Base.read(io::IO,::Type{PointM})
-    x = read(io,Float64)
-    y = read(io,Float64)
-    m = read(io,Float64)
-    PointM(x,y,m)
+function Base.read(io::IO, ::Type{PointM})
+    x = read(io, Float64)
+    y = read(io, Float64)
+    m = read(io, Float64)
+    PointM(x, y, m)
 end
 
-function Base.read(io::IO,::Type{PointZ})
-    x = read(io,Float64)
-    y = read(io,Float64)
-    z = read(io,Float64)
-    m = read(io,Float64)
-    PointZ(x,y,z,m)
+function Base.read(io::IO, ::Type{PointZ})
+    x = read(io, Float64)
+    y = read(io, Float64)
+    z = read(io, Float64)
+    m = read(io, Float64)
+    PointZ(x, y, z, m)
 end
 
-function Base.read(io::IO,::Type{Polyline})
-    box = read(io,Rect)
-    numparts = read(io,Int32)
-    numpoints = read(io,Int32)
+function Base.read(io::IO, ::Type{Polyline})
+    box = read(io, Rect)
+    numparts = read(io, Int32)
+    numpoints = read(io, Int32)
     parts = Vector{Int32}(undef, numparts)
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    Polyline(box,parts,points)
+    Polyline(box, parts, points)
 end
 
-function Base.read(io::IO,::Type{PolylineM})
-    box = read(io,Rect)
-    numparts = read(io,Int32)
-    numpoints = read(io,Int32)
-    parts = Vector{Int32}(undef, numparts)
-    read!(io, parts)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
-    mrange = Vector{Float64}(undef, 2)
-    read!(io, mrange)
-    measures = Vector{Float64}(undef, numpoints)
-    read!(io, measures)
-    PolylineM(box,parts,points,measures)
-end
-
-function Base.read(io::IO,::Type{PolylineZ})
-    box = read(io,Rect)
-    numparts = read(io,Int32)
-    numpoints = read(io,Int32)
-    parts = Vector{Int32}(undef, numparts)
-    read!(io, parts)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
-    zrange = Vector{Float64}(undef, 2)
-    read!(io, zrange)
-    zvalues = Vector{Float64}(undef, numpoints)
-    read!(io, zvalues)
-    mrange = Vector{Float64}(undef, 2)
-    read!(io, mrange)
-    measures = Vector{Float64}(undef, numpoints)
-    read!(io, measures)
-    PolylineZ(box,parts,points,zvalues,measures)
-end
-
-function Base.read(io::IO,::Type{Polygon})
-    box = read(io,Rect)
-    numparts = read(io,Int32)
-    numpoints = read(io,Int32)
-    parts = Vector{Int32}(undef, numparts)
-    read!(io, parts)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
-    Polygon(box,parts,points)
-end
-
-function Base.read(io::IO,::Type{PolygonM})
-    box = read(io,Rect)
-    numparts = read(io,Int32)
-    numpoints = read(io,Int32)
+function Base.read(io::IO, ::Type{PolylineM})
+    box = read(io, Rect)
+    numparts = read(io, Int32)
+    numpoints = read(io, Int32)
     parts = Vector{Int32}(undef, numparts)
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
@@ -228,13 +184,13 @@ function Base.read(io::IO,::Type{PolygonM})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    PolygonM(box,parts,points,measures)
+    PolylineM(box, parts, points, measures)
 end
 
-function Base.read(io::IO,::Type{PolygonZ})
-    box = read(io,Rect)
-    numparts = read(io,Int32)
-    numpoints = read(io,Int32)
+function Base.read(io::IO, ::Type{PolylineZ})
+    box = read(io, Rect)
+    numparts = read(io, Int32)
+    numpoints = read(io, Int32)
     parts = Vector{Int32}(undef, numparts)
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
@@ -247,32 +203,41 @@ function Base.read(io::IO,::Type{PolygonZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    PolygonZ(box,parts,points,zvalues,measures)
+    PolylineZ(box, parts, points, zvalues, measures)
 end
 
-function Base.read(io::IO,::Type{MultiPoint})
-    box = read(io,Rect)
-    numpoints = read(io,Int32)
+function Base.read(io::IO, ::Type{Polygon})
+    box = read(io, Rect)
+    numparts = read(io, Int32)
+    numpoints = read(io, Int32)
+    parts = Vector{Int32}(undef, numparts)
+    read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    MultiPoint(box,points)
+    Polygon(box, parts, points)
 end
 
-function Base.read(io::IO,::Type{MultiPointM})
-    box = read(io,Rect)
-    numpoints = read(io,Int32)
+function Base.read(io::IO, ::Type{PolygonM})
+    box = read(io, Rect)
+    numparts = read(io, Int32)
+    numpoints = read(io, Int32)
+    parts = Vector{Int32}(undef, numparts)
+    read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
     mrange = Vector{Float64}(undef, 2)
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    MultiPointM(box,points,measures)
+    PolygonM(box, parts, points, measures)
 end
 
-function Base.read(io::IO,::Type{MultiPointZ})
-    box = read(io,Rect)
-    numpoints = read(io,Int32)
+function Base.read(io::IO, ::Type{PolygonZ})
+    box = read(io, Rect)
+    numparts = read(io, Int32)
+    numpoints = read(io, Int32)
+    parts = Vector{Int32}(undef, numparts)
+    read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
     zrange = Vector{Float64}(undef, 2)
@@ -283,13 +248,49 @@ function Base.read(io::IO,::Type{MultiPointZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    MultiPointZ(box,points,zvalues,measures)
+    PolygonZ(box, parts, points, zvalues, measures)
 end
 
-function Base.read(io::IO,::Type{MultiPatch})
-    box = read(io,Rect)
-    numparts = read(io,Int32)
-    numpoints = read(io,Int32)
+function Base.read(io::IO, ::Type{MultiPoint})
+    box = read(io, Rect)
+    numpoints = read(io, Int32)
+    points = Vector{Point}(undef, numpoints)
+    read!(io, points)
+    MultiPoint(box, points)
+end
+
+function Base.read(io::IO, ::Type{MultiPointM})
+    box = read(io, Rect)
+    numpoints = read(io, Int32)
+    points = Vector{Point}(undef, numpoints)
+    read!(io, points)
+    mrange = Vector{Float64}(undef, 2)
+    read!(io, mrange)
+    measures = Vector{Float64}(undef, numpoints)
+    read!(io, measures)
+    MultiPointM(box, points, measures)
+end
+
+function Base.read(io::IO, ::Type{MultiPointZ})
+    box = read(io, Rect)
+    numpoints = read(io, Int32)
+    points = Vector{Point}(undef, numpoints)
+    read!(io, points)
+    zrange = Vector{Float64}(undef, 2)
+    read!(io, zrange)
+    zvalues = Vector{Float64}(undef, numpoints)
+    read!(io, zvalues)
+    mrange = Vector{Float64}(undef, 2)
+    read!(io, mrange)
+    measures = Vector{Float64}(undef, numpoints)
+    read!(io, measures)
+    MultiPointZ(box, points, zvalues, measures)
+end
+
+function Base.read(io::IO, ::Type{MultiPatch})
+    box = read(io, Rect)
+    numparts = read(io, Int32)
+    numpoints = read(io, Int32)
     parts = Vector{Int32}(undef, numparts)
     read!(io, parts)
     parttypes = Vector{Int32}(undef, numparts)
@@ -304,27 +305,36 @@ function Base.read(io::IO,::Type{MultiPatch})
     # read!(io, mrange)
     # measures = Vector{Float64}(numpoints)
     # read!(io, measures)
-    MultiPatch(box,parts,parttypes,points,zvalues) #,measures)
+    MultiPatch(box, parts, parttypes, points, zvalues) #,measures)
 end
 
-function Base.read(io::IO,::Type{Handle})
-    code = bswap(read(io,Int32))
+function Base.read(io::IO, ::Type{Handle})
+    code = bswap(read(io, Int32))
     read!(io, Vector{Int32}(undef, 5))
-    fileSize = bswap(read(io,Int32))
-    version = read(io,Int32)
-    shapeType = read(io,Int32)
-    MBR = read(io,Rect)
-    zmin = read(io,Float64)
-    zmax = read(io,Float64)
-    mmin = read(io,Float64)
-    mmax = read(io,Float64)
+    fileSize = bswap(read(io, Int32))
+    version = read(io, Int32)
+    shapeType = read(io, Int32)
+    MBR = read(io, Rect)
+    zmin = read(io, Float64)
+    zmax = read(io, Float64)
+    mmin = read(io, Float64)
+    mmax = read(io, Float64)
     jltype = SHAPETYPE[shapeType]
-    shapes = Vector{Union{jltype, Missing}}(undef, 0)
-    file = Handle(code,fileSize,version,shapeType,MBR,Interval(zmin,zmax),Interval(mmin,mmax),shapes)
-    while(!eof(io))
-        num = bswap(read(io,Int32))
-        rlength = bswap(read(io,Int32))
-        shapeType = read(io,Int32)
+    shapes = Vector{Union{jltype,Missing}}(undef, 0)
+    file = Handle(
+        code,
+        fileSize,
+        version,
+        shapeType,
+        MBR,
+        Interval(zmin, zmax),
+        Interval(mmin, mmax),
+        shapes,
+    )
+    while (!eof(io))
+        num = bswap(read(io, Int32))
+        rlength = bswap(read(io, Int32))
+        shapeType = read(io, Int32)
         if shapeType === Int32(0)
             push!(shapes, missing)
         else
@@ -336,9 +346,7 @@ end
 
 function Base.:(==)(a::Rect, b::Rect)
     a.left == b.left &&
-        a.bottom == b.bottom &&
-        a.right == b.right &&
-        a.top == b.top
+    a.bottom == b.bottom && a.right == b.right && a.top == b.top
 end
 
 include("geo_interface.jl")
