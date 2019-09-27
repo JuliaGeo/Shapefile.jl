@@ -1,6 +1,6 @@
 module Shapefile
 
-import GeoInterface
+import GeoInterface, DBFTables, Tables
 
 struct Rect
     left::Float64
@@ -131,6 +131,8 @@ mutable struct Handle{T<:Union{<:GeoInterface.AbstractGeometry,Missing}}
     mrange::Interval
     shapes::Vector{T}
 end
+
+Base.length(shp::Handle) = length(shp.shapes)
 
 function Base.read(io::IO, ::Type{Rect})
     minx = read(io, Float64)
@@ -349,6 +351,7 @@ function Base.:(==)(a::Rect, b::Rect)
     a.bottom == b.bottom && a.right == b.right && a.top == b.top
 end
 
+include("table.jl")
 include("geo_interface.jl")
 include("shx.jl")
 
