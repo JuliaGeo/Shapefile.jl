@@ -60,7 +60,7 @@ struct Polygon <: GeoInterface.AbstractMultiPolygon
 end
 
 Base.show(io::IO, p::Polygon) =
-    print(io, "Polygon(", length(p.points), " ", T, " Points)")
+    print(io, "Polygon(", length(p.points), " Points)")
 
 struct PolygonM <: GeoInterface.AbstractMultiPolygon
     MBR::Rect
