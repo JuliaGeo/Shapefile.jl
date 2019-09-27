@@ -72,6 +72,13 @@ Base.propertynames(t::Table) = propertynames(getdbf(t))
 
 Tables.schema(t::Table) = Tables.schema(getdbf(t))
 
+function Base.show(io::IO, t::Table)
+    tt = typeof(t)
+    nr = length(t)
+    nc = length(propertynames(t))
+    println(io, "$tt with $nr rows and $nc columns")
+end
+
 # TODO generalize these with a future GeoInterface/GeoTables
 # should probably be geometry/geometries but don't want to claim these names yet
 "Get the geometry associated with a shapefile row"

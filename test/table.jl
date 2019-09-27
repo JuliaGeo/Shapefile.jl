@@ -148,6 +148,10 @@ end
         @test Shapefile.shape(r) isa Shapefile.Point
         @test r.featurecla in classes
     end
+    @test sprint(
+            show,
+            ne_cities,
+        ) === "Shapefile.Table{Union{Missing, Shapefile.Point}} with 243 rows and 38 columns\n"
     df_cities = DataFrames.DataFrame(ne_cities)
     @test size(df_cities) == (243, 38)
     @test names(df_cities) == colnames
