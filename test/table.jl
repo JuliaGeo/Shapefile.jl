@@ -148,10 +148,10 @@ end
         @test Shapefile.shape(r) isa Shapefile.Point
         @test r.featurecla in classes
     end
-    @test sprint(
+    @test startswith(sprint(
             show,
             ne_cities,
-        ) === "Shapefile.Table{Union{Missing, Shapefile.Point}} with 243 rows and 38 columns\nTables.Schema:\n :scalerank   Union{Missing, $Int}  \n :natscale    Union{Missing, $Int}  \n :labelrank   Union{Missing, $Int}  \n :featurecla  Union{Missing, String} \n :name        Union{Missing, String} \n :namepar     Union{Missing, String} \n :namealt     Union{Missing, String} \n :diffascii   Union{Missing, $Int}  \n :nameascii   Union{Missing, String} \n :adm0cap     Union{Missing, Float64}\n :capalt      Union{Missing, $Int}  \n :capin       Union{Missing, String} \n :worldcity   Union{Missing, Float64}\n :megacity    Union{Missing, $Int}  \n :sov0name    Union{Missing, String} \n :sov_a3      Union{Missing, String} \n :adm0name    Union{Missing, String} \n :adm0_a3     Union{Missing, String} \n :adm1name    Union{Missing, String} \n :iso_a2      Union{Missing, String} \n :note        Union{Missing, String} \n :latitude    Union{Missing, Float64}\n :longitude   Union{Missing, Float64}\n :changed     Union{Missing, Float64}\n :namediff    Union{Missing, $Int}  \n :diffnote    Union{Missing, String} \n :pop_max     Union{Missing, $Int}  \n :pop_min     Union{Missing, $Int}  \n :pop_other   Union{Missing, $Int}  \n :rank_max    Union{Missing, $Int}  \n :rank_min    Union{Missing, $Int}  \n :geonameid   Union{Missing, Float64}\n :meganame    Union{Missing, String} \n :ls_name     Union{Missing, String} \n :ls_match    Union{Missing, $Int}  \n :checkme     Union{Missing, $Int}  \n :min_zoom    Union{Missing, Float64}\n :ne_id       Union{Missing, $Int}  \n"
+        ), "Shapefile.Table{Union{Missing, Shapefile.Point}} with 243 rows and 38 columns\nTables.Schema:\n")
     df_cities = DataFrames.DataFrame(ne_cities)
     @test size(df_cities) == (243, 38)
     @test names(df_cities) == colnames
