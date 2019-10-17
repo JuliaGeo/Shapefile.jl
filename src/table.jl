@@ -76,8 +76,9 @@ function Base.show(io::IO, t::Table)
     tt = typeof(t)
     nr = length(t)
     nc = length(propertynames(t))
-    println(io, "$tt with $nr rows and $nc columns")
-    println(io, Tables.schema(t))
+    println(io, "$tt with $nr rows and the following $nc columns:\n\t")
+    join(io, propertynames(t), ", ")
+    println(io)
 end
 
 # TODO generalize these with a future GeoInterface/GeoTables

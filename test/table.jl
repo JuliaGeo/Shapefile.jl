@@ -148,10 +148,10 @@ end
         @test Shapefile.shape(r) isa Shapefile.Point
         @test r.featurecla in classes
     end
-    @test startswith(sprint(
+    @test sprint(
             show,
             ne_cities,
-        ), "Shapefile.Table{Union{Missing, Shapefile.Point}} with 243 rows and 38 columns\nTables.Schema:\n")
+        ) === "Shapefile.Table{Union{Missing, Shapefile.Point}} with 243 rows and the following 38 columns:\n\t\nscalerank, natscale, labelrank, featurecla, name, namepar, namealt, diffascii, nameascii, adm0cap, capalt, capin, worldcity, megacity, sov0name, sov_a3, adm0name, adm0_a3, adm1name, iso_a2, note, latitude, longitude, changed, namediff, diffnote, pop_max, pop_min, pop_other, rank_max, rank_min, geonameid, meganame, ls_name, ls_match, checkme, min_zoom, ne_id\n"
     df_cities = DataFrames.DataFrame(ne_cities)
     @test size(df_cities) == (243, 38)
     @test names(df_cities) == colnames
