@@ -95,7 +95,7 @@ function GeoInterface.coordinates(obj::Polygon)
     coords
 end
 
-# copied from GeoInterface.coordinates{T}(obj::Polygon{T}) to match signature here
+# copied from GeoInterface.coordinates(obj::Polygon) to match signature here
 function GeoInterface.coordinates(obj::PolygonM)
     npoints = length(obj.points)
     nparts = length(obj.parts)
@@ -136,7 +136,7 @@ function GeoInterface.coordinates(obj::PolygonM)
     coords
 end
 
-# copied from GeoInterface.coordinates{T}(obj::Polygon{T}) to match signature here
+# copied from GeoInterface.coordinates(obj::Polygon) to match signature here
 function GeoInterface.coordinates(obj::PolygonZ)
     npoints = length(obj.points)
     nparts = length(obj.parts)

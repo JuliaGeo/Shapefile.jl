@@ -2,9 +2,7 @@
 
 [![Build Status](https://travis-ci.org/JuliaGeo/Shapefile.jl.svg)](https://travis-ci.org/JuliaGeo/Shapefile.jl)
 
-This library supports reading ESRI Shapefiles in pure Julia. Note that currently only
-the `.shp` is read, not `.shx` or `.dbf`. This means the feature geometry can be read,
-but no attribute information is associated to it.
+This library supports reading ESRI Shapefiles in pure Julia.
 
 ## Quick Start
 Basic example of reading a shapefile from test cases:
@@ -13,26 +11,28 @@ Basic example of reading a shapefile from test cases:
 using Shapefile
 
 path = joinpath(dirname(pathof(Shapefile)),"..","test","shapelib_testcases","test.shp")
+table = Shapefile.Table(path)
 
-handle = open(path, "r") do io
-    read(io, Shapefile.Handle)
+# if you only want the geometries and not the metadata in the DBF file
+geoms = Shapefile.shapes(table)
+
+# whole columns can be retrieved by their name
+table.Descriptio  # => Union{String, Missing}["Square with triangle missing", "Smaller triangle", missing]
+
+# example function that iterates over the rows and gathers shapes that meet specific criteria
+function selectshapes(table)
+    geoms = empty(Shapefile.shapes(table))
+    for row in table
+        if !ismissing(row.TestDouble) && row.TestDouble < 2000.0
+            push!(geoms, Shapefile.shape(row))
+        end
+    end
+    return geoms
 end
-```
 
-The `Shapefile.Handle` structure contains shapes and metadata.
-List of the `Shapefile.Handle` field names:
-
-```julia
-julia> fieldnames(typeof(handle))
-8-element Array{Symbol,1}:
- :code
- :length
- :version
- :shapeType
- :MBR
- :zrange
- :mrange
- :shapes
+# the metadata can be converted to other Tables such as DataFrame
+using DataFrames
+df = DataFrame(table)
 ```
 
 Shapefiles can contain multiple parts for each shape entity.
@@ -40,7 +40,7 @@ Use `GeoInterface.coordinates` to fully decompose the shape data into parts.
 
 ```julia
 # Example of converting the 1st shape of the file into parts (array of coordinates)
-julia> GeoInterface.coordinates(handle.shapes[1])
+julia> GeoInterface.coordinates(Shapefile.shape(first(table)))
 2-element Array{Array{Array{Array{Float64,1},1},1},1}:
  Array{Array{Float64,1},1}[Array{Float64,1}[[20.0, 20.0], ...]]
  Array{Array{Float64,1},1}[Array{Float64,1}[[0.0, 0.0], ...]]
@@ -48,8 +48,7 @@ julia> GeoInterface.coordinates(handle.shapes[1])
 
 ## Alternative packages
 If you want another lightweight pure Julia package for reading feature files, consider
-also [GeoJSON.jl](https://github.com/JuliaGeo/GeoJSON.jl). It will also give access to
-the attribute information.
+also [GeoJSON.jl](https://github.com/JuliaGeo/GeoJSON.jl).
 
 For much more fully featured support for reading and writing geospatial data, at the
 cost of a larger binary dependency, look at [GDAL.jl](https://github.com/JuliaGeo/GDAL.jl)

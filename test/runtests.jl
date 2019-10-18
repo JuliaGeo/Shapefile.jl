@@ -139,4 +139,6 @@ for test in test_tuples
 
 end
 
+include("table.jl")
+
 end  # @testset "Shapefile"
