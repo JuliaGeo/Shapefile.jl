@@ -38,5 +38,6 @@ include("handle.jl")
 include("table.jl")
 include("extent.jl")
 include("plotrecipes.jl")
+include("writer.jl")
 
 end # module
