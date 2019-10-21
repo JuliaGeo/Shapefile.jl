@@ -354,5 +354,6 @@ end
 include("table.jl")
 include("geo_interface.jl")
 include("shx.jl")
+include("writer.jl")
 
 end # module
