@@ -270,8 +270,64 @@ function get_MBR(points::Array{T}) where T<:Union{Point,PointM,PointZ}
     return Rect(most_left, most_bottom, most_right, most_top)
 end
 
-function Base.write(io::IO, shapes::Array{Union{Missing,T}}) where T<:Union{Point,Polyline,Polygon,MultiPoint,PointZ,PolylineZ,PolygonZ,MultiPointZ,PointM,PolylineM,PolygonM,MultiPointM,MultiPatch}
+const GeometriesHasNoZValues = Union{          PolygonM,            PolylineM,              MultiPointM,           Polyline, Polygon, MultiPoint, Point, PointM} # PointZ is speically handled 
+const GeometriesHasZValues   = Union{PolygonZ,           PolylineZ,            MultiPointZ,             MultiPatch} 
+const GeometriesHasNoMValues = Union{Polyline, Polygon, MultiPoint, Point} # PointZ, PointM are speically handled
+const GeometriesHasMValues   = Union{PolygonZ, PolygonM, PolylineZ, PolylineM, MultiPointZ, MultiPointM}
+
+get_zrange(shapes::Array{Union{Missing,T}}) where T<:GeometriesHasNoZValues = Interval(0,0)
+function get_zrange(shapes::Array{Union{Missing,T}}) where T<:GeometriesHasZValues
+    # get z range
+    min_z = +Inf
+    max_z = -Inf
+    for shape in skipmissing(shapes)
+        for zvalue in shape.zvalues
+            min_z = min(min_z, zvalue)
+            max_z = max(max_z, zvalue)
+        end 
+    end
+    return Interval(min_z, max_z)    
+end
+function get_zrange(points::Array{Union{Missing,T}}) where T<:PointZ
+    min_z = +Inf
+    max_z = -Inf
+    for point in skipmissing(points)
+        min_z = min(min_z, point.z)
+        max_z = max(max_z, point.z)
+    end
+    return Interval(min_z, max_z)
+end
+
+get_mrange(x::Array{Union{Missing,T}}) where T<:GeometriesHasNoMValues = Interval(0.0,0.0)
+function get_mrange(shapes::Array{Missing,T}) where T<:GeometriesHasMValues
+    # get m range
+    min_m = +Inf
+    max_m = -Inf
+    for shape in skipmissing(shapes)
+        for measure in shape.measures
+            min_m = min(min_m, measure)
+            max_m = max(max_m, measure)
+        end 
+    end
+    return Interval(min_m, max_m)
+end
+function get_mrange(points::Array{Union{Missing,T}}) where T<:Union{PointM, PointZ}
+    min_m = +Inf
+    max_m = -Inf
+    for point in skipmissing(points)
+        min_m = min(min_m, point.m)
+        max_m = max(max_m, point.m)
+    end
+    return Interval(min_m, max_m)
+end
+
+const AllShapeTypes = Union{Point,Polyline,Polygon,MultiPoint,PointZ,PolylineZ,PolygonZ,MultiPointZ,PointM,PolylineM,PolygonM,MultiPointM,MultiPatch}
+function Base.write(io::IO, ::Type{Handle}, shapes::Array{Union{Missing,T}}) where T<:AllShapeTypes
     
+    # Since all the headers has some sort of content length information before the data block.
+    # The code here will write out the data into a IOBuffer first to get the content length.
+    # Finally it write the length information and then unload the IOBuffer data into the main block.
+
     # Define some temorary io buffer to store raw bytes
     geometries_io = IOBuffer()
     record_io     = IOBuffer()
@@ -326,56 +382,9 @@ function Base.write(io::IO, shapes::Array{Union{Missing,T}}) where T<:Union{Poin
     #   2. zrange; An 1-dimensional interval encapsulating all z-values presented in the data 
     #   3. mrange; An 1-dimensional interval encapsulating all measurements values presented in the data
     #
-    # MBR       = Rect(0,0,0,0)
     MBR = get_MBR(shapes)
-    
-    zrange    = Interval(0,0)
-    mrange    = Interval(0,0)
-    if T in (PolygonZ, PolylineZ, MultiPointZ, MultiPatch)
-        # get z range
-        min_z = +Inf
-        max_z = -Inf
-        for shape in shapes
-            for zvalue in shape.zvalues
-                min_z = min(min_z, zvalue)
-                max_z = max(max_z, zvalue)
-            end 
-        end
-        zrange = Interval(min_z, max_z)
-    
-    elseif T in (PointZ,)
-        min_z = +Inf
-        max_z = -Inf
-        for point in shapes
-            min_z = min(min_z, point.z)
-            max_z = max(max_z, point.z)
-        end
-        zrange = Interval(min_z, max_z)
-    end
-
-    if T in (PolygonZ, PolygonM, PolylineZ, PolylineM, MultiPointZ, MultiPointM)
-        # get m range
-        min_m = +Inf
-        max_m = -Inf
-        for shape in shapes
-            for measure in shape.measures
-                min_m = min(min_m, measure)
-                max_m = max(max_m, measure)
-            end 
-        end
-        mrange = Interval(min_m, max_m)
-    
-    elseif T in (PointM, PointZ)
-        min_m = +Inf
-        max_m = -Inf
-        for shape in shapes
-            for measure in shape.measures
-                min_m = min(min_m, measure)
-                max_m = max(max_m, measure)
-            end 
-        end
-        mrange = Interval(min_m, max_m)
-    end
+    zrange = get_zrange(shapes)
+    mrange = get_mrange(shapes)
 
     #
     # Write File Header Information into file
