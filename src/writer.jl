@@ -250,6 +250,7 @@ end
 # Reverse lookup for Shapetype to Code
 SHAPECODE = Dict(zip(values(Shapefile.SHAPETYPE), keys(Shapefile.SHAPETYPE)))
 
+get_MBR(shapes::Array{Missing}) = Rect(0,0,0,0)
 function get_MBR(shapes::Array{Union{Missing,T}}) where T<:Union{Polyline,Polygon,MultiPoint,PolylineZ,PolygonZ,MultiPointZ,PolylineM,PolygonM,MultiPointM,MultiPatch}
     most_left   = Inf
     most_bottom = Inf
@@ -283,6 +284,7 @@ const GeometriesHasZValues   = Union{PolygonZ,           PolylineZ,            M
 const GeometriesHasNoMValues = Union{Polyline, Polygon, MultiPoint, Point, MultiPatch} # PointZ, PointM are speically handled
 const GeometriesHasMValues   = Union{PolygonZ, PolygonM, PolylineZ, PolylineM, MultiPointZ, MultiPointM}
 
+get_zrange(shapes::Array{Missing}) = Interval(0,0)
 get_zrange(shapes::Array{Union{Missing,T}}) where T<:GeometriesHasNoZValues = Interval(0,0)
 function get_zrange(shapes::Array{Union{Missing,T}}) where T<:GeometriesHasZValues
     # get z range
@@ -306,6 +308,7 @@ function get_zrange(points::Array{Union{Missing,T}}) where T<:PointZ
     return Interval(min_z, max_z)
 end
 
+get_mrange(x::Array{Missing}) = Interval(0,0)
 get_mrange(x::Array{Union{Missing,T}}) where T<:GeometriesHasNoMValues = Interval(0.0,0.0)
 function get_mrange(shapes::Array{Union{Missing,T}}) where T<:GeometriesHasMValues
     # get m range
