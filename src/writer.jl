@@ -66,8 +66,12 @@ function Base.write(io::IO, polyline_m::PolylineM)
     bytes = Int32(0)
 
     mbr_box = polyline_m.MBR
-    numparts = Int32(length(polyline_m.parts ))
-    numpoints = Int32(length(polyline_m.parts ))
+    numparts  = Int32(length(polyline_m.parts ))
+    numpoints = Int32(length(polyline_m.points ))
+    
+    bytes += write(io, mbr_box)
+    bytes += write(io, numparts)
+    bytes += write(io, numpoints)
     
     bytes += write(io, polyline_m.parts)
     bytes += write(io, polyline_m.points)
@@ -84,7 +88,7 @@ function Base.write(io::IO, polyline_z::PolylineZ)
 
     mbr_box = polyline_z.MBR
     numparts  = Int32(length(polyline_z.parts ))
-    numpoints = Int32(length(polyline_z.numpoints ))
+    numpoints = Int32(length(polyline_z.points ))
     
     bytes += write(io, mbr_box)
     bytes += write(io, numparts)
@@ -236,6 +240,10 @@ function Base.write(io::IO, multipatch::MultiPatch)
     zrange = extrema(multipatch.zvalues)
     bytes += write(io, zrange...)
     bytes += write(io, multipatch.zvalues)
+    
+    # mrange = extrema(multipatch.mvalues)
+    # bytes += write(io, mrange...)
+    # bytes += write(io, multipatch.measures)
     return bytes
 end
 
@@ -256,12 +264,12 @@ function get_MBR(shapes::Array{Union{Missing,T}}) where T<:Union{Polyline,Polygo
     return Rect(most_left, most_bottom, most_right, most_top)
 end
 
-function get_MBR(points::Array{T}) where T<:Union{Point,PointM,PointZ}
+function get_MBR(points::Array{Union{Missing,T}}) where T<:Union{Point,PointM,PointZ}
     most_left   = Inf
     most_bottom = Inf
     most_right  = -Inf
     most_top    = -Inf
-    for point in points
+    for point in skipmissing(points)
         most_left   = min(point.x, most_left)
         most_bottom = min(point.y, most_bottom)
         most_right  = max(point.x, most_right)
@@ -272,7 +280,7 @@ end
 
 const GeometriesHasNoZValues = Union{          PolygonM,            PolylineM,              MultiPointM,           Polyline, Polygon, MultiPoint, Point, PointM} # PointZ is speically handled 
 const GeometriesHasZValues   = Union{PolygonZ,           PolylineZ,            MultiPointZ,             MultiPatch} 
-const GeometriesHasNoMValues = Union{Polyline, Polygon, MultiPoint, Point} # PointZ, PointM are speically handled
+const GeometriesHasNoMValues = Union{Polyline, Polygon, MultiPoint, Point, MultiPatch} # PointZ, PointM are speically handled
 const GeometriesHasMValues   = Union{PolygonZ, PolygonM, PolylineZ, PolylineM, MultiPointZ, MultiPointM}
 
 get_zrange(shapes::Array{Union{Missing,T}}) where T<:GeometriesHasNoZValues = Interval(0,0)
@@ -299,7 +307,7 @@ function get_zrange(points::Array{Union{Missing,T}}) where T<:PointZ
 end
 
 get_mrange(x::Array{Union{Missing,T}}) where T<:GeometriesHasNoMValues = Interval(0.0,0.0)
-function get_mrange(shapes::Array{Missing,T}) where T<:GeometriesHasMValues
+function get_mrange(shapes::Array{Union{Missing,T}}) where T<:GeometriesHasMValues
     # get m range
     min_m = +Inf
     max_m = -Inf
@@ -337,18 +345,29 @@ function Base.write(io::IO, ::Type{Handle}, shapes::Array{Union{Missing,T}}) whe
     num          = 0
     rec_length   = 0
 
-    shapeType = SHAPECODE[T]
+    
+    # NOTE:
+    # Since if we are allowing shapes to be an array of Union{Missing,AllShapeType}
+    # We have to default the base shapefile is Null shape
+    # Until there is AT LEAST ONE non-null shape type
+    # Then we will set the whole shapefile as such non-null shape type
+    shapeType = SHAPECODE[Missing]
     for shape in shapes
+        # One -based record number; Increment from 0, and increment after record.
+        num += 1
         
         # Write Record to temorary buffer first
         bytes = 0
         if !ismissing(shape)
+            shapeType = SHAPECODE[typeof(shape)]
             bytes += write( record_io, shapeType)
             bytes += write( record_io, shape)
         else
             # Null Shape
             bytes += write( record_io, SHAPECODE[Missing])
         end
+        
+        @assert bytes == record_io.size "The hardcoded accumulation of bytes should match how much bytes it has written into the buffer!"
 
         # Record Header
         # 32-bits (4 bytes) Record Number + 32-bits (4 bytes) Content length = 8 bytes
@@ -357,15 +376,13 @@ function Base.write(io::IO, ::Type{Handle}, shapes::Array{Union{Missing,T}}) whe
         
         # Record length measured in 16-bit words (1-unit is 2-bytes (16-bits))
         # So we divide record length recorded in bytes (8-bits) by 2 into 1 unit (16-bit/2 bytes) 
-        write( geometries_io, bswap(Int32(rec_length /2)))
+        write( geometries_io, bswap(Int32(bytes /2)))
         write( geometries_io, take!(record_io))
         
         content_size += rec_length
 
         # !TODO: Here is where we extract and store the shx file content offset number        
 
-        # Zero-based record number; Increment from 0, and increment after record.
-        num += 1
          
     end
 

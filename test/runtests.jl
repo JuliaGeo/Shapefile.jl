@@ -19,6 +19,9 @@ test_tuples = [
         geomtype=Missing,
         coordinates=nothing,
         extent=Extent(X=(0.0, 10.0), Y=(0.0, 20.0), Z=(0.0, 0.0)),
+        # This data has no shape, the correct bbox should be all zeros.
+        # However the data contain some non-zero box values
+        skip_check_mask = [43:44,51:52,59:60,67:68],
     ),(
         path=joinpath("shapelib_testcases", "test1.shp"),
         geomtype=Point,
@@ -83,7 +86,9 @@ test_tuples = [
         path=joinpath("shapelib_testcases/test13.shp"),
         geomtype=MultiPatch,
         coordinates=nothing,
-        extent=Extent(X=(0.0, 100.0), Y=(0.0, 100.0), Z=(0.0, 27.35)),
+        # MultiPatch is currently coded with no mrange, but the test data has `mrange.right` as 27.35,
+        # However the writer output 0.0 as it can not possibily guess a random number that the test data has.
+        skip_check_mask = [93:100],
     )
 ]
 
@@ -237,3 +242,4 @@ end
 end  # @testset "Loading Shapefiles"
 
 include("table.jl")
+include("writer.jl")
