@@ -12,6 +12,9 @@ test_tuples = [
         geomtype=Missing,
         coordinates=nothing,
         bbox=Shapefile.Rect(0.0, 0.0, 10.0, 20.0),
+        # This data has no shape, the correct bbox should be all zeros.
+        # However the data contain some non-zero box values
+        skip_check_mask = [43:44,51:52,59:60,67:68],
     ),(
         path="shapelib_testcases/test1.shp",
         geomtype=Shapefile.Point,
@@ -77,6 +80,9 @@ test_tuples = [
         geomtype=Shapefile.MultiPatch,
         coordinates=nothing,
         bbox=Shapefile.Rect(0.0, 0.0, 100.0, 100.0),
+        # MultiPatch is currently coded with no mrange, but the test data has `mrange.right` as 27.35,
+        # However the writer output 0.0 as it can not possibily guess a random number that the test data has.
+        skip_check_mask = [93:100],
     )
 ]
 
@@ -140,5 +146,7 @@ for test in test_tuples
 end
 
 include("table.jl")
+
+include("writer.jl")
 
 end  # @testset "Shapefile"
