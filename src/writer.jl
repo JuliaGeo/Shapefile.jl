@@ -438,8 +438,9 @@ function Base.write(io::IO, ::Type{Handle}, shapes::Array{Union{Missing,T}}) whe
     bytes += write(io, mrange.right)
     # mmin = read(io, Float64)
     # mmax = read(io, Float64)
-    @show bytes
 
+
+    
     # Write the maind block of data into the rest of the shape file
     write(io, take!(geometries_io))
     
