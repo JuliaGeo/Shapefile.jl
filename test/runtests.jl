@@ -1,5 +1,8 @@
-using Shapefile, GeoInterface
+using Shapefile
+using GeoInterface: GeoInterface
 using Test
+using GeometryBasics: GeometryBasics
+const GB = GeometryBasics
 
 test_tuples = [
     (

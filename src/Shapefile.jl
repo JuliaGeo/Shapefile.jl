@@ -1,9 +1,11 @@
 module Shapefile
 
-using GeometryBasics
+using GeometryBasics: GeometryBasics
 using GeometryBasics.StructArrays
 
 import GeoInterface, DBFTables, Tables
+
+const GB = GeometryBasics
 
 struct Rect
     left::Float64
@@ -12,45 +14,49 @@ struct Rect
     top::Float64
 end
 
-const Point64 = GeometryBasics.Point{2, Float64}
-const PointM = typeof(meta(Point64(0.0, 0.0), measure=1.0))
-const PointZ = typeof(meta(Point64(0.0, 0.0), z=1.0, measure=1.0))
+struct Interval
+    left::Float64
+    right::Float64
+end
 
-const MultiPointB = typeof(MultiPointMeta(
-    [Point64(0)],
+const Point = GB.Point{2, Float64}
+const PointM = typeof(GB.meta(Point(0), m=1.0))
+const PointZ = typeof(GB.meta(Point(0), z=1.0, m=1.0))
+
+const MultiPoint = typeof(GB.MultiPointMeta(
+    [Point(0)],
     boundingbox=Rect(0,0,2,2)
 ))
 
-const MultiPointM = typeof(MultiPointMeta(
-    MultiPoint([Point64(0)], measure=[1.0]),
+const MultiPointM = typeof(GB.MultiPointMeta(
+    GB.MultiPoint([Point(0)], m=[1.0]),
     boundingbox=Rect(0,0,2,2)
 ))
 
-const MultiPointZ = typeof(MultiPointMeta(
-    MultiPoint([Point64(0)], z=[1.0], measure=[1.0]),
+const MultiPointZ = typeof(GB.MultiPointMeta(
+    GB.MultiPoint([Point(0)], z=[1.0], m=[1.0]),
     boundingbox=Rect(0,0,2,2)
 ))
 
-
-MultiLineString([LineString([Point64(0)])])
+# GB.MultiLineString([GB.LineString([Point(0)])])
 
 struct Polyline <: GeoInterface.AbstractMultiLineString
     MBR::Rect
     parts::Vector{Int32}
-    points::Vector{Point64}
+    points::Vector{Point}
 end
 
 struct PolylineM <: GeoInterface.AbstractMultiLineString
     MBR::Rect
     parts::Vector{Int32}
-    points::Vector{Point64}
+    points::Vector{Point}
     measures::Vector{Float64}
 end
 
 struct PolylineZ <: GeoInterface.AbstractMultiLineString
     MBR::Rect
     parts::Vector{Int32}
-    points::Vector{Point64}
+    points::Vector{Point}
     zvalues::Vector{Float64}
     measures::Vector{Float64}
 end
@@ -58,25 +64,39 @@ end
 struct Polygon <: GeoInterface.AbstractMultiPolygon
     MBR::Rect
     parts::Vector{Int32}
-    points::Vector{Point64}
+    points::Vector{Point}
 end
 
 Base.show(io::IO, p::Polygon) =
     print(io, "Polygon(", length(p.points), " Points)")
 
+struct PolygonM <: GeoInterface.AbstractMultiPolygon
+    MBR::Rect
+    parts::Vector{Int32}
+    points::Vector{Point}
+    measures::Vector{Float64}
+end
+
+struct PolygonZ <: GeoInterface.AbstractMultiPolygon
+    MBR::Rect
+    parts::Vector{Int32}
+    points::Vector{Point}
+    zvalues::Vector{Float64}
+    measures::Vector{Float64}
+end
 
 struct MultiPatch <: GeoInterface.AbstractGeometry
     MBR::Rect
     parts::Vector{Int32}
     parttypes::Vector{Int32}
-    points::Vector{Point64}
+    points::Vector{Point}
     zvalues::Vector{Float64}
     # measures::Vector{Float64}  # (optional)
 end
 
 const SHAPETYPE = Dict{Int32,DataType}(
     0 => Missing,
-    1 => Point64,
+    1 => Point,
     3 => Polyline,
     5 => Polygon,
     8 => MultiPoint,
@@ -91,7 +111,7 @@ const SHAPETYPE = Dict{Int32,DataType}(
     31 => MultiPatch,
 )
 
-mutable struct Handle{T<:Union{<:GeoInterface.AbstractGeometry,Missing}}
+mutable struct Handle{T}
     code::Int32
     length::Int32
     version::Int32
@@ -112,17 +132,17 @@ function Base.read(io::IO, ::Type{Rect})
     Rect(minx, miny, maxx, maxy)
 end
 
-function Base.read(io::IO, ::Type{Point64})
+function Base.read(io::IO, ::Type{Point})
     x = read(io, Float64)
     y = read(io, Float64)
-    Point64(x, y)
+    Point(x, y)
 end
 
 function Base.read(io::IO, ::Type{PointM})
     x = read(io, Float64)
     y = read(io, Float64)
     m = read(io, Float64)
-    PointM(x, y, m)
+    GB.meta(Point(x, y), m=m)
 end
 
 function Base.read(io::IO, ::Type{PointZ})
@@ -130,7 +150,7 @@ function Base.read(io::IO, ::Type{PointZ})
     y = read(io, Float64)
     z = read(io, Float64)
     m = read(io, Float64)
-    PointZ(x, y, z, m)
+    GB.meta(Point(x, y), z=z, m=m)
 end
 
 function Base.read(io::IO, ::Type{Polyline})
@@ -139,7 +159,7 @@ function Base.read(io::IO, ::Type{Polyline})
     numpoints = read(io, Int32)
     parts = Vector{Int32}(undef, numparts)
     read!(io, parts)
-    points = Vector{Point64}(undef, numpoints)
+    points = Vector{Point}(undef, numpoints)
     read!(io, points)
     Polyline(box, parts, points)
 end
@@ -150,7 +170,7 @@ function Base.read(io::IO, ::Type{PolylineM})
     numpoints = read(io, Int32)
     parts = Vector{Int32}(undef, numparts)
     read!(io, parts)
-    points = Vector{Point64}(undef, numpoints)
+    points = Vector{Point}(undef, numpoints)
     read!(io, points)
     mrange = Vector{Float64}(undef, 2)
     read!(io, mrange)
@@ -165,7 +185,7 @@ function Base.read(io::IO, ::Type{PolylineZ})
     numpoints = read(io, Int32)
     parts = Vector{Int32}(undef, numparts)
     read!(io, parts)
-    points = Vector{Point64}(undef, numpoints)
+    points = Vector{Point}(undef, numpoints)
     read!(io, points)
     zrange = Vector{Float64}(undef, 2)
     read!(io, zrange)
@@ -184,7 +204,7 @@ function Base.read(io::IO, ::Type{Polygon})
     numpoints = read(io, Int32)
     parts = Vector{Int32}(undef, numparts)
     read!(io, parts)
-    points = Vector{Point64}(undef, numpoints)
+    points = Vector{Point}(undef, numpoints)
     read!(io, points)
     Polygon(box, parts, points)
 end
@@ -195,7 +215,7 @@ function Base.read(io::IO, ::Type{PolygonM})
     numpoints = read(io, Int32)
     parts = Vector{Int32}(undef, numparts)
     read!(io, parts)
-    points = Vector{Point64}(undef, numpoints)
+    points = Vector{Point}(undef, numpoints)
     read!(io, points)
     mrange = Vector{Float64}(undef, 2)
     read!(io, mrange)
@@ -210,7 +230,7 @@ function Base.read(io::IO, ::Type{PolygonZ})
     numpoints = read(io, Int32)
     parts = Vector{Int32}(undef, numparts)
     read!(io, parts)
-    points = Vector{Point64}(undef, numpoints)
+    points = Vector{Point}(undef, numpoints)
     read!(io, points)
     zrange = Vector{Float64}(undef, 2)
     read!(io, zrange)
@@ -226,27 +246,28 @@ end
 function Base.read(io::IO, ::Type{MultiPoint})
     box = read(io, Rect)
     numpoints = read(io, Int32)
-    points = Vector{Point64}(undef, numpoints)
+    points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    MultiPoint(box, points)
+    return GB.meta(points, boundingbox=box)
 end
 
 function Base.read(io::IO, ::Type{MultiPointM})
     box = read(io, Rect)
     numpoints = read(io, Int32)
-    points = Vector{Point64}(undef, numpoints)
+    points = Vector{Point}(undef, numpoints)
     read!(io, points)
     mrange = Vector{Float64}(undef, 2)
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    MultiPointM(box, points, measures)
+    multipoints = MultiPoint(points, m=measures)
+    return GB.meta(multipoints, boundingbox=box)
 end
 
 function Base.read(io::IO, ::Type{MultiPointZ})
     box = read(io, Rect)
     numpoints = read(io, Int32)
-    points = Vector{Point64}(undef, numpoints)
+    points = Vector{Point}(undef, numpoints)
     read!(io, points)
     zrange = Vector{Float64}(undef, 2)
     read!(io, zrange)
@@ -256,8 +277,8 @@ function Base.read(io::IO, ::Type{MultiPointZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    multipoints = MultiPoint(points, z=[1.0], measure=[1.0])
-    return meta(multipoints, box=box)
+    multipoints = MultiPoint(points, z=zvalues, m=measures)
+    return GB.meta(multipoints, boundingbox=box)
 end
 
 function Base.read(io::IO, ::Type{MultiPatch})
@@ -268,7 +289,7 @@ function Base.read(io::IO, ::Type{MultiPatch})
     read!(io, parts)
     parttypes = Vector{Int32}(undef, numparts)
     read!(io, parttypes)
-    points = Vector{Point64}(undef, numpoints)
+    points = Vector{Point}(undef, numpoints)
     read!(io, points)
     zrange = Vector{Float64}(undef, 2)
     read!(io, zrange)

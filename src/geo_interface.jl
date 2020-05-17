@@ -1,6 +1,6 @@
-GeoInterface.coordinates(obj::Point) = Float64[obj.x, obj.y]
-GeoInterface.coordinates(obj::PointM) = Float64[obj.x, obj.y]
-GeoInterface.coordinates(obj::PointZ) = Float64[obj.x, obj.y, obj.z]
+GeoInterface.coordinates(obj::Point) = collect(obj)
+GeoInterface.coordinates(obj::PointM) = collect(obj)
+GeoInterface.coordinates(obj::PointZ) = collect(obj)
 
 GeoInterface.coordinates(obj::MultiPoint) =
     Vector{Float64}[GeoInterface.coordinates(p) for p in obj.points]
@@ -70,7 +70,7 @@ function GeoInterface.coordinates(obj::Polygon)
         for j = (obj.parts[i]+1):(obj.parts[i+1]-1)
             prev = obj.points[j]
             cur = obj.points[j+1]
-            test += (cur.x - prev.x) * (cur.y + prev.y)
+            test += (cur[1] - prev[1]) * (cur[2] + prev[2])
             push!(ring, GeoInterface.coordinates(prev))
         end
         push!(ring, GeoInterface.coordinates(obj.points[obj.parts[i+1]]))
@@ -111,7 +111,7 @@ function GeoInterface.coordinates(obj::PolygonM)
         for j = (obj.parts[i]+1):(obj.parts[i+1]-1)
             prev = obj.points[j]
             cur = obj.points[j+1]
-            test += (cur.x - prev.x) * (cur.y + prev.y)
+            test += (cur[1] - prev[1]) * (cur[2] + prev[2])
             push!(ring, GeoInterface.coordinates(prev))
         end
         push!(ring, GeoInterface.coordinates(obj.points[obj.parts[i+1]]))
