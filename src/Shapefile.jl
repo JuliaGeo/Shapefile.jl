@@ -38,6 +38,11 @@ const MultiPointZ = typeof(GB.MultiPointMeta(
     boundingbox=Rect(0,0,2,2)
 ))
 
+const Polygon =  typeof(GB.PolygonMeta(
+    [Point(0.0, 1.0)], [0],
+    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+))
+
 # GB.MultiLineString([GB.LineString([Point(0)])])
 
 struct Polyline <: GeoInterface.AbstractMultiLineString
@@ -60,15 +65,9 @@ struct PolylineZ <: GeoInterface.AbstractMultiLineString
     zvalues::Vector{Float64}
     measures::Vector{Float64}
 end
-
-struct Polygon <: GeoInterface.AbstractMultiPolygon
-    MBR::Rect
-    parts::Vector{Int32}
-    points::Vector{Point}
-end
-
-Base.show(io::IO, p::Polygon) =
-    print(io, "Polygon(", length(p.points), " Points)")
+# Do we keep Base.show?
+# Base.show(io::IO, p::Polygon) =
+#     print(io, "Polygon(", length(p.points), " Points)")
 
 struct PolygonM <: GeoInterface.AbstractMultiPolygon
     MBR::Rect
@@ -206,7 +205,7 @@ function Base.read(io::IO, ::Type{Polygon})
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    Polygon(box, parts, points)
+    return GB.meta(GB.Polygon(points, parts), boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolygonM})
@@ -314,7 +313,7 @@ function Base.read(io::IO, ::Type{Handle})
     mmin = read(io, Float64)
     mmax = read(io, Float64)
     jltype = SHAPETYPE[shapeType]
-    shapes = Vector{Union{jltype,Missing}}(undef, 0)
+    shapes = Vector{Any}(undef, 0) #TODO figure out a type
     file = Handle(
         code,
         fileSize,
@@ -332,7 +331,7 @@ function Base.read(io::IO, ::Type{Handle})
         if shapeType === Int32(0)
             push!(shapes, missing)
         else
-            push!(shapes, read(io, jltype))
+            push!(shapes, GB.metafree(read(io, jltype)))
         end
     end
     file
@@ -348,3 +347,4 @@ include("geo_interface.jl")
 include("shx.jl")
 
 end # module
+ 
