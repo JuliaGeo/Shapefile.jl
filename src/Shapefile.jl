@@ -38,12 +38,23 @@ const MultiPointZ = typeof(GB.MultiPointMeta(
     boundingbox=Rect(0,0,2,2)
 ))
 
+#Construction from type aliases for Polygon is not supported yet
 const Polygon =  typeof(GB.PolygonMeta(
     [Point(0.0, 1.0)], [0],
     boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
 
-# GB.MultiLineString([GB.LineString([Point(0)])])
+const PolygonM =  typeof(GB.PolygonMeta(
+    [Point(0.0, 1.0)], [0], m = [1],
+    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+))
+
+const PolygonZ =  typeof(GB.PolygonMeta(
+    [Point(0.0, 1.0)], [0], z = [1.0], m = [1.0], 
+    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+))
+
+# const Polyline =GB.MultiLineString([GB.LineString([Point(0)])])
 
 struct Polyline <: GeoInterface.AbstractMultiLineString
     MBR::Rect
@@ -68,21 +79,6 @@ end
 # Do we keep Base.show?
 # Base.show(io::IO, p::Polygon) =
 #     print(io, "Polygon(", length(p.points), " Points)")
-
-struct PolygonM <: GeoInterface.AbstractMultiPolygon
-    MBR::Rect
-    parts::Vector{Int32}
-    points::Vector{Point}
-    measures::Vector{Float64}
-end
-
-struct PolygonZ <: GeoInterface.AbstractMultiPolygon
-    MBR::Rect
-    parts::Vector{Int32}
-    points::Vector{Point}
-    zvalues::Vector{Float64}
-    measures::Vector{Float64}
-end
 
 struct MultiPatch <: GeoInterface.AbstractGeometry
     MBR::Rect
@@ -220,7 +216,8 @@ function Base.read(io::IO, ::Type{PolygonM})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    PolygonM(box, parts, points, measures)
+    return GB.meta(GB.Polygon(points, parts), m = measures, boundingbox = box)
+
 end
 
 function Base.read(io::IO, ::Type{PolygonZ})
@@ -239,7 +236,7 @@ function Base.read(io::IO, ::Type{PolygonZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    PolygonZ(box, parts, points, zvalues, measures)
+    return GB.meta(GB.Polygon(points, parts), z = zvalues,m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{MultiPoint})
