@@ -76,9 +76,6 @@ struct PolylineZ <: GeoInterface.AbstractMultiLineString
     zvalues::Vector{Float64}
     measures::Vector{Float64}
 end
-# Do we keep Base.show?
-# Base.show(io::IO, p::Polygon) =
-#     print(io, "Polygon(", length(p.points), " Points)")
 
 struct MultiPatch <: GeoInterface.AbstractGeometry
     MBR::Rect
@@ -156,7 +153,9 @@ function Base.read(io::IO, ::Type{Polyline})
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    Polyline(box, parts, points)
+    # Polyline(box, parts, points)
+    # Hastily created the type, needs thorough testing
+    return GB.meta(GB.MultiLineString([GB.LineString(points, parts)]), boundingbox = [box])
 end
 
 function Base.read(io::IO, ::Type{PolylineM})
@@ -216,7 +215,7 @@ function Base.read(io::IO, ::Type{PolygonM})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    return GB.meta(GB.Polygon(points, parts), m = measures, boundingbox = box)
+    return GB.meta(GB.PolygonM(points, parts), m = measures, boundingbox = box)
 
 end
 
@@ -236,7 +235,7 @@ function Base.read(io::IO, ::Type{PolygonZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    return GB.meta(GB.Polygon(points, parts), z = zvalues,m = measures, boundingbox = box)
+    return GB.meta(GB.PolygonZ(points, parts), z = zvalues, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{MultiPoint})
