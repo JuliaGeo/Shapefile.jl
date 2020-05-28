@@ -153,8 +153,8 @@ function Base.read(io::IO, ::Type{Polyline})
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    # Polyline(box, parts, points)
-    # Hastily created the type, needs thorough testing
+    parts .+= 1
+    # Loosely created the type, needs thorough testing
     return GB.meta(GB.MultiLineString([GB.LineString(points, parts)]), boundingbox = [box])
 end
 
@@ -170,6 +170,7 @@ function Base.read(io::IO, ::Type{PolylineM})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
+    parts .+= 1
     PolylineM(box, parts, points, measures)
 end
 
@@ -189,6 +190,7 @@ function Base.read(io::IO, ::Type{PolylineZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
+    parts .+= 1
     PolylineZ(box, parts, points, zvalues, measures)
 end
 
@@ -200,6 +202,7 @@ function Base.read(io::IO, ::Type{Polygon})
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
+    parts .+= 1
     return GB.meta(GB.Polygon(points, parts), boundingbox = box)
 end
 
@@ -215,6 +218,7 @@ function Base.read(io::IO, ::Type{PolygonM})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
+    parts .+= 1
     return GB.meta(GB.PolygonM(points, parts), m = measures, boundingbox = box)
 
 end
@@ -235,6 +239,7 @@ function Base.read(io::IO, ::Type{PolygonZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
+    parts .+= 1
     return GB.meta(GB.PolygonZ(points, parts), z = zvalues, m = measures, boundingbox = box)
 end
 
@@ -294,6 +299,7 @@ function Base.read(io::IO, ::Type{MultiPatch})
     # read!(io, mrange)
     # measures = Vector{Float64}(numpoints)
     # read!(io, measures)
+    parts .+= 1
     MultiPatch(box, parts, parttypes, points, zvalues) #,measures)
 end
 
@@ -343,4 +349,3 @@ include("geo_interface.jl")
 include("shx.jl")
 
 end # module
- 
