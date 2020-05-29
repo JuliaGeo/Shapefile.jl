@@ -59,21 +59,15 @@ const Polyline = typeof(GB.MultiLineStringMeta(
     boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
 
+const PolylineM = typeof(GB.MultiLineStringMeta(
+    [GB.LineString([Point(0)], [1])],
+    m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+)) 
 
-struct PolylineM <: GeoInterface.AbstractMultiLineString
-    MBR::Rect
-    parts::Vector{Int32}
-    points::Vector{Point}
-    measures::Vector{Float64}
-end
-
-struct PolylineZ <: GeoInterface.AbstractMultiLineString
-    MBR::Rect
-    parts::Vector{Int32}
-    points::Vector{Point}
-    zvalues::Vector{Float64}
-    measures::Vector{Float64}
-end
+const PolylineZ = typeof(GB.MultiLineStringMeta(
+    [GB.LineString([Point(0)], [1])],
+    z = [1.0], m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+)) 
 
 struct MultiPatch <: GeoInterface.AbstractGeometry
     MBR::Rect
@@ -168,7 +162,7 @@ function Base.read(io::IO, ::Type{PolylineM})
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
     parts .+= 1
-    PolylineM(box, parts, points, measures)
+    return GB.MultiLineStringMeta([GB.LineString(points, parts)], m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolylineZ})
@@ -188,7 +182,7 @@ function Base.read(io::IO, ::Type{PolylineZ})
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
     parts .+= 1
-    PolylineZ(box, parts, points, zvalues, measures)
+    return GB.MultiLineStringMeta([GB.LineString(points, parts)], z = zvalues, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{Polygon})
