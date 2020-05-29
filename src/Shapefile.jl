@@ -54,13 +54,11 @@ const PolygonZ =  typeof(GB.PolygonMeta(
     boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
 
-# const Polyline =GB.MultiLineString([GB.LineString([Point(0)])])
+const Polyline = typeof(GB.MultiLineStringMeta(
+    [GB.LineString([Point(0)], [1])],
+    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+))
 
-struct Polyline <: GeoInterface.AbstractMultiLineString
-    MBR::Rect
-    parts::Vector{Int32}
-    points::Vector{Point}
-end
 
 struct PolylineM <: GeoInterface.AbstractMultiLineString
     MBR::Rect
@@ -154,8 +152,7 @@ function Base.read(io::IO, ::Type{Polyline})
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
     parts .+= 1
-    # Loosely created the type, needs thorough testing
-    return GB.meta(GB.MultiLineString([GB.LineString(points, parts)]), boundingbox = [box])
+    return GB.MultiLineStringMeta([GB.LineString(points, parts)], boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolylineM})
