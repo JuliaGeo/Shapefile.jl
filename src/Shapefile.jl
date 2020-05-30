@@ -69,14 +69,11 @@ const PolylineZ = typeof(GB.MultiLineStringMeta(
     z = [1.0], m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 )) 
 
-struct MultiPatch <: GeoInterface.AbstractGeometry
-    MBR::Rect
-    parts::Vector{Int32}
-    parttypes::Vector{Int32}
-    points::Vector{Point}
-    zvalues::Vector{Float64}
-    # measures::Vector{Float64}  # (optional)
-end
+const MultiPatch = typeof(GB.MeshMeta(
+    [Point(0.0)], [1],
+    p = [1.0], z = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+)) 
+ 
 
 const SHAPETYPE = Dict{Int32,DataType}(
     0 => Missing,
@@ -291,7 +288,7 @@ function Base.read(io::IO, ::Type{MultiPatch})
     # measures = Vector{Float64}(numpoints)
     # read!(io, measures)
     parts .+= 1
-    MultiPatch(box, parts, parttypes, points, zvalues) #,measures)
+    return GB.MeshMeta(points, parts, p = parttypes, z = zvalues, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{Handle})
