@@ -39,9 +39,9 @@ const MultiPointZ = typeof(GB.MultiPointMeta(
 ))
 
 #Construction from type aliases for Polygon is not supported yet
-const Polygon =  typeof(GB.PolygonMeta(
-    [Point(0.0, 1.0)], [0],
-    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+const Polygon =  typeof(GB.Polygon(
+    GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
+    [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])]
 ))
 
 const PolygonM =  typeof(GB.PolygonMeta(
@@ -183,6 +183,8 @@ function Base.read(io::IO, ::Type{PolylineZ})
 end
 
 function Base.read(io::IO, ::Type{Polygon})
+    exterior_pts = []
+    interior_pts = []
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
@@ -191,7 +193,22 @@ function Base.read(io::IO, ::Type{Polygon})
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
     parts .+= 1
-    return GB.meta(GB.Polygon(points, parts), boundingbox = box)
+    for i in 1:length(parts)
+        if i == 1 && length(parts) != 1
+            exterior_pts = collect(points[x] for x in parts[i]:parts[i+1]-1)
+        elseif length(parts) == 1
+            exterior_pts = points
+        elseif i < length(parts) && i > 1 
+            push!(interior_pts, collect(points[x] for x  in parts[i]:parts[i+1]-1))
+        else
+            push!(interior_pts, collect(points[x] for x  in parts[i]:length(points)))
+        end
+    end
+    exterior = GB.LineString(exterior_pts)
+    interiors = collect(GB.LineString(pts) for pts in interior_pts)
+    println(eltype(interiors) == typeof(exterior))
+    println(eltype(interiors))
+    GB.Polygon(exterior, interiors)
 end
 
 function Base.read(io::IO, ::Type{PolygonM})
@@ -321,7 +338,7 @@ function Base.read(io::IO, ::Type{Handle})
         if shapeType === Int32(0)
             push!(shapes, missing)
         else
-            push!(shapes, GB.metafree(read(io, jltype)))
+            push!(shapes, read(io, jltype))
         end
     end
     file
