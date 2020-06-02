@@ -40,46 +40,45 @@ const MultiPointZ = typeof(GB.MultiPointMeta(
 
 #Construction from type aliases for Polygon is not supported yet
 const Polygon =  typeof(GB.PolygonMeta(
-    [Point(0.0, 1.0)], [0],
+    GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
+    [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
     boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
 
 const PolygonM =  typeof(GB.PolygonMeta(
-    [Point(0.0, 1.0)], [0], m = [1],
-    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+    GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
+    [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
+    m = [1], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
 
 const PolygonZ =  typeof(GB.PolygonMeta(
-    [Point(0.0, 1.0)], [0], z = [1.0], m = [1.0], 
+    GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
+    [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
+    z = [1.0], m = [1.0], 
     boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
 
-# const Polyline =GB.MultiLineString([GB.LineString([Point(0)])])
+const Polyline = typeof(GB.MultiLineStringMeta( #todo refactor these aliases
+    [GB.LineString([Point(0)], [1])],
+    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+))
 
-struct Polyline <: GeoInterface.AbstractMultiLineString
-    MBR::Rect
-    parts::Vector{Int32}
-    points::Vector{Point}
-end
 
-struct PolylineM <: GeoInterface.AbstractMultiLineString
-    MBR::Rect
-    parts::Vector{Int32}
-    points::Vector{Point}
-    measures::Vector{Float64}
-end
+const PolylineM = typeof(GB.MultiLineStringMeta(
+    [GB.LineString([Point(0)], [1])],
+    m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+)) 
 
-struct PolylineZ <: GeoInterface.AbstractMultiLineString
-    MBR::Rect
-    parts::Vector{Int32}
-    points::Vector{Point}
-    zvalues::Vector{Float64}
-    measures::Vector{Float64}
-end
-# Do we keep Base.show?
-# Base.show(io::IO, p::Polygon) =
-#     print(io, "Polygon(", length(p.points), " Points)")
+const PolylineZ = typeof(GB.MultiLineStringMeta(
+    [GB.LineString([Point(0)], [1])],
+    z = [1.0], m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+)) 
 
+# const MultiPatch = typeof(GB.MeshMeta(
+#     [Point(0.0)], [1],
+#     p = [1.0], z = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+# )) 
+ 
 struct MultiPatch <: GeoInterface.AbstractGeometry
     MBR::Rect
     parts::Vector{Int32}
@@ -88,7 +87,6 @@ struct MultiPatch <: GeoInterface.AbstractGeometry
     zvalues::Vector{Float64}
     # measures::Vector{Float64}  # (optional)
 end
-
 const SHAPETYPE = Dict{Int32,DataType}(
     0 => Missing,
     1 => Point,
@@ -156,7 +154,8 @@ function Base.read(io::IO, ::Type{Polyline})
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    Polyline(box, parts, points)
+    m_linestrings = parts_polyline(points, parts)
+    GB.MultiLineStringMeta(m_linestrings, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolylineM})
@@ -171,7 +170,8 @@ function Base.read(io::IO, ::Type{PolylineM})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    PolylineM(box, parts, points, measures)
+    m_linestrings = parts_polyline(points, parts)
+    GB.MultiLineStringMeta(m_linestrings, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolylineZ})
@@ -190,7 +190,8 @@ function Base.read(io::IO, ::Type{PolylineZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    PolylineZ(box, parts, points, zvalues, measures)
+    m_linestrings = parts_polyline(points, parts)
+    GB.MultiLineStringMeta(m_linestrings, z = zvalues, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{Polygon})
@@ -201,7 +202,8 @@ function Base.read(io::IO, ::Type{Polygon})
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    return GB.meta(GB.Polygon(points, parts), boundingbox = box)
+    polygon = parts_polygon(points, parts)
+    GB.PolygonMeta(polygon, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolygonM})
@@ -216,8 +218,8 @@ function Base.read(io::IO, ::Type{PolygonM})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    return GB.meta(GB.Polygon(points, parts), m = measures, boundingbox = box)
-
+    polygon = parts_polygon(points, parts)
+    GB.PolygonMeta(polygon, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolygonZ})
@@ -236,7 +238,8 @@ function Base.read(io::IO, ::Type{PolygonZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    return GB.meta(GB.Polygon(points, parts), z = zvalues,m = measures, boundingbox = box)
+    polygon = parts_polygon(points, parts)
+    GB.PolygonMeta(polygon, z = zvalues, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{MultiPoint})
@@ -295,6 +298,9 @@ function Base.read(io::IO, ::Type{MultiPatch})
     # read!(io, mrange)
     # measures = Vector{Float64}(numpoints)
     # read!(io, measures)
+    
+    # parts .+= 1
+    # return GB.MeshMeta(points, parts, p = parttypes, z = zvalues, boundingbox = box)
     MultiPatch(box, parts, parttypes, points, zvalues) #,measures)
 end
 
@@ -328,7 +334,7 @@ function Base.read(io::IO, ::Type{Handle})
         if shapeType === Int32(0)
             push!(shapes, missing)
         else
-            push!(shapes, GB.metafree(read(io, jltype)))
+            push!(shapes, read(io, jltype))
         end
     end
     file
@@ -342,6 +348,5 @@ end
 include("table.jl")
 include("geo_interface.jl")
 include("shx.jl")
-
+include("basics.jl")
 end # module
- 
