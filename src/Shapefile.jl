@@ -39,18 +39,22 @@ const MultiPointZ = typeof(GB.MultiPointMeta(
 ))
 
 #Construction from type aliases for Polygon is not supported yet
-const Polygon =  typeof(GB.Polygon(
+const Polygon =  typeof(GB.PolygonMeta(
     GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
-    [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])]
-))
-
-const PolygonM =  typeof(GB.PolygonMeta(
-    [Point(0.0, 1.0)], [0], m = [1],
+    [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
     boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
 
+const PolygonM =  typeof(GB.PolygonMeta(
+    GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
+    [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
+    m = [1], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+))
+
 const PolygonZ =  typeof(GB.PolygonMeta(
-    [Point(0.0, 1.0)], [0], z = [1.0], m = [1.0], 
+    GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
+    [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
+    z = [1.0], m = [1.0], 
     boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
 
@@ -183,8 +187,6 @@ function Base.read(io::IO, ::Type{PolylineZ})
 end
 
 function Base.read(io::IO, ::Type{Polygon})
-    exterior_pts = []
-    interior_pts = []
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
@@ -192,23 +194,13 @@ function Base.read(io::IO, ::Type{Polygon})
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    parts .+= 1
-    for i in 1:length(parts)
-        if i == 1 && length(parts) != 1
-            exterior_pts = collect(points[x] for x in parts[i]:parts[i+1]-1)
-        elseif length(parts) == 1
-            exterior_pts = points
-        elseif i < length(parts) && i > 1 
-            push!(interior_pts, collect(points[x] for x  in parts[i]:parts[i+1]-1))
-        else
-            push!(interior_pts, collect(points[x] for x  in parts[i]:length(points)))
-        end
+    exterior, interior_pts = parts_poly(points, parts)
+    if length(interior_pts) !=0
+        interiors = collect(GB.LineString(pts) for pts in interior_pts)
+        GB.PolygonMeta(exterior, interiors, boundingbox = box)
+    else
+        GB.PolygonMeta(exterior, boundingbox = box)
     end
-    exterior = GB.LineString(exterior_pts)
-    interiors = collect(GB.LineString(pts) for pts in interior_pts)
-    println(eltype(interiors) == typeof(exterior))
-    println(eltype(interiors))
-    GB.Polygon(exterior, interiors)
 end
 
 function Base.read(io::IO, ::Type{PolygonM})
@@ -224,8 +216,13 @@ function Base.read(io::IO, ::Type{PolygonM})
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
     parts .+= 1
-    return GB.meta(GB.PolygonM(points, parts), m = measures, boundingbox = box)
-
+    exterior, interior_pts = parts_poly(points, parts)
+    if length(interior_pts) !=0
+        interiors = collect(GB.LineString(pts) for pts in interior_pts)
+        GB.PolygonMeta(exterior, interiors, m = measures, boundingbox = box)
+    else
+        GB.PolygonMeta(exterior, m = measures, boundingbox = box)
+    end
 end
 
 function Base.read(io::IO, ::Type{PolygonZ})
@@ -245,7 +242,13 @@ function Base.read(io::IO, ::Type{PolygonZ})
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
     parts .+= 1
-    return GB.meta(GB.PolygonZ(points, parts), z = zvalues, m = measures, boundingbox = box)
+    exterior, interior_pts = parts_poly(points, parts)
+    if length(interior_pts) !=0
+        interiors = collect(GB.LineString(pts) for pts in interior_pts)
+        GB.PolygonMeta(exterior, interiors, z = zvalues, m = measures, boundingbox = box)
+    else
+        GB.PolygonMeta(exterior, z = zvalues, m = measures, boundingbox = box)
+    end
 end
 
 function Base.read(io::IO, ::Type{MultiPoint})
@@ -352,5 +355,5 @@ end
 include("table.jl")
 include("geo_interface.jl")
 include("shx.jl")
-
+include("basics.jl")
 end # module
