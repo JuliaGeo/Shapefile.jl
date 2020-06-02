@@ -58,10 +58,11 @@ const PolygonZ =  typeof(GB.PolygonMeta(
     boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
 
-const Polyline = typeof(GB.MultiLineStringMeta(
+const Polyline = typeof(GB.MultiLineStringMeta( #todo refactor these aliases
     [GB.LineString([Point(0)], [1])],
     boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
+
 
 const PolylineM = typeof(GB.MultiLineStringMeta(
     [GB.LineString([Point(0)], [1])],
@@ -73,12 +74,19 @@ const PolylineZ = typeof(GB.MultiLineStringMeta(
     z = [1.0], m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 )) 
 
-const MultiPatch = typeof(GB.MeshMeta(
-    [Point(0.0)], [1],
-    p = [1.0], z = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
-)) 
+# const MultiPatch = typeof(GB.MeshMeta(
+#     [Point(0.0)], [1],
+#     p = [1.0], z = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+# )) 
  
-
+struct MultiPatch <: GeoInterface.AbstractGeometry
+    MBR::Rect
+    parts::Vector{Int32}
+    parttypes::Vector{Int32}
+    points::Vector{Point}
+    zvalues::Vector{Float64}
+    # measures::Vector{Float64}  # (optional)
+end
 const SHAPETYPE = Dict{Int32,DataType}(
     0 => Missing,
     1 => Point,
@@ -146,8 +154,8 @@ function Base.read(io::IO, ::Type{Polyline})
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    parts .+= 1
-    return GB.MultiLineStringMeta([GB.LineString(points, parts)], boundingbox = box)
+    m_linestrings = parts_polyline(points, parts)
+    GB.MultiLineStringMeta(m_linestrings, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolylineM})
@@ -162,8 +170,8 @@ function Base.read(io::IO, ::Type{PolylineM})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    parts .+= 1
-    return GB.MultiLineStringMeta([GB.LineString(points, parts)], m = measures, boundingbox = box)
+    m_linestrings = parts_polyline(points, parts)
+    GB.MultiLineStringMeta(m_linestrings, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolylineZ})
@@ -182,8 +190,8 @@ function Base.read(io::IO, ::Type{PolylineZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    parts .+= 1
-    return GB.MultiLineStringMeta([GB.LineString(points, parts)], z = zvalues, m = measures, boundingbox = box)
+    m_linestrings = parts_polyline(points, parts)
+    GB.MultiLineStringMeta(m_linestrings, z = zvalues, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{Polygon})
@@ -194,13 +202,8 @@ function Base.read(io::IO, ::Type{Polygon})
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    exterior, interior_pts = parts_poly(points, parts)
-    if length(interior_pts) !=0
-        interiors = collect(GB.LineString(pts) for pts in interior_pts)
-        GB.PolygonMeta(exterior, interiors, boundingbox = box)
-    else
-        GB.PolygonMeta(exterior, boundingbox = box)
-    end
+    polygon = parts_polygon(points, parts)
+    GB.PolygonMeta(polygon, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolygonM})
@@ -215,14 +218,8 @@ function Base.read(io::IO, ::Type{PolygonM})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    parts .+= 1
-    exterior, interior_pts = parts_poly(points, parts)
-    if length(interior_pts) !=0
-        interiors = collect(GB.LineString(pts) for pts in interior_pts)
-        GB.PolygonMeta(exterior, interiors, m = measures, boundingbox = box)
-    else
-        GB.PolygonMeta(exterior, m = measures, boundingbox = box)
-    end
+    polygon = parts_polygon(points, parts)
+    GB.PolygonMeta(polygon, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolygonZ})
@@ -241,14 +238,8 @@ function Base.read(io::IO, ::Type{PolygonZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    parts .+= 1
-    exterior, interior_pts = parts_poly(points, parts)
-    if length(interior_pts) !=0
-        interiors = collect(GB.LineString(pts) for pts in interior_pts)
-        GB.PolygonMeta(exterior, interiors, z = zvalues, m = measures, boundingbox = box)
-    else
-        GB.PolygonMeta(exterior, z = zvalues, m = measures, boundingbox = box)
-    end
+    polygon = parts_polygon(points, parts)
+    GB.PolygonMeta(polygon, z = zvalues, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{MultiPoint})
@@ -307,8 +298,10 @@ function Base.read(io::IO, ::Type{MultiPatch})
     # read!(io, mrange)
     # measures = Vector{Float64}(numpoints)
     # read!(io, measures)
-    parts .+= 1
-    return GB.MeshMeta(points, parts, p = parttypes, z = zvalues, boundingbox = box)
+    
+    # parts .+= 1
+    # return GB.MeshMeta(points, parts, p = parttypes, z = zvalues, boundingbox = box)
+    MultiPatch(box, parts, parttypes, points, zvalues) #,measures)
 end
 
 function Base.read(io::IO, ::Type{Handle})
