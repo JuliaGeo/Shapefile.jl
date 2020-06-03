@@ -19,7 +19,7 @@ struct Interval
     right::Float64
 end
 
-linestrings = GB.LineString{2,Float64,GB.Point{2,Float64}}[GB.LineString([Point(0.0, 1.0)])]
+linestrings = GB.LineString{2,Float64,GB.Point{2,Float64}}[GB.LineString([GB.Point(0.0, 1.0)])]
 
 const Point = GB.Point{2, Float64}
 const PointM = typeof(GB.meta(Point(0), m=1.0))

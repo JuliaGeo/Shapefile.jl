@@ -151,6 +151,6 @@ for test in test_tuples
 
 end
 
-# include("table.jl")
+include("table.jl")
 
 end  # @testset "Shapefile"
