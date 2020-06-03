@@ -36,5 +36,5 @@ function parts_polyline(points::Vector{Point}, parts::Vector{Int32})
             push!(linestrings, GB.LineString(pts))
         end
     end
-    return GB.MultiLineString(linestrings) #todo fix the type of linestrings, replace collect
+    return GB.MultiLineString(linestrings) 
 end
