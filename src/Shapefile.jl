@@ -19,6 +19,8 @@ struct Interval
     right::Float64
 end
 
+linestrings = GB.LineString{2,Float64,GB.Point{2,Float64}}[GB.LineString([Point(0.0, 1.0)])]
+
 const Point = GB.Point{2, Float64}
 const PointM = typeof(GB.meta(Point(0), m=1.0))
 const PointZ = typeof(GB.meta(Point(0), z=1.0, m=1.0))
@@ -58,12 +60,10 @@ const PolygonZ =  typeof(GB.PolygonMeta(
     boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
 
-linestrings = GB.LineString{2,Float64,GB.Point{2,Float64}}[GB.LineString([Point(0.0, 1.0)])]
-const Polyline = typeof(GB.MultiLineStringMeta( #todo refactor these aliases
+const Polyline = typeof(GB.MultiLineStringMeta( 
     GB.MultiLineString(linestrings),
     boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 ))
-
 
 const PolylineM = typeof(GB.MultiLineStringMeta(
     GB.MultiLineString(linestrings),
