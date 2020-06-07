@@ -29,21 +29,27 @@ function selectshapes(table)
     end
     return geoms
 end
+```
+
+The GeometryBasics types bring in metadata support that allow storing metadata into a NamedTuple along with the geometry.
+```julia
+# Example of working with metadata
+using GeometryBasics
+
+# read the shape
+shape = Shapefile.shape(first(table)));
+
+# get the shape without it's metadata
+shape_mf = metafree(shape)
+
+# get the metadata as a NamedTuple
+shape_meta = meta(shape)
 
 # the metadata can be converted to other Tables such as DataFrame
 using DataFrames
 df = DataFrame(table)
-```
 
-Shapefiles can contain multiple parts for each shape entity.
-Use `GeoInterface.coordinates` to fully decompose the shape data into parts.
-
-```julia
-# Example of converting the 1st shape of the file into parts (array of coordinates)
-julia> GeoInterface.coordinates(Shapefile.shape(first(table)))
-2-element Array{Array{Array{Array{Float64,1},1},1},1}:
- Array{Array{Float64,1},1}[Array{Float64,1}[[20.0, 20.0], ...]]
- Array{Array{Float64,1},1}[Array{Float64,1}[[0.0, 0.0], ...]]
+df_sp = DataFrame(geoms)
 ```
 
 ## Alternative packages

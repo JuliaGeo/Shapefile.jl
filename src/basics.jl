@@ -23,7 +23,7 @@ function parts_polygon(points::Vector{Point}, parts::Vector{Int32})
 end
 
 function parts_polyline(points::Vector{Point}, parts::Vector{Int32})
-    linestrings = []
+    linestrings = GB.LineString{2,Float64,GB.Point{2,Float64}}[]
     parts .+= 1
     for i in 1:length(parts)
         if length(parts) != 1 && i < length(parts)
@@ -36,16 +36,5 @@ function parts_polyline(points::Vector{Point}, parts::Vector{Int32})
             push!(linestrings, GB.LineString(pts))
         end
     end
-    return GB.MultiLineString(collect(x for x in linestrings)) #todo fix the type of linestrings, replace collect
-
-
-
-
-
-
-
-
-
-
-
+    return GB.MultiLineString(linestrings) 
 end
