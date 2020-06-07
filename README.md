@@ -36,7 +36,6 @@ The GeometryBasics types bring in metadata support that allow storing metadata i
 # Example of working with metadata
 using GeometryBasics
 
-
 # read the shape
 shape = Shapefile.shape(first(table)));
 

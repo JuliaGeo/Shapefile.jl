@@ -12,7 +12,6 @@ struct Table{T}
         new{T}(shp, dbf)
     end
 end
-
 function Table(shp::Handle{T}, dbf::DBFTables.Table) where {T}
     Table{T}(shp, dbf)
 end
@@ -36,8 +35,14 @@ function Table(path::AbstractString)
         read(io, Shapefile.Handle)
     end
     dbf = DBFTables.Table(dbf_path)
+    
+    # t = StructArray(shapes = shp.shapes)
+    # println(t)
+    # println("")
     return Shapefile.Table(shp, dbf)
 end
+        
+
 
 "Struct representing a singe record in a shapefile"
 struct Row{T}

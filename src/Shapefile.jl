@@ -318,7 +318,7 @@ function Base.read(io::IO, ::Type{Handle})
     mmin = read(io, Float64)
     mmax = read(io, Float64)
     jltype = SHAPETYPE[shapeType]
-    shapes = Vector{Any}(undef, 0) #TODO figure out a type
+    shapes = Vector{jltype}(undef, 0) #TODO figure out a type
     file = Handle(
         code,
         fileSize,
@@ -347,8 +347,8 @@ function Base.:(==)(a::Rect, b::Rect)
     a.bottom == b.bottom && a.right == b.right && a.top == b.top
 end
 
+include("basics.jl")
 include("table.jl")
 include("geo_interface.jl")
 include("shx.jl")
-include("basics.jl")
 end # module
