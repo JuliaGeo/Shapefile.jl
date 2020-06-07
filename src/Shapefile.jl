@@ -318,7 +318,7 @@ function Base.read(io::IO, ::Type{Handle})
     mmin = read(io, Float64)
     mmax = read(io, Float64)
     jltype = SHAPETYPE[shapeType]
-    shapes = Vector{jltype}(undef, 0) #TODO figure out a type
+    shapes = Vector{jltype}(undef, 0)
     file = Handle(
         code,
         fileSize,

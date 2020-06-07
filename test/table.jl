@@ -53,7 +53,7 @@ ne_cities = Shapefile.Table(path(natural_earth, "ne_cities_shp"))
     end
     ne_land_parts = Shapefile.Table(ne_land_shp, ne_land_dbf)
 
-    @test ne_land_shp isa Shapefile.Handle{Any} #todo change this after giving a type to shapes
+    @test ne_land_shp isa Shapefile.Handle
     @test ne_land_dbf isa DBFTables.Table
     @test ne_land_parts isa Shapefile.Table
 end
@@ -62,7 +62,7 @@ end
 @test Shapefile.Table(splitext(path(natural_earth, "ne_land_shp"))[1]) isa Shapefile.Table
 
 @testset "ne_land" begin
-    @test ne_land isa Shapefile.Table{Any} #todo change this after shapes gets a type
+    @test ne_land isa Shapefile.Table
     @test length(ne_land) == 127
     @test count(true for r in ne_land) == length(ne_land)
     @test propertynames(ne_land) == [:featurecla, :scalerank, :min_zoom]
@@ -70,7 +70,7 @@ end
     @test ne_land.featurecla isa Vector{String}
     @test length(ne_land.scalerank) == length(ne_land)
     @test sum(ne_land.scalerank) == 58
-    @test Shapefile.shapes(ne_land) isa Vector{Any} #todo change this after shapes gets a type
+    @test Shapefile.shapes(ne_land) isa Vector #todo change this after shapes gets a type
     @test Tables.istable(ne_land)
     @test Tables.rows(ne_land) === ne_land
     @test Tables.columns(ne_land) === ne_land
@@ -91,7 +91,7 @@ end
 end
 
 @testset "ne_coastline" begin
-    @test ne_coastline isa Shapefile.Table{Union{Any}} #todo change this after shapes gets a type
+    @test ne_coastline isa Shapefile.Table
     @test length(ne_coastline) == 134
     @test count(true for r in ne_coastline) == length(ne_coastline)
     @test propertynames(ne_coastline) == [:scalerank, :featurecla, :min_zoom]
@@ -99,7 +99,7 @@ end
     @test ne_coastline.featurecla isa Vector{String}
     @test length(ne_coastline.scalerank) == length(ne_coastline)
     @test sum(ne_coastline.scalerank) == 59
-    @test Shapefile.shapes(ne_coastline) isa Vector{Union{Any}} #todo change this after shapes gets a type
+    @test Shapefile.shapes(ne_coastline) isa Vector
     @test Tables.istable(ne_coastline)
     @test Tables.rows(ne_coastline) === ne_coastline
     @test Tables.columns(ne_coastline) === ne_coastline
@@ -120,7 +120,7 @@ end
 end
 
 @testset "ne_cities" begin
-    @test ne_cities isa Shapefile.Table{Union{Any}} #todo change this after shapes gets a type
+    @test ne_cities isa Shapefile.Table
     @test length(ne_cities) == 243
     @test count(true for r in ne_cities) == length(ne_cities)
     colnames = [
@@ -135,7 +135,7 @@ end
     @test ne_cities.featurecla isa Vector{String}
     @test length(ne_cities.scalerank) == length(ne_cities)
     @test sum(ne_cities.scalerank) == 612
-    @test Shapefile.shapes(ne_cities) isa Vector{Any} #todo change this after shapes gets a type
+    @test Shapefile.shapes(ne_cities) isa Vector
     @test Tables.istable(ne_cities)
     @test Tables.rows(ne_cities) === ne_cities
     @test Tables.columns(ne_cities) === ne_cities
@@ -148,7 +148,7 @@ end
         @test Shapefile.shape(r) isa Shapefile.Point
         @test r.featurecla in classes
     end
-    show_result = "Shapefile.Table{Any} with 243 rows and the following 38 columns:\n\t\nscalerank, natscale, labelrank, featurecla, name, namepar, namealt, diffascii, nameascii, adm0cap, capalt, capin, worldcity, megacity, sov0name, sov_a3, adm0name, adm0_a3, adm1name, iso_a2, note, latitude, longitude, changed, namediff, diffnote, pop_max, pop_min, pop_other, rank_max, rank_min, geonameid, meganame, ls_name, ls_match, checkme, min_zoom, ne_id\n"
+    show_result = "Shapefile.Table{GeometryBasics.Point{2,Float64}} with 243 rows and the following 38 columns:\n\t\nscalerank, natscale, labelrank, featurecla, name, namepar, namealt, diffascii, nameascii, adm0cap, capalt, capin, worldcity, megacity, sov0name, sov_a3, adm0name, adm0_a3, adm1name, iso_a2, note, latitude, longitude, changed, namediff, diffnote, pop_max, pop_min, pop_other, rank_max, rank_min, geonameid, meganame, ls_name, ls_match, checkme, min_zoom, ne_id\n"
     if VERSION < v"1.1"
         show_result = replace(show_result, "Shapefile.Point" => "Point")
     end
