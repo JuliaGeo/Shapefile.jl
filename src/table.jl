@@ -1,5 +1,5 @@
 import GeoInterface, DBFTables, Tables
-
+global i = 0
 "Shapefile.Table represents both the geometries and associated fields"
 struct Table{T}
     shp::Handle{T}
@@ -16,8 +16,15 @@ function Table(shp::Handle{T}, dbf::DBFTables.Table) where {T}
     Table{T}(shp, dbf)
 end
 
+"""
+Creates a struct array of shp and dbf 
+"""
+function structarray(shp::Handle, dbf::DBFTables.Table)
+    return StructArray(Geometry = shp.shapes, DBF = collect(a for a  in dbf))
+end
+
 "Read a file into a Shapefile.Table"
-function Table(path::AbstractString)
+function Table(path::AbstractString, separate = false)
     stempath, ext = splitext(path)
     if lowercase(ext) == ".shp"
         shp_path = path
@@ -35,11 +42,11 @@ function Table(path::AbstractString)
         read(io, Shapefile.Handle)
     end
     dbf = DBFTables.Table(dbf_path)
-    
-    # t = StructArray(shapes = shp.shapes)
-    # println(t)
-    # println("")
-    return Shapefile.Table(shp, dbf)
+    if separate == true
+        return Shapefile.Table(shp, dbf)
+    else 
+        return structarray(shp, dbf)
+    end
 end
         
 
