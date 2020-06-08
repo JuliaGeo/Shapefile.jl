@@ -20,7 +20,10 @@ end
 Creates a struct array of shp and dbf 
 """
 function structarray(shp::Handle, dbf::DBFTables.Table)
-    return StructArray(Geometry = collect(GB.metafree(i) for  i in shp.shapes), meta = collect(GB.meta(s) for s in shp.shapes), DBF = collect(a for a in dbf))
+    dbf_cols = Tables.columntable(dbf)
+    meta = collect(GB.meta(s) for s in shp.shapes)
+    meta_cols = Tables.columntable(meta)
+    return StructArray(Geometry = collect(GB.metafree(i) for  i in shp.shapes); meta_cols..., dbf_cols...)
 end
 
 "Read a file into a Shapefile.Table"
