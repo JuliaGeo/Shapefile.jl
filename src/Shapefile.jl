@@ -19,7 +19,9 @@ struct Interval
     right::Float64
 end
 
-linestrings = GB.LineString{2,Float64,GB.Point{2,Float64}}[GB.LineString([GB.Point(0.0, 1.0)])]
+const linestrings = GB.LineString{2,Float64,GB.Point{2,Float64}}[GB.LineString([GB.Point(0.0, 1.0)])]
+const dbf_t = DBFTables.Table(joinpath(@__DIR__, "test.dbf"))
+const dbf = DBFTables.Row(dbf_t,1)
 
 const Point = GB.Point{2, Float64}
 const PointM = typeof(GB.meta(Point(0), m=1.0))
@@ -27,52 +29,52 @@ const PointZ = typeof(GB.meta(Point(0), z=1.0, m=1.0))
 
 const MultiPoint = typeof(GB.MultiPointMeta(
     [Point(0)],
-    boundingbox=Rect(0.0, 0.0, 2.0, 2.0)
+    boundingbox=Rect(0.0, 0.0, 2.0, 2.0), DBF = dbf
 ))
 
 const MultiPointM = typeof(GB.MultiPointMeta(
     [Point(0)], m=[1.0],
-    boundingbox=Rect(0,0,2,2)
+    boundingbox=Rect(0,0,2,2), DBF = dbf
 ))
 
 const MultiPointZ = typeof(GB.MultiPointMeta(
     [Point(0)], z=[1.0], m=[1.0],
-    boundingbox=Rect(0,0,2,2)
+    boundingbox=Rect(0,0,2,2), DBF = dbf
 ))
 
 #Construction from type aliases for Polygon is not supported yet
 const Polygon =  typeof(GB.PolygonMeta(
     GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
     [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
-    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+    boundingbox = Rect(0.0, 0.0, 2.0, 2.0), DBF = dbf
 ))
 
 const PolygonM =  typeof(GB.PolygonMeta(
     GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
     [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
-    m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+    m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0), DBF = dbf
 ))
 
 const PolygonZ =  typeof(GB.PolygonMeta(
     GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
     [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
     z = [1.0], m = [1.0], 
-    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+    boundingbox = Rect(0.0, 0.0, 2.0, 2.0), DBF = dbf
 ))
 
 const Polyline = typeof(GB.MultiLineStringMeta( 
     GB.MultiLineString(linestrings),
-    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+    boundingbox = Rect(0.0, 0.0, 2.0, 2.0), DBF = dbf
 ))
 
 const PolylineM = typeof(GB.MultiLineStringMeta(
     GB.MultiLineString(linestrings),
-    m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+    m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0), DBF = dbf
 )) 
 
 const PolylineZ = typeof(GB.MultiLineStringMeta(
     GB.MultiLineString(linestrings),
-    z = [1.0], m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+    z = [1.0], m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0), DBF = dbf
 )) 
 
 # const MultiPatch = typeof(GB.MeshMeta(
@@ -126,20 +128,20 @@ function Base.read(io::IO, ::Type{Rect})
     Rect(minx, miny, maxx, maxy)
 end
 
-function Base.read(io::IO, ::Type{Point})
+function Base.read(io::IO, ::Type{Point}, Dbf)
     x = read(io, Float64)
     y = read(io, Float64)
     Point(x, y)
 end
 
-function Base.read(io::IO, ::Type{PointM})
+function Base.read(io::IO, ::Type{PointM}, Dbf)
     x = read(io, Float64)
     y = read(io, Float64)
     m = read(io, Float64)
     GB.meta(Point(x, y), m=m)
 end
 
-function Base.read(io::IO, ::Type{PointZ})
+function Base.read(io::IO, ::Type{PointZ}, Dbf)
     x = read(io, Float64)
     y = read(io, Float64)
     z = read(io, Float64)
@@ -147,7 +149,7 @@ function Base.read(io::IO, ::Type{PointZ})
     GB.meta(Point(x, y), z=z, m=m)
 end
 
-function Base.read(io::IO, ::Type{Polyline})
+function Base.read(io::IO, ::Type{Polyline}, Dbf)
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
@@ -156,10 +158,10 @@ function Base.read(io::IO, ::Type{Polyline})
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
     m_linestrings = parts_polyline(points, parts)
-    GB.MultiLineStringMeta(m_linestrings, boundingbox = box)
+    GB.MultiLineStringMeta(m_linestrings, boundingbox = box, DBF = Dbf)
 end
 
-function Base.read(io::IO, ::Type{PolylineM})
+function Base.read(io::IO, ::Type{PolylineM}, Dbf)
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
@@ -172,10 +174,10 @@ function Base.read(io::IO, ::Type{PolylineM})
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
     m_linestrings = parts_polyline(points, parts)
-    GB.MultiLineStringMeta(m_linestrings, m = measures, boundingbox = box)
+    GB.MultiLineStringMeta(m_linestrings, m = measures, boundingbox = box, DBF = Dbf)
 end
 
-function Base.read(io::IO, ::Type{PolylineZ})
+function Base.read(io::IO, ::Type{PolylineZ}, Dbf)
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
@@ -192,10 +194,10 @@ function Base.read(io::IO, ::Type{PolylineZ})
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
     m_linestrings = parts_polyline(points, parts)
-    GB.MultiLineStringMeta(m_linestrings, z = zvalues, m = measures, boundingbox = box)
+    GB.MultiLineStringMeta(m_linestrings, z = zvalues, m = measures, boundingbox = box, DBF = Dbf)
 end
 
-function Base.read(io::IO, ::Type{Polygon})
+function Base.read(io::IO, ::Type{Polygon}, Dbf)
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
@@ -204,10 +206,10 @@ function Base.read(io::IO, ::Type{Polygon})
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
     polygon = parts_polygon(points, parts)
-    GB.PolygonMeta(polygon, boundingbox = box)
+    GB.PolygonMeta(polygon, boundingbox = box, DBF = Dbf)
 end
 
-function Base.read(io::IO, ::Type{PolygonM})
+function Base.read(io::IO, ::Type{PolygonM}, Dbf)
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
@@ -220,10 +222,10 @@ function Base.read(io::IO, ::Type{PolygonM})
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
     polygon = parts_polygon(points, parts)
-    GB.PolygonMeta(polygon, m = measures, boundingbox = box)
+    GB.PolygonMeta(polygon, m = measures, boundingbox = box, DBF = Dbf)
 end
 
-function Base.read(io::IO, ::Type{PolygonZ})
+function Base.read(io::IO, ::Type{PolygonZ}, Dbf)
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
@@ -240,19 +242,19 @@ function Base.read(io::IO, ::Type{PolygonZ})
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
     polygon = parts_polygon(points, parts)
-    GB.PolygonMeta(polygon, z = zvalues, m = measures, boundingbox = box)
+    GB.PolygonMeta(polygon, z = zvalues, m = measures, boundingbox = box, DBF = Dbf)
 end
 
-function Base.read(io::IO, ::Type{MultiPoint})
+function Base.read(io::IO, ::Type{MultiPoint}, Dbf)
     box = read(io, Rect)
     numpoints = read(io, Int32)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
     multipoint = GB.MultiPoint(points)
-    return GB.MultiPointMeta(multipoint, boundingbox=box)
+    return GB.MultiPointMeta(multipoint, boundingbox=box, DBF = Dbf)
 end
 
-function Base.read(io::IO, ::Type{MultiPointM})
+function Base.read(io::IO, ::Type{MultiPointM}, Dbf)
     box = read(io, Rect)
     numpoints = read(io, Int32)
     points = Vector{Point}(undef, numpoints)
@@ -262,10 +264,10 @@ function Base.read(io::IO, ::Type{MultiPointM})
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
     multipoint = GB.MultiPoint(points)
-    return GB.MultiPointMeta(multipoint, m=measures, boundingbox=box)
+    return GB.MultiPointMeta(multipoint, m=measures, boundingbox=box, DBF = Dbf)
 end
 
-function Base.read(io::IO, ::Type{MultiPointZ})
+function Base.read(io::IO, ::Type{MultiPointZ}, Dbf)
     box = read(io, Rect)
     numpoints = read(io, Int32)
     points = Vector{Point}(undef, numpoints)
@@ -279,10 +281,10 @@ function Base.read(io::IO, ::Type{MultiPointZ})
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
     multipoint = GB.MultiPoint(points)
-    return GB.MultiPointMeta(multipoint, z=zvalues, m=measures, boundingbox=box)
+    return GB.MultiPointMeta(multipoint, z=zvalues, m=measures, boundingbox=box, DBF = Dbf)
 end
 
-function Base.read(io::IO, ::Type{MultiPatch})
+function Base.read(io::IO, ::Type{MultiPatch}, Dbf)
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
@@ -306,7 +308,7 @@ function Base.read(io::IO, ::Type{MultiPatch})
     MultiPatch(box, parts, parttypes, points, zvalues) #,measures)
 end
 
-function Base.read(io::IO, ::Type{Handle})
+function Base.read(io::IO, ::Type{Handle}, Dbf)
     code = bswap(read(io, Int32))
     read!(io, Vector{Int32}(undef, 5))
     fileSize = bswap(read(io, Int32))
@@ -336,7 +338,7 @@ function Base.read(io::IO, ::Type{Handle})
         if shapeType === Int32(0)
             push!(shapes, missing)
         else
-            push!(shapes, read(io, jltype))
+            push!(shapes, read(io, jltype, Dbf))
             end
     end
     file
