@@ -48,8 +48,10 @@ ne_cities = Shapefile.Table(path(natural_earth, "ne_cities_shp"), true)
     ne_land_dbf = open(path(natural_earth, "ne_land_dbf")) do io
         DBFTables.Table(io)
     end
+    i = 0
     ne_land_shp = open(path(natural_earth, "ne_land_shp")) do io
-        read(io, Shapefile.Handle, ne_land_dbf)
+        i+= 1
+        read(io, Shapefile.Handle, DBFTables.Row(ne_land_dbf, i))
     end
     ne_land_parts = Shapefile.Table(ne_land_shp, ne_land_dbf)
 

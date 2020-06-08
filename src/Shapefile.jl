@@ -20,8 +20,8 @@ struct Interval
 end
 
 const linestrings = GB.LineString{2,Float64,GB.Point{2,Float64}}[GB.LineString([GB.Point(0.0, 1.0)])]
-const dbf = DBFTables.Table(joinpath(@__DIR__, "test.dbf"))
-
+const dbf_t = DBFTables.Table(joinpath(@__DIR__, "test.dbf"))
+const dbf = DBFTables.Row(dbf_t,1)
 
 const Point = GB.Point{2, Float64}
 const PointM = typeof(GB.meta(Point(0), m=1.0))
