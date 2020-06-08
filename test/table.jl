@@ -40,16 +40,16 @@ download(natural_earth)
 @test isfile(natural_earth)
 
 # create tables that we can use in the tests below
-ne_land = Shapefile.Table(path(natural_earth, "ne_land_shp"))
-ne_coastline = Shapefile.Table(path(natural_earth, "ne_coastline_shp"))
-ne_cities = Shapefile.Table(path(natural_earth, "ne_cities_shp"))
+ne_land = Shapefile.Table(path(natural_earth, "ne_land_shp"), true)
+ne_coastline = Shapefile.Table(path(natural_earth, "ne_coastline_shp"), true)
+ne_cities = Shapefile.Table(path(natural_earth, "ne_cities_shp"), true)
 
 @testset "Create from parts" begin
-    ne_land_shp = open(path(natural_earth, "ne_land_shp")) do io
-        read(io, Shapefile.Handle)
-    end
     ne_land_dbf = open(path(natural_earth, "ne_land_dbf")) do io
         DBFTables.Table(io)
+    end
+    ne_land_shp = open(path(natural_earth, "ne_land_shp")) do io
+        read(io, Shapefile.Handle, ne_land_dbf)
     end
     ne_land_parts = Shapefile.Table(ne_land_shp, ne_land_dbf)
 
@@ -59,7 +59,7 @@ ne_cities = Shapefile.Table(path(natural_earth, "ne_cities_shp"))
 end
 
 # without .shp extension it should also work
-@test Shapefile.Table(splitext(path(natural_earth, "ne_land_shp"))[1]) isa Shapefile.Table
+@test Shapefile.Table(splitext(path(natural_earth, "ne_land_shp"))[1], true) isa Shapefile.Table
 
 @testset "ne_land" begin
     @test ne_land isa Shapefile.Table

@@ -1,8 +1,9 @@
 using Shapefile
 using Test
 using GeometryBasics: GeometryBasics
+using DBFTables
 const GB = GeometryBasics
-
+const dbf = DBFTables.Table("shapelib_testcases/test.dbf")
 test_tuples = [
     (
         path="shapelib_testcases/test.shp",
@@ -101,7 +102,7 @@ test_tuples = [
 
 for test in test_tuples
     shp = open(joinpath(@__DIR__, test.path)) do fd
-        read(fd, Shapefile.Handle)
+        read(fd, Shapefile.Handle, dbf)
     end
     shapes = unique(map(typeof, shp.shapes))   
     @test shapes[1] == test.geomtype
@@ -129,7 +130,7 @@ for test in test_tuples
             rlength = bswap(read(fd, Int32))
             shapeType = read(fd, Int32)
             if shapeType !== Int32(0)
-                read(fd, jltype)
+                read(fd, jltype, dbf)
             end
 
             # records the offest after this geometry record
