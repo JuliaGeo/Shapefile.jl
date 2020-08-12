@@ -40,25 +40,26 @@ const MultiPointZ = typeof(GB.MultiPointMeta(
     boundingbox=Rect(0,0,2,2)
 ))
 
+_poly_ = GB.Polygon(
+                GB.LineString([Point(0.0, 0.0),   Point(0.0,   100.0)]),
+               [GB.LineString([Point(1.0, 1.0),   Point(0.0,   100.0)]),
+                GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])
+            ])
+
+_multi_poly_ = GB.MultiPolygon([_poly_])
+
 #Construction from type aliases for Polygon is not supported yet
-const Polygon =  typeof(GB.PolygonMeta(
-    GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
-    [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
-    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
-))
+const Polygon = typeof(GB.MultiPolygonMeta(_multi_poly_,
+                       boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+ ))
 
-const PolygonM =  typeof(GB.PolygonMeta(
-    GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
-    [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
-    m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
-))
+const PolygonM = typeof(GB.MultiPolygonMeta(_multi_poly_,
+                       m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+  ))
 
-const PolygonZ =  typeof(GB.PolygonMeta(
-    GB.LineString([Point(0.0, 0.0), Point(0.0, 100.0)]),
-    [GB.LineString([Point(1.0, 1.0), Point(0.0, 100.0)]), GB.LineString([Point(0.0, 100.0), Point(200.0, 100.0)])],
-    z = [1.0], m = [1.0], 
-    boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
-))
+const PolygonZ = typeof(GB.MultiPolygonMeta(_multi_poly_,
+                       z = [1.0], m = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
+  ))
 
 const Polyline = typeof(GB.MultiLineStringMeta( 
     GB.MultiLineString(linestrings),
@@ -203,8 +204,8 @@ function Base.read(io::IO, ::Type{Polygon})
     read!(io, parts)
     points = Vector{Point}(undef, numpoints)
     read!(io, points)
-    polygon = parts_polygon(points, parts)
-    GB.PolygonMeta(polygon, boundingbox = box)
+    multipolygon = parts_polygon(points, parts)
+    GB.MultiPolygonMeta(multipolygon, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolygonM}) 
@@ -219,8 +220,8 @@ function Base.read(io::IO, ::Type{PolygonM})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    polygon = parts_polygon(points, parts)
-    GB.PolygonMeta(polygon, m = measures, boundingbox = box)
+    multipolygon = parts_polygon(points, parts)
+    GB.MultiPolygonMeta(multipolygon, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{PolygonZ}) 
@@ -239,8 +240,8 @@ function Base.read(io::IO, ::Type{PolygonZ})
     read!(io, mrange)
     measures = Vector{Float64}(undef, numpoints)
     read!(io, measures)
-    polygon = parts_polygon(points, parts)
-    GB.PolygonMeta(polygon, z = zvalues, m = measures, boundingbox = box)
+    multipolygon = parts_polygon(points, parts)
+    GB.MultiPolygonMeta(multipolygon, z = zvalues, m = measures, boundingbox = box)
 end
 
 function Base.read(io::IO, ::Type{MultiPoint}) 
