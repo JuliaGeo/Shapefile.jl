@@ -15,24 +15,25 @@ function parts_polygon(points::Vector{Point}, parts::Vector{Int32})
             push!(exterior_pts, pts)
         end
     end
-    
-    if false # length(exterior_pts) == 1 # need GB.Polygon
+
+    if length(exterior_pts) == 0 && length(interior_pts) == 1
+        polygons = [GB.Polygon(GB.LineString(only(interior_pts)))]
+
+    elseif length(exterior_pts) == 1 # need GB.Polygon
         exterior = GB.LineString(only(exterior_pts))
         if length(interior_pts) != 0
             interiors = collect(GB.LineString(pts) for pts in interior_pts)
-            return GB.Polygon(exterior, interiors)
+            polygons = [GB.Polygon(exterior, interiors)]
         else
-            return GB.Polygon(exterior)
+            polygons = [GB.Polygon(exterior)]
         end
     else # need GB.MultiPolygon
         # 1) match exteriors with interiors
         if length(interior_pts) == 0
             polygons = GB.Polygon.(exterior_pts)
         else
-            @show eltype(interior_pts)
             # for each interior return the index of containing exterior ring
             i_exterior_matched = map(interior_pts) do int
-                print("! ")
                 pt_int = int[1]
                 
                 i_ext_matched = findfirst(eachindex(exterior_pts)) do i_ext
@@ -47,9 +48,10 @@ function parts_polygon(points::Vector{Point}, parts::Vector{Int32})
                 GB.Polygon(exterior, interiors)
             end
         end
-        
-        return GB.MultiPolygon(polygons)
     end
+
+    return GB.MultiPolygon(polygons)
+
 end
 
 using ShiftedArrays
@@ -58,10 +60,11 @@ using ShiftedArrays
 function f(edge)
     x1, y1 = edge[1]
     x2, y2 = edge[2]
-    - (x2 - x1) / (y2 + y1)
+    (x2 - x1) * (y2 + y1)
+    #y1 * x2 - y2 * x1 # used in linked js code
 end
 edges(pts) = zip(pts, ShiftedArrays.circshift(pts, -1)) # ShiftedArrays.circshift is lazy
-clockwise(pts) = sum(f, edges(pts)) > 0
+clockwise(pts) = sum(f, edges(pts)) >= 0
 hole(pts) = !clockwise(pts)
 
 function parts_polyline(points::Vector{Point}, parts::Vector{Int32})
