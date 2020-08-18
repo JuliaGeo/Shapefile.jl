@@ -1,4 +1,4 @@
-import GeoInterface, DBFTables, Tables
+import DBFTables, Tables
 const GB = GeometryBasics
 "Shapefile.Table represents both the geometries and associated fields"
 struct Table{T}
