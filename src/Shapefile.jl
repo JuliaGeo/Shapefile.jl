@@ -350,6 +350,6 @@ end
 
 include("basics.jl")
 include("table.jl")
-include("geo_interface.jl")
 include("shx.jl")
+
 end # module
