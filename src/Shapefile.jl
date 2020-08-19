@@ -3,7 +3,7 @@ module Shapefile
 using GeometryBasics: GeometryBasics
 using GeometryBasics.StructArrays
 
-import GeoInterface, DBFTables, Tables
+import DBFTables, Tables
 
 const GB = GeometryBasics
 
@@ -81,7 +81,7 @@ const PolylineZ = typeof(GB.MultiLineStringMeta(
 #     p = [1.0], z = [1.0], boundingbox = Rect(0.0, 0.0, 2.0, 2.0)
 # )) 
  
-struct MultiPatch <: GeoInterface.AbstractGeometry
+struct MultiPatch
     MBR::Rect
     parts::Vector{Int32}
     parttypes::Vector{Int32}
