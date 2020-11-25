@@ -131,9 +131,10 @@ mutable struct Handle{T<:Union{<:GeoInterface.AbstractGeometry,Missing}}
     mrange::Interval
     shapes::Vector{T}
 end
+
 function Handle(path::AbstractString)
     open(path) do io
-        read(io, Shapefile.Handle)
+        read(io, Handle)
     end
 end
 
