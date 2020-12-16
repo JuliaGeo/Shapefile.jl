@@ -86,7 +86,7 @@ end
     end
     df_land = DataFrames.DataFrame(ne_land)
     @test size(df_land) == (127, 3)
-    @test names(df_land) == [:featurecla, :scalerank, :min_zoom]
+    @test names(df_land) == ["featurecla", "scalerank", "min_zoom"]
     df_land.featurecla isa Vector{String}
 end
 
@@ -115,7 +115,7 @@ end
     end
     df_coastline = DataFrames.DataFrame(ne_coastline)
     @test size(df_coastline) == (134, 3)
-    @test names(df_coastline) == [:scalerank, :featurecla, :min_zoom]
+    @test names(df_coastline) == ["scalerank", "featurecla", "min_zoom"]
     df_coastline.featurecla isa Vector{String}
 end
 
@@ -158,7 +158,7 @@ end
         ) === show_result
     df_cities = DataFrames.DataFrame(ne_cities)
     @test size(df_cities) == (243, 38)
-    @test names(df_cities) == colnames
+    @test names(df_cities) == string.(colnames)
     df_cities.featurecla isa Vector{String}
 end
 
