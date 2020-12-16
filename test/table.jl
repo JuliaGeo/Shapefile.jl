@@ -5,32 +5,22 @@ import DBFTables
 import Tables
 import DataFrames
 
-url_physical = "https://github.com/nvkelso/natural-earth-vector/raw/v4.1.0/110m_physical"
-url_cultural = "https://github.com/nvkelso/natural-earth-vector/raw/v4.1.0/110m_cultural"
 datadir = joinpath(@__DIR__, "data")
+url = "https://github.com/nvkelso/natural-earth-vector/raw/v4.1.0"
 
-@RemoteFileSet natural_earth "Natural Earth 110m physical" begin
+@RemoteFileSet natural_earth "Natural Earth 110m" begin
     # polygon
-    ne_land_shp = @RemoteFile joinpath(url_physical, "ne_110m_land.shp") dir = datadir
-    ne_land_shx = @RemoteFile joinpath(url_physical, "ne_110m_land.shx") dir = datadir
-    ne_land_dbf = @RemoteFile joinpath(url_physical, "ne_110m_land.dbf") dir = datadir
+    ne_land_shp = @RemoteFile "$url/110m_physical/ne_110m_land.shp" dir = datadir
+    ne_land_shx = @RemoteFile "$url/110m_physical/ne_110m_land.shx" dir = datadir
+    ne_land_dbf = @RemoteFile "$url/110m_physical/ne_110m_land.dbf" dir = datadir
     # linestring
-    ne_coastline_shp = @RemoteFile joinpath(url_physical, "ne_110m_coastline.shp") dir = datadir
-    ne_coastline_shx = @RemoteFile joinpath(url_physical, "ne_110m_coastline.shx") dir = datadir
-    ne_coastline_dbf = @RemoteFile joinpath(url_physical, "ne_110m_coastline.dbf") dir = datadir
+    ne_coastline_shp = @RemoteFile "$url/110m_physical/ne_110m_coastline.shp" dir = datadir
+    ne_coastline_shx = @RemoteFile "$url/110m_physical/ne_110m_coastline.shx" dir = datadir
+    ne_coastline_dbf = @RemoteFile "$url/110m_physical/ne_110m_coastline.dbf" dir = datadir
     # point
-    ne_cities_shp = @RemoteFile joinpath(
-        url_cultural,
-        "ne_110m_populated_places_simple.shp",
-    ) dir = datadir
-    ne_cities_shx = @RemoteFile joinpath(
-        url_cultural,
-        "ne_110m_populated_places_simple.shx",
-    ) dir = datadir
-    ne_cities_dbf = @RemoteFile joinpath(
-        url_cultural,
-        "ne_110m_populated_places_simple.dbf",
-    ) dir = datadir
+    ne_cities_shp = @RemoteFile "$url/110m_cultural/ne_110m_populated_places_simple.shp" dir = datadir
+    ne_cities_shx = @RemoteFile "$url/110m_cultural/ne_110m_populated_places_simple.shx" dir = datadir
+    ne_cities_dbf = @RemoteFile "$url/110m_cultural/ne_110m_populated_places_simple.dbf" dir = datadir
 end
 
 download(natural_earth)
