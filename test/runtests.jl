@@ -1,4 +1,4 @@
-using Shapefile, GeoInterface
+using Shapefile, GeoInterface, Plots
 using Test
 
 test_tuples = [
@@ -95,7 +95,13 @@ for test in test_tuples
         @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
     end
     @test shp.MBR == test.bbox
+
+    # Multipatch can't be plotted, but it's obscure anyway
+    if !(test.geomtype == Shapefile.MultiPatch)
+        plot(shp) # Just test that it actually plots
+    end
 end
+
 
 # Test all .shx files; the values in .shx must match the .shp offsets
 for test in test_tuples

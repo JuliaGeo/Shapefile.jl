@@ -2,6 +2,8 @@ module Shapefile
 
 import GeoInterface, DBFTables, Tables
 
+using RecipesBase
+
 struct Rect
     left::Float64
     bottom::Float64
@@ -360,5 +362,6 @@ end
 include("table.jl")
 include("geo_interface.jl")
 include("shx.jl")
+include("plotrecipes.jl")
 
 end # module
