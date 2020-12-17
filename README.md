@@ -1,6 +1,6 @@
 # Shapefile
 
-[![Build Status](https://travis-ci.com/JuliaGeo/Shapefile.jl.svg)](https://travis-ci.com/JuliaGeo/Shapefile.jl)
+![CI](https://github.com/JuliaGeo/Shapefile.jl/workflows/CI/badge.svg)
 
 This library supports reading ESRI Shapefiles in pure Julia.
 
