@@ -46,6 +46,8 @@ end
 getshp(t::Table) = getfield(t, :shp)
 getdbf(t::Table) = getfield(t, :dbf)
 
+getshp(t::Row) = getfield(t, :geometry)
+
 Base.length(t::Table) = length(getshp(t).shapes)
 
 Tables.istable(::Type{<:Table}) = true
@@ -63,12 +65,14 @@ function Base.iterate(t::Table, st = 1)
 end
 
 Base.getproperty(row::Row, name::Symbol) = getproperty(getfield(row, :record), name)
+Base.getproperty(row::Row, name::Symbol) = getproperty(getfield(row, :geometry), name)
 Base.getproperty(t::Table, name::Symbol) = getproperty(getdbf(t), name)
 
 Base.propertynames(row::Row) = propertynames(getfield(row, :record))
 Base.propertynames(t::Table) = propertynames(getdbf(t))
 
 Tables.schema(t::Table) = Tables.schema(getdbf(t))
+Tables.schema(t::Row) = Tables.schema(getdbf(t))
 
 function Base.show(io::IO, t::Table)
     tt = typeof(t)
