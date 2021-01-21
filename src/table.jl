@@ -46,8 +46,6 @@ end
 getshp(t::Table) = getfield(t, :shp)
 getdbf(t::Table) = getfield(t, :dbf)
 
-getshp(t::Row) = getfield(t, :geometry)
-
 Base.length(t::Table) = length(getshp(t).shapes)
 
 Tables.istable(::Type{<:Table}) = true
@@ -65,14 +63,24 @@ function Base.iterate(t::Table, st = 1)
 end
 
 Base.getproperty(row::Row, name::Symbol) = getproperty(getfield(row, :record), name)
-Base.getproperty(row::Row, name::Symbol) = getproperty(getfield(row, :geometry), name)
 Base.getproperty(t::Table, name::Symbol) = getproperty(getdbf(t), name)
 
 Base.propertynames(row::Row) = propertynames(getfield(row, :record))
 Base.propertynames(t::Table) = propertynames(getdbf(t))
 
-Tables.schema(t::Table) = Tables.schema(getdbf(t))
-Tables.schema(t::Row) = Tables.schema(getdbf(t))
+function Tables.schema(t::Table)
+    	names = [field for field in propertynames(t)]
+	# Specifically adding in shapes
+	push!(names, :shapes) 
+	names = tuple(names...)
+
+	types = [getproperty(t, name) |> eltype for name in names]
+	# Specifically adding in shapes eltype
+	push!(names, Union{Missing, Shapefile.Polygon})
+	types = tuple(types...)
+
+	Tables.schema(names, types)
+end
 
 function Base.show(io::IO, t::Table)
     tt = typeof(t)
