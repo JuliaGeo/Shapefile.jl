@@ -45,6 +45,17 @@ end
 
 getshp(t::Table) = getfield(t, :shp)
 getdbf(t::Table) = getfield(t, :dbf)
+function getall(t::Table)
+       names = []
+       types = []
+       map([getdbf(t), getshp(t)]) do values
+       	   for prop in values |> propertynames
+	   	push!(names, prop)
+		push!(types, getproperty(values, prop) |> eltype) 
+	   end
+       end
+       return Tables.Schema(tuple(names...), tuple(types...))
+end
 
 Base.length(t::Table) = length(getshp(t).shapes)
 
@@ -63,24 +74,13 @@ function Base.iterate(t::Table, st = 1)
 end
 
 Base.getproperty(row::Row, name::Symbol) = getproperty(getfield(row, :record), name)
-Base.getproperty(t::Table, name::Symbol) = getproperty(getdbf(t), name)
+# Base.getproperty(t::Table, name::Symbol) = getproperty(getdbf(t), name)
+Base.getproperty(t::Table, name::Symbol) = getproperty(getall(t), name)
 
 Base.propertynames(row::Row) = propertynames(getfield(row, :record))
-Base.propertynames(t::Table) = propertynames(getdbf(t))
+Base.propertynames(t::Table) = [name for name in Shapefile.getall(t).names]
 
-function Tables.schema(t::Table)
-    	names = [field for field in propertynames(t)]
-	# Specifically adding in shapes
-	push!(names, :shapes) 
-	names = tuple(names...)
-
-	types = [getproperty(t, name) |> eltype for name in names]
-	# Specifically adding in shapes eltype
-	push!(names, Union{Missing, Shapefile.Polygon})
-	types = tuple(types...)
-
-	Tables.schema(names, types)
-end
+Tables.schema(t::Table) = getall(t)
 
 function Base.show(io::IO, t::Table)
     tt = typeof(t)
