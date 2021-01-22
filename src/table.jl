@@ -45,17 +45,6 @@ end
 
 getshp(t::Table) = getfield(t, :shp)
 getdbf(t::Table) = getfield(t, :dbf)
-function getall(t::Table)
-       names = []
-       types = []
-       map([getdbf(t), getshp(t)]) do values
-       	   for prop in values |> propertynames
-	   	push!(names, prop)
-		push!(types, getproperty(values, prop) |> eltype) 
-	   end
-       end
-       return Tables.Schema(tuple(names...), tuple(types...))
-end
 
 Base.length(t::Table) = length(getshp(t).shapes)
 
@@ -74,13 +63,30 @@ function Base.iterate(t::Table, st = 1)
 end
 
 Base.getproperty(row::Row, name::Symbol) = getproperty(getfield(row, :record), name)
-# Base.getproperty(t::Table, name::Symbol) = getproperty(getdbf(t), name)
-Base.getproperty(t::Table, name::Symbol) = getproperty(getall(t), name)
+
+function Base.getproperty(t::Table, name::Symbol)
+    if name === :geometry
+        shapes(t)
+    else
+        getproperty(getdbf(t), name)
+    end
+end
 
 Base.propertynames(row::Row) = propertynames(getfield(row, :record))
-Base.propertynames(t::Table) = [name for name in Shapefile.getall(t).names]
 
-Tables.schema(t::Table) = getall(t)
+function Base.propertynames(t::Table)
+    names = propertynames(getdbf(t))
+    pushfirst!(names, :geometry)
+    return names
+end
+
+function Tables.schema(t::Table)
+    dbf = getdbf(t)
+    dbf_schema = Tables.schema(dbf)
+    names = (:geometry, dbf_schema.names...)
+    types = (eltype(shapes(t)), dbf_schema.types...)
+    return Tables.Schema(names, types)
+end
 
 function Base.show(io::IO, t::Table)
     tt = typeof(t)
