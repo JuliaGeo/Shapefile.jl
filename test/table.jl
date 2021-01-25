@@ -56,7 +56,7 @@ end
     @test ne_land isa Shapefile.Table{Union{Shapefile.Polygon,Missing}}
     @test length(ne_land) == 127
     @test count(true for r in ne_land) == length(ne_land)
-    @test propertynames(ne_land) == [:featurecla, :scalerank, :min_zoom]
+    @test propertynames(ne_land) == [:geometry, :featurecla, :scalerank, :min_zoom]
     @test propertynames(first(ne_land)) == [:featurecla, :scalerank, :min_zoom]
     @test ne_land.featurecla isa Vector{String}
     @test length(ne_land.scalerank) == length(ne_land)
@@ -68,16 +68,16 @@ end
     @test Tables.rowaccess(ne_land)
     @test Tables.columnaccess(ne_land)
     @test Tables.schema(ne_land) == Tables.Schema(
-        (:featurecla, :scalerank, :min_zoom),
-        (Union{String,Missing}, Union{Int,Missing}, Union{Float64,Missing}),
+        (:geometry, :featurecla, :scalerank, :min_zoom),
+        (Union{Missing, Shapefile.Polygon}, Union{String,Missing}, Union{Int,Missing}, Union{Float64,Missing}),
     )
     for r in ne_land
         @test Shapefile.shape(r) isa Shapefile.Polygon
         @test r.featurecla === "Land"
     end
     df_land = DataFrames.DataFrame(ne_land)
-    @test size(df_land) == (127, 3)
-    @test names(df_land) == ["featurecla", "scalerank", "min_zoom"]
+    @test size(df_land) == (127, 4)
+    @test names(df_land) == ["geometry", "featurecla", "scalerank", "min_zoom"]
     df_land.featurecla isa Vector{String}
 end
 
@@ -85,7 +85,7 @@ end
     @test ne_coastline isa Shapefile.Table{Union{Shapefile.Polyline,Missing}}
     @test length(ne_coastline) == 134
     @test count(true for r in ne_coastline) == length(ne_coastline)
-    @test propertynames(ne_coastline) == [:scalerank, :featurecla, :min_zoom]
+    @test propertynames(ne_coastline) == [:geometry, :scalerank, :featurecla, :min_zoom]
     @test propertynames(first(ne_coastline)) == [:scalerank, :featurecla, :min_zoom]
     @test ne_coastline.featurecla isa Vector{String}
     @test length(ne_coastline.scalerank) == length(ne_coastline)
@@ -97,16 +97,16 @@ end
     @test Tables.rowaccess(ne_coastline)
     @test Tables.columnaccess(ne_coastline)
     @test Tables.schema(ne_coastline) == Tables.Schema(
-        (:scalerank, :featurecla, :min_zoom),
-        (Union{Int,Missing}, Union{String,Missing}, Union{Float64,Missing}),
+        (:geometry, :scalerank, :featurecla, :min_zoom),
+        (Union{Missing, Shapefile.Polyline}, Union{Int,Missing}, Union{String,Missing}, Union{Float64,Missing}),
     )
     for r in ne_coastline
         @test Shapefile.shape(r) isa Shapefile.Polyline
         @test r.featurecla in ("Coastline", "Country")
     end
     df_coastline = DataFrames.DataFrame(ne_coastline)
-    @test size(df_coastline) == (134, 3)
-    @test names(df_coastline) == ["scalerank", "featurecla", "min_zoom"]
+    @test size(df_coastline) == (134, 4)
+    @test names(df_coastline) == ["geometry", "scalerank", "featurecla", "min_zoom"]
     df_coastline.featurecla isa Vector{String}
 end
 
@@ -115,14 +115,14 @@ end
     @test length(ne_cities) == 243
     @test count(true for r in ne_cities) == length(ne_cities)
     colnames = [
-        :scalerank, :natscale, :labelrank, :featurecla, :name, :namepar, :namealt, :diffascii,
+        :geometry, :scalerank, :natscale, :labelrank, :featurecla, :name, :namepar, :namealt, :diffascii,
         :nameascii, :adm0cap, :capalt, :capin, :worldcity, :megacity, :sov0name, :sov_a3,
         :adm0name, :adm0_a3, :adm1name, :iso_a2, :note, :latitude, :longitude, :changed,
         :namediff, :diffnote, :pop_max, :pop_min, :pop_other, :rank_max, :rank_min, :geonameid,
         :meganame, :ls_name, :ls_match, :checkme, :min_zoom, :ne_id,
     ]
     @test propertynames(ne_cities) == colnames
-    @test propertynames(first(ne_cities)) == colnames
+    @test propertynames(first(ne_cities)) == colnames[2:end]
     @test ne_cities.featurecla isa Vector{String}
     @test length(ne_cities.scalerank) == length(ne_cities)
     @test sum(ne_cities.scalerank) == 612
@@ -139,7 +139,7 @@ end
         @test Shapefile.shape(r) isa Shapefile.Point
         @test r.featurecla in classes
     end
-    show_result = "Shapefile.Table{Union{Missing, Shapefile.Point}} with 243 rows and the following 38 columns:\n\t\nscalerank, natscale, labelrank, featurecla, name, namepar, namealt, diffascii, nameascii, adm0cap, capalt, capin, worldcity, megacity, sov0name, sov_a3, adm0name, adm0_a3, adm1name, iso_a2, note, latitude, longitude, changed, namediff, diffnote, pop_max, pop_min, pop_other, rank_max, rank_min, geonameid, meganame, ls_name, ls_match, checkme, min_zoom, ne_id\n"
+    show_result = "Shapefile.Table{Union{Missing, Shapefile.Point}} with 243 rows and the following 39 columns:\n\t\ngeometry, scalerank, natscale, labelrank, featurecla, name, namepar, namealt, diffascii, nameascii, adm0cap, capalt, capin, worldcity, megacity, sov0name, sov_a3, adm0name, adm0_a3, adm1name, iso_a2, note, latitude, longitude, changed, namediff, diffnote, pop_max, pop_min, pop_other, rank_max, rank_min, geonameid, meganame, ls_name, ls_match, checkme, min_zoom, ne_id\n"
     if VERSION < v"1.1"
         show_result = replace(show_result, "Shapefile.Point" => "Point")
     end
@@ -148,7 +148,7 @@ end
             ne_cities,
         ) === show_result
     df_cities = DataFrames.DataFrame(ne_cities)
-    @test size(df_cities) == (243, 38)
+    @test size(df_cities) == (243, 39)
     @test names(df_cities) == string.(colnames)
     df_cities.featurecla isa Vector{String}
 end
