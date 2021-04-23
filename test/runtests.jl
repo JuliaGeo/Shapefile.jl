@@ -83,22 +83,32 @@ test_tuples = [
 @testset "Shapefile" begin
 
 for test in test_tuples
-    shp = open(joinpath(@__DIR__, test.path)) do fd
-        read(fd, Shapefile.Handle)
-    end
-    shapes = unique(map(typeof, shp.shapes))
-    @test length(shapes) == 1
-    @test shapes[1] == test.geomtype
-    @test eltype(shp.shapes) == Union{test.geomtype,Missing}
-    # missing and MultiPatch are not covered by the GeoInterface
-    if !(test.geomtype <: Union{Missing,Shapefile.MultiPatch})
-        @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
-    end
-    @test shp.MBR == test.bbox
+    for use_shx in (false, true)
+        shp = if use_shx
+            #This accesses shp based on offsets in .shx
+            stempath, ext = splitext(test.path)
+            shxname = string(stempath, ".shx")
+            Shapefile.Handle(joinpath(@__DIR__, test.path), joinpath(@__DIR__, shxname))
+        else
+            #Use .shp only
+            open(joinpath(@__DIR__, test.path)) do fd
+                read(fd, Shapefile.Handle)
+            end
+        end
+        shapes = unique(map(typeof, shp.shapes))
+        @test length(shapes) == 1
+        @test shapes[1] == test.geomtype
+        @test eltype(shp.shapes) == Union{test.geomtype,Missing}
+        # missing and MultiPatch are not covered by the GeoInterface
+        if !(test.geomtype <: Union{Missing,Shapefile.MultiPatch})
+            @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
+        end
+        @test shp.MBR == test.bbox
 
-    # Multipatch can't be plotted, but it's obscure anyway
-    if !(test.geomtype == Shapefile.MultiPatch)
-        plot(shp) # Just test that it actually plots
+        # Multipatch can't be plotted, but it's obscure anyway
+        if !(test.geomtype == Shapefile.MultiPatch)
+            plot(shp) # Just test that it actually plots
+        end
     end
 end
 
