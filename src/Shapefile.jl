@@ -359,11 +359,16 @@ function Base.read(io::IO, ::Type{Handle}, index = nothing)
 end
 
 include("shx.jl")
+include("table.jl")
+include("geo_interface.jl")
+include("plotrecipes.jl")
 
 seeknext(io, num, ::Nothing) = nothing
+
 function seeknext(io, num, index::IndexHandle)
-    seek(io, index.indices[num+1].offset*2)
+    seek(io, index.indices[num+1].offset * 2)
 end
+
 function Handle(path::AbstractString, indexpath::AbstractString)
     index = open(indexpath) do io
         read(io, IndexHandle)
@@ -375,12 +380,5 @@ function Base.:(==)(a::Rect, b::Rect)
     a.left == b.left &&
     a.bottom == b.bottom && a.right == b.right && a.top == b.top
 end
-
-include("table.jl")
-
-include("geo_interface.jl")
-include("plotrecipes.jl")
-
-
 
 end # module
