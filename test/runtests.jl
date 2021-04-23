@@ -85,12 +85,12 @@ test_tuples = [
 for test in test_tuples
     for use_shx in (false, true)
         shp = if use_shx
-            #This accesses shp based on offsets in .shx
+            # this accesses .shp based on offsets in .shx
             stempath, ext = splitext(test.path)
             shxname = string(stempath, ".shx")
             Shapefile.Handle(joinpath(@__DIR__, test.path), joinpath(@__DIR__, shxname))
         else
-            #Use .shp only
+            # use .shp only
             open(joinpath(@__DIR__, test.path)) do fd
                 read(fd, Shapefile.Handle)
             end
