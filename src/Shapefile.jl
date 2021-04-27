@@ -346,13 +346,18 @@ function Base.read(io::IO, ::Type{Handle}, index = nothing)
     num = Int32(0)
     while (!eof(io))
         seeknext(io, num, index)
-        num = bswap(read(io, Int32))
-        rlength = bswap(read(io, Int32))
-        shapeType = read(io, Int32)
-        if shapeType === Int32(0)
+        try
+            num = bswap(read(io, Int32))
+            rlength = bswap(read(io, Int32))
+            shapeType = read(io, Int32)
+            if shapeType === Int32(0)
+                push!(shapes, missing)
+            else
+                push!(shapes, read(io, jltype))
+            end
+        catch e
+            println("An error occured when trying to read corrupt entry $(num+1) in Shapefile: $e")
             push!(shapes, missing)
-        else
-            push!(shapes, read(io, jltype))
         end
     end
     file
