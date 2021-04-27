@@ -343,11 +343,13 @@ function Base.read(io::IO, ::Type{Handle}, index = nothing)
         Interval(mmin, mmax),
         shapes,
     )
-    num = Int32(0)
+    ii = 0
     while (!eof(io))
-        seeknext(io, num, index)
         try
+            ii = ii + 1
+            seeknext(io, ii, index)
             num = bswap(read(io, Int32))
+            @assert num == ii
             rlength = bswap(read(io, Int32))
             shapeType = read(io, Int32)
             if shapeType === Int32(0)
@@ -356,7 +358,7 @@ function Base.read(io::IO, ::Type{Handle}, index = nothing)
                 push!(shapes, read(io, jltype))
             end
         catch e
-            println("An error occured when trying to read corrupt entry $(num+1) in Shapefile: $e")
+            println("An error occured when trying to read corrupt entry $(ii) in Shapefile: $e")
             push!(shapes, missing)
         end
     end
@@ -371,7 +373,7 @@ include("plotrecipes.jl")
 seeknext(io, num, ::Nothing) = nothing
 
 function seeknext(io, num, index::IndexHandle)
-    seek(io, index.indices[num+1].offset * 2)
+    seek(io, index.indices[num].offset * 2)
 end
 
 function Handle(path::AbstractString, indexpath::AbstractString)
