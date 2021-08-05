@@ -275,7 +275,11 @@ mpoly5 = MultiPolygon([
 		])
 
 # ╔═╡ e1e760c6-6960-4d7a-8477-e7e0c6b00845
-poly(mpoly5)
+let
+	fig, ax, plt = poly(mpoly5)
+	ax.title = "orphaned hole"
+	fig
+end
 
 # ╔═╡ 1a86bf8a-9b87-4231-8661-25fdcffa2bc1
 @test poly_equal(polygon_from_rings([rings1; [orphaned_hole]]), mpoly5)
@@ -1382,7 +1386,7 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╟─c77b1f94-eef5-4957-9e60-a21b94730f82
+# ╠═c77b1f94-eef5-4957-9e60-a21b94730f82
 # ╠═e251c752-f52e-11eb-096e-cfe085d3c380
 # ╠═914aa07c-4a26-4e70-857c-fe44fa5e2b08
 # ╠═dd561349-2552-4757-87dd-d822ac531967
@@ -1424,7 +1428,7 @@ version = "3.5.0+0"
 # ╠═dce7cb05-743f-4d44-aa6c-64581da552fd
 # ╠═922c8e88-4c04-4462-a57b-dce70f53785a
 # ╠═ddaef174-ef3f-4bda-b86e-c124019be7bf
-# ╠═e1e760c6-6960-4d7a-8477-e7e0c6b00845
+# ╟─e1e760c6-6960-4d7a-8477-e7e0c6b00845
 # ╠═1a86bf8a-9b87-4231-8661-25fdcffa2bc1
 # ╟─3715d4f4-b0e2-4b3f-b343-15de1d221c5e
 # ╠═5f13e7f7-09b6-460c-a481-8b77f40ff323
