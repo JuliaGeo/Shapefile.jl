@@ -150,9 +150,9 @@ end
         @test Shapefile.shape(r) isa Shapefile.Point
         @test r.featurecla in classes
     end
-    show_result = "Shapefile.Table{GeometryBasics.Point{2,Float64}} with 243 rows and the following 38 columns:\n\t\nscalerank, natscale, labelrank, featurecla, name, namepar, namealt, diffascii, nameascii, adm0cap, capalt, capin, worldcity, megacity, sov0name, sov_a3, adm0name, adm0_a3, adm1name, iso_a2, note, latitude, longitude, changed, namediff, diffnote, pop_max, pop_min, pop_other, rank_max, rank_min, geonameid, meganame, ls_name, ls_match, checkme, min_zoom, ne_id\n"
-    if VERSION < v"1.1"
-        show_result = replace(show_result, "Shapefile.Point" => "Point")
+    show_result = "Shapefile.Table{GeometryBasics.Point2{Float64}} with 243 rows and the following 38 columns:\n\t\nscalerank, natscale, labelrank, featurecla, name, namepar, namealt, diffascii, nameascii, adm0cap, capalt, capin, worldcity, megacity, sov0name, sov_a3, adm0name, adm0_a3, adm1name, iso_a2, note, latitude, longitude, changed, namediff, diffnote, pop_max, pop_min, pop_other, rank_max, rank_min, geonameid, meganame, ls_name, ls_match, checkme, min_zoom, ne_id\n"
+    if VERSION < v"1.6"
+        show_result = replace(show_result, "Point2{Float64}" => "Point{2,Float64}")
     end
     @test sprint(
             show,
