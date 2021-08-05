@@ -70,7 +70,7 @@ end
     @test Tables.columnaccess(ne_land)
     @test Tables.schema(ne_land) == Tables.Schema(
         (:geometry, :featurecla, :scalerank, :min_zoom),
-        (Union{Missing, Shapefile.Polygon}, Union{String,Missing}, Union{Int,Missing}, Union{Float64,Missing}),
+        (Shapefile.Polygon, Union{String,Missing}, Union{Int,Missing}, Union{Float64,Missing}),
     )
     for r in ne_land
         @test Shapefile.shape(r) isa Shapefile.Polygon
@@ -99,7 +99,7 @@ end
     @test Tables.columnaccess(ne_coastline)
     @test Tables.schema(ne_coastline) == Tables.Schema(
         (:geometry, :scalerank, :featurecla, :min_zoom),
-        (Union{Missing, Shapefile.Polyline}, Union{Int,Missing}, Union{String,Missing}, Union{Float64,Missing}),
+        (Shapefile.Polyline, Union{Int,Missing}, Union{String,Missing}, Union{Float64,Missing}),
     )
     for r in ne_coastline
         @test Shapefile.shape(r) isa Shapefile.Polyline
