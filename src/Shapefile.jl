@@ -7,6 +7,8 @@ import DBFTables, Tables
 
 const GB = GeometryBasics
 
+using RecipesBase
+
 struct Rect
     left::Float64
     bottom::Float64
@@ -115,6 +117,12 @@ mutable struct Handle{T}
     zrange::Interval
     mrange::Interval
     shapes::Vector{T}
+end
+
+function Handle(path::AbstractString)
+    open(path) do io
+        read(io, Handle)
+    end
 end
 
 Base.length(shp::Handle) = length(shp.shapes)
@@ -351,5 +359,6 @@ end
 include("basics.jl")
 include("table.jl")
 include("shx.jl")
+include("plotrecipes.jl")
 
 end # module

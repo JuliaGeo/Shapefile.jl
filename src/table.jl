@@ -42,9 +42,7 @@ function Table(path::AbstractString, separate = false)
     isfile(dbf_path) || throw(ArgumentError("File not found: $dbf_path"))
 
     dbf = DBFTables.Table(dbf_path)
-    shp = open(shp_path) do io
-        read(io, Shapefile.Handle)
-    end
+    shp = Shapefile.Handle(shp_path)
     if separate == true
         return Shapefile.Table(shp, dbf)
     else 

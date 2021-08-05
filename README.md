@@ -1,6 +1,6 @@
 # Shapefile
 
-[![Build Status](https://travis-ci.org/JuliaGeo/Shapefile.jl.svg)](https://travis-ci.org/JuliaGeo/Shapefile.jl)
+[![CI](https://github.com/JuliaGeo/Shapefile.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeo/Shapefile.jl/actions?query=workflow%3ACI)
 
 This library supports reading ESRI Shapefiles in pure Julia.
 The with the latest API, the speciality of geometry is retained, though now the .shp and the .dbf data can be represented together
