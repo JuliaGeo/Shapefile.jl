@@ -1,57 +1,89 @@
 using PolygonOps
 
 function parts_polygon(points::Vector{Point}, parts::Vector{Int32})
-    exterior_pts = Vector{GB.Point{2, Float64}}[]
-    interior_pts = Vector{GB.Point{2, Float64}}[]
+	rings = Vector{GB.Point{2, Float64}}[]
     parts .+= 1
     push!(parts, length(points)+1)
     # - split points into parts (rings)
     # - determine if rings are exterior or interior (holes)
     for i in 1:(length(parts)-1)
-        pts = collect(points[x] for x in parts[i]:parts[i+1]-1)
-        if hole(pts)
-            push!(interior_pts, pts)
-        else
-            push!(exterior_pts, pts)
-        end
+        ring = collect(points[x] for x in parts[i]:parts[i+1]-1)
+        push!(rings, ring)
     end
+	
+	polygon_from_rings(rings)
+end
 
-    if length(exterior_pts) == 0 && length(interior_pts) == 1
-        polygons = [GB.Polygon(GB.LineString(only(interior_pts)))]
+function polygon_from_rings(rings)
+   	# Split rings into exterior rings and holes
+	ext_rings = filter(!hole, rings)
+    int_rings = filter(hole, rings)
+    	
+	# For each hole find the corresponding exterior ring
+	matched_ext_inds = find_exterior_ring.(int_rings, Ref(ext_rings))
+	
+	# Dealing with orphaned holes (== reversed exteriors)
+	orphaned_hole_inds = isnothing.(matched_ext_inds)
+	
+	if length(orphaned_hole_inds) > 0
+		@warn "Misspecified multipolygon"
+		ext_rings = [ext_rings; int_rings[orphaned_hole_inds]]
+		int_rings = int_rings[.! orphaned_hole_inds]
 
-    elseif length(exterior_pts) == 1 # need GB.Polygon
-        exterior = GB.LineString(only(exterior_pts))
-        if length(interior_pts) != 0
-            interiors = collect(GB.LineString(pts) for pts in interior_pts)
-            polygons = [GB.Polygon(exterior, interiors)]
-        else
-            polygons = [GB.Polygon(exterior)]
-        end
-    else # need GB.MultiPolygon
-        # 1) match exteriors with interiors
-        if length(interior_pts) == 0
-            polygons = GB.Polygon.(exterior_pts)
-        else
-            # for each interior return the index of containing exterior ring
-            i_exterior_matched = map(interior_pts) do int
-                pt_int = int[1]
-                
-                i_ext_matched = findfirst(eachindex(exterior_pts)) do i_ext
-                    ext = exterior_pts[i_ext]
-                    inpolygon(pt_int, ext) == 1 # TODO: function should return a Bool
-                end
-            end
-            # 2) for each exterior collect all associated interiors
-            polygons = map(enumerate(exterior_pts)) do (i_ext, ext)
-                interiors = GB.LineString.(interior_pts[i_exterior_matched .== i_ext])
-                exterior = GB.LineString(ext)
-                GB.Polygon(exterior, interiors)
-            end
-        end
-    end
+		matched_ext_inds = find_exterior_ring.(int_rings, Ref(ext_rings))
+	end
+	
+	# Combine exteriors with corresponding holes into polygons
+	polygons = map(enumerate(ext_rings)) do (i, ext)
+		hole_inds = findall(matched_ext_inds .== i)
+		if length(hole_inds) > 0
+			GB.Polygon(ext, int_rings[hole_inds])
+		else
+			GB.Polygon(ext)
+		end
+	end
+	
+	# Combine polygons into a MultiPolygon
+	GB.MultiPolygon(polygons)
+	
+end
 
-    return GB.MultiPolygon(polygons)
+function find_exterior_ring(interior_ring, exterior_rings)
+	ext_inds = findall(iscontained.(Ref(interior_ring), exterior_rings))
+		
+	if isempty(ext_inds)
+		nothing
+	elseif length(ext_inds) == 1
+		only(ext_inds)
+	else
+		ext_inds[find_smallest_ring(exterior_rings[ext_inds])]
+	end
+end
 
+"""
+Find smallest ring of a collection rings {x₁, x₂, ..., xₙ} for which
+xᵢ ⊂ xⱼ or xᵢ ⊃ xⱼ for all i,j
+"""
+function find_smallest_ring(rings)
+	@assert length(rings) > 0
+	# rings need to be either ⊂ or ⊃ or both
+	sortperm(rings, lt = iscontained)[1]
+end
+
+"Checks containedment for non-overlapping polygons"
+function iscontained(haystack, needle)
+    out = nothing
+	for int_point in haystack
+		res = inpolygon(int_point, needle)
+		if res == -1
+			continue
+		elseif res == 1
+			return true
+		elseif res == 0
+			return false
+		end
+	end
+	@error "all points of haystack are *on* needle"
 end
 
 using ShiftedArrays
