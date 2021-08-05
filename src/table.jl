@@ -31,9 +31,11 @@ function Table(path::AbstractString, separate = false)
     stempath, ext = splitext(path)
     if lowercase(ext) == ".shp"
         shp_path = path
+        shx_path = string(stempath, ".shx")
         dbf_path = string(stempath, ".dbf")
     elseif ext == ""
         shp_path = string(stempath, ".shp")
+        shx_path = string(stempath, ".shx")
         dbf_path = string(stempath, ".dbf")
     else
         throw(ArgumentError("Provide the shapefile with either .shp or no extension"))
@@ -41,8 +43,12 @@ function Table(path::AbstractString, separate = false)
     isfile(shp_path) || throw(ArgumentError("File not found: $shp_path"))
     isfile(dbf_path) || throw(ArgumentError("File not found: $dbf_path"))
 
+    shp = if isfile(shx_path)
+        Shapefile.Handle(shp_path,shx_path)
+    else
+        Shapefile.Handle(shp_path)
+    end
     dbf = DBFTables.Table(dbf_path)
-    shp = Shapefile.Handle(shp_path)
     if separate == true
         return Shapefile.Table(shp, dbf)
     else 
@@ -78,12 +84,30 @@ function Base.iterate(t::Table, st = 1)
 end
 
 Base.getproperty(row::Row, name::Symbol) = getproperty(getfield(row, :record), name)
-Base.getproperty(t::Table, name::Symbol) = getproperty(getdbf(t), name)
+
+function Base.getproperty(t::Table, name::Symbol)
+    if name === :geometry
+        shapes(t)
+    else
+        getproperty(getdbf(t), name)
+    end
+end
 
 Base.propertynames(row::Row) = propertynames(getfield(row, :record))
-Base.propertynames(t::Table) = propertynames(getdbf(t))
 
-Tables.schema(t::Table) = Tables.schema(getdbf(t))
+function Base.propertynames(t::Table)
+    names = propertynames(getdbf(t))
+    pushfirst!(names, :geometry)
+    return names
+end
+
+function Tables.schema(t::Table)
+    dbf = getdbf(t)
+    dbf_schema = Tables.schema(dbf)
+    names = (:geometry, dbf_schema.names...)
+    types = (eltype(shapes(t)), dbf_schema.types...)
+    return Tables.Schema(names, types)
+end
 
 function Base.show(io::IO, t::Table)
     tt = typeof(t)

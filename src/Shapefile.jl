@@ -117,11 +117,13 @@ mutable struct Handle{T}
     shapes::Vector{T}
 end
 
-function Handle(path::AbstractString)
+function Handle(path::AbstractString, index=nothing)
     open(path) do io
-        read(io, Handle)
+        read(io, Handle, index)
     end
 end
+
+
 
 Base.length(shp::Handle) = length(shp.shapes)
 
@@ -313,7 +315,7 @@ function Base.read(io::IO, ::Type{MultiPatch})
     MultiPatch(box, parts, parttypes, points, zvalues) #,measures)
 end
 
-function Base.read(io::IO, ::Type{Handle}) 
+function Base.read(io::IO, ::Type{Handle}, index = nothing)
     code = bswap(read(io, Int32))
     read!(io, Vector{Int32}(undef, 5))
     fileSize = bswap(read(io, Int32))
@@ -336,7 +338,9 @@ function Base.read(io::IO, ::Type{Handle})
         Interval(mmin, mmax),
         shapes,
     )
+    num = Int32(0)
     while (!eof(io))
+        seeknext(io, num, index)
         num = bswap(read(io, Int32))
         rlength = bswap(read(io, Int32))
         shapeType = read(io, Int32)
@@ -349,13 +353,26 @@ function Base.read(io::IO, ::Type{Handle})
     file
 end
 
+include("basics.jl")
+include("table.jl")
+include("shx.jl")
+
+seeknext(io, num, ::Nothing) = nothing
+
+function seeknext(io, num, index::IndexHandle)
+    seek(io, index.indices[num+1].offset * 2)
+end
+
+function Handle(path::AbstractString, indexpath::AbstractString)
+    index = open(indexpath) do io
+        read(io, IndexHandle)
+    end
+    Handle(path, index)
+end
+
 function Base.:(==)(a::Rect, b::Rect)
     a.left == b.left &&
     a.bottom == b.bottom && a.right == b.right && a.top == b.top
 end
-
-include("basics.jl")
-include("table.jl")
-include("shx.jl")
 
 end # module
