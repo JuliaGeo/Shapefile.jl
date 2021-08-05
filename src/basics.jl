@@ -1,7 +1,7 @@
 using PolygonOps
 
 function parts_polygon(points::Vector{Point}, parts::Vector{Int32})
-	rings = Vector{GB.Point{2, Float64}}[]
+    rings = Vector{GB.Point{2, Float64}}[]
     parts .+= 1
     push!(parts, length(points)+1)
     # - split points into parts (rings)
@@ -10,54 +10,54 @@ function parts_polygon(points::Vector{Point}, parts::Vector{Int32})
         ring = collect(points[x] for x in parts[i]:parts[i+1]-1)
         push!(rings, ring)
     end
-	
-	polygon_from_rings(rings)
+
+    polygon_from_rings(rings)
 end
 
 function polygon_from_rings(rings)
-   	# Split rings into exterior rings and holes
-	ext_rings = filter(!hole, rings)
+    # Split rings into exterior rings and holes
+    ext_rings = filter(!hole, rings)
     int_rings = filter(hole, rings)
-    	
-	# For each hole find the corresponding exterior ring
-	matched_ext_inds = find_exterior_ring.(int_rings, Ref(ext_rings))
-	
-	# Dealing with orphaned holes (== reversed exteriors)
-	orphaned_hole_inds = isnothing.(matched_ext_inds)
-	
-	if length(orphaned_hole_inds) > 0
-		@warn "Misspecified multipolygon"
-		ext_rings = [ext_rings; int_rings[orphaned_hole_inds]]
-		int_rings = int_rings[.! orphaned_hole_inds]
+        
+    # For each hole find the corresponding exterior ring
+    matched_ext_inds = find_exterior_ring.(int_rings, Ref(ext_rings))
+    
+    # Dealing with orphaned holes (== reversed exteriors)
+    orphaned_hole_inds = isnothing.(matched_ext_inds)
+    
+    if length(orphaned_hole_inds) > 0
+        @warn "Misspecified multipolygon"
+        ext_rings = [ext_rings; int_rings[orphaned_hole_inds]]
+        int_rings = int_rings[.! orphaned_hole_inds]
 
-		matched_ext_inds = find_exterior_ring.(int_rings, Ref(ext_rings))
-	end
-	
-	# Combine exteriors with corresponding holes into polygons
-	polygons = map(enumerate(ext_rings)) do (i, ext)
-		hole_inds = findall(matched_ext_inds .== i)
-		if length(hole_inds) > 0
-			GB.Polygon(ext, int_rings[hole_inds])
-		else
-			GB.Polygon(ext)
-		end
-	end
-	
-	# Combine polygons into a MultiPolygon
-	GB.MultiPolygon(polygons)
-	
+        matched_ext_inds = find_exterior_ring.(int_rings, Ref(ext_rings))
+    end
+
+    # Combine exteriors with corresponding holes into polygons
+    polygons = map(enumerate(ext_rings)) do (i, ext)
+        hole_inds = findall(matched_ext_inds .== i)
+        if length(hole_inds) > 0
+            GB.Polygon(ext, int_rings[hole_inds])
+        else
+            GB.Polygon(ext)
+        end
+    end
+
+    # Combine polygons into a MultiPolygon
+    GB.MultiPolygon(polygons)
+
 end
 
 function find_exterior_ring(interior_ring, exterior_rings)
-	ext_inds = findall(iscontained.(Ref(interior_ring), exterior_rings))
-		
-	if isempty(ext_inds)
-		nothing
-	elseif length(ext_inds) == 1
-		only(ext_inds)
-	else
-		ext_inds[find_smallest_ring(exterior_rings[ext_inds])]
-	end
+    ext_inds = findall(iscontained.(Ref(interior_ring), exterior_rings))
+        
+    if isempty(ext_inds)
+        nothing
+    elseif length(ext_inds) == 1
+        only(ext_inds)
+    else
+        ext_inds[find_smallest_ring(exterior_rings[ext_inds])]
+    end
 end
 
 """
@@ -65,25 +65,25 @@ Find smallest ring of a collection rings {x₁, x₂, ..., xₙ} for which
 xᵢ ⊂ xⱼ or xᵢ ⊃ xⱼ for all i,j
 """
 function find_smallest_ring(rings)
-	@assert length(rings) > 0
-	# rings need to be either ⊂ or ⊃ or both
-	sortperm(rings, lt = iscontained)[1]
+    @assert length(rings) > 0
+    # rings need to be either ⊂ or ⊃ or both
+    sortperm(rings, lt = iscontained)[1]
 end
 
 "Checks containedment for non-overlapping polygons"
 function iscontained(haystack, needle)
     out = nothing
-	for int_point in haystack
-		res = inpolygon(int_point, needle)
-		if res == -1
-			continue
-		elseif res == 1
-			return true
-		elseif res == 0
-			return false
-		end
-	end
-	@error "all points of haystack are *on* needle"
+    for int_point in haystack
+        res = inpolygon(int_point, needle)
+        if res == -1
+            continue
+        elseif res == 1
+            return true
+        elseif res == 0
+            return false
+        end
+    end
+    @error "all points of haystack are *on* needle"
 end
 
 using ShiftedArrays
