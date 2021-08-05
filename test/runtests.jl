@@ -1,4 +1,4 @@
-using Shapefile, Plots
+using Shapefile
 using Test
 using GeometryBasics: GeometryBasics
 using DBFTables
@@ -108,11 +108,6 @@ for test in test_tuples
     @test shapes[1] == test.geomtype
     @test shp.MBR == test.bbox
     @test shp.shapeType == test.shapetype
-
-    # Multipatch can't be plotted, but it's obscure anyway
-    if !(test.geomtype == Shapefile.MultiPatch)
-        plot(shp) # Just test that it actually plots
-    end
 end
 
 

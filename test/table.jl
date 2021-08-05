@@ -1,7 +1,6 @@
 using Shapefile
 using Test
 using RemoteFiles
-using Plots
 import DBFTables
 import Tables
 import DataFrames
@@ -163,12 +162,6 @@ for shx_path in ne_shx
     open(path(natural_earth, "ne_land_shx")) do io
         read(io, Shapefile.IndexHandle)
     end
-end
-
-@testset "plot tables" begin
-    plot(ne_land)
-    plot(ne_coastline)
-    plot(ne_cities)
 end
 
 end  # testset "Tables interface"

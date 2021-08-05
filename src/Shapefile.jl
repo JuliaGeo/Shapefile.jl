@@ -7,8 +7,6 @@ import DBFTables, Tables
 
 const GB = GeometryBasics
 
-using RecipesBase
-
 struct Rect
     left::Float64
     bottom::Float64
@@ -359,6 +357,5 @@ end
 include("basics.jl")
 include("table.jl")
 include("shx.jl")
-include("plotrecipes.jl")
 
 end # module
