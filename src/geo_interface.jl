@@ -176,3 +176,12 @@ function GeoInterface.coordinates(obj::PolygonZ)
     end
     coords
 end
+
+# bbox
+const HasMBR = Union{Polyline,PolylineM, PolylineZ, Polygon, PolygonM, PolygonZ, 
+                     MultiPoint, MultiPointM, MultiPointZ, MultiPatch, Handle}
+
+function GeoInterface.bbox(x::HasMBR)
+    rect = x.MBR 
+    return rect.left, rect.bottom, rect.right, rect.top
+end
