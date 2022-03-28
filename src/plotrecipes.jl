@@ -3,5 +3,5 @@
 end
 
 @recipe function f(shp::Handle)
-    shp.shapes
+    shapes(shp)
 end
