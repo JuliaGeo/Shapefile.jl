@@ -1,6 +1,6 @@
 module Shapefile
 
-import GeoInterface, DBFTables, Tables
+import GeoInterface, DBFTables, Tables, GeoFormatTypes
 
 using RecipesBase
 
@@ -288,16 +288,17 @@ mutable struct Handle{T<:Union{<:GeoInterface.AbstractGeometry,Missing}}
     zrange::Interval
     mrange::Interval
     shapes::Vector{T}
+    crs::Union{Nothing,GeoFormatTypes.ESRIWellKnownText}
 end
-
 function Handle(path::AbstractString, index=nothing)
     open(path) do io
-        read(io, Handle, index)
+        read(io, Handle, index; path = path)
     end
 end
 
 shapes(h::Handle) = h.shapes
 
+GeoInterface.crs(h::Handle) = h.crs
 
 Base.length(shp::Handle) = length(shapes(shp))
 
@@ -477,7 +478,7 @@ function Base.read(io::IO, ::Type{MultiPatch})
     MultiPatch(box, parts, parttypes, points, zvalues) #,measures)
 end
 
-function Base.read(io::IO, ::Type{Handle}, index = nothing)
+function Base.read(io::IO, ::Type{Handle}, index = nothing; path = nothing)
     code = bswap(read(io, Int32))
     read!(io, Vector{Int32}(undef, 5))
     fileSize = bswap(read(io, Int32))
@@ -490,6 +491,17 @@ function Base.read(io::IO, ::Type{Handle}, index = nothing)
     mmax = read(io, Float64)
     jltype = SHAPETYPE[shapeType]
     shapes = Vector{Union{jltype,Missing}}(undef, 0)
+    crs = nothing
+    if !isnothing(path)
+        prjfile = string(splitext(path)[1], ".prj")
+        if isfile(prjfile) 
+            try
+                crs = GeoFormatTypes.ESRIWellKnownText(read(open(prjfile), String))
+            catch
+                @warn "Projection file $prjfile appears to be corrupted. `nothing` used for `crs`"
+            end
+        end
+    end
     file = Handle(
         code,
         fileSize,
@@ -499,6 +511,7 @@ function Base.read(io::IO, ::Type{Handle}, index = nothing)
         Interval(zmin, zmax),
         Interval(mmin, mmax),
         shapes,
+        crs,
     )
     num = Int32(0)
     while (!eof(io))

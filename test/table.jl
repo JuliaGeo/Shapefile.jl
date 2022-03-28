@@ -5,6 +5,8 @@ using Plots
 import DBFTables
 import Tables
 import DataFrames
+import GeoInterface
+import GeoFormatTypes
 
 datadir = joinpath(@__DIR__, "data")
 url = "https://github.com/nvkelso/natural-earth-vector/raw/v4.1.0"
@@ -14,14 +16,17 @@ url = "https://github.com/nvkelso/natural-earth-vector/raw/v4.1.0"
     ne_land_shp = @RemoteFile "$url/110m_physical/ne_110m_land.shp" dir = datadir
     ne_land_shx = @RemoteFile "$url/110m_physical/ne_110m_land.shx" dir = datadir
     ne_land_dbf = @RemoteFile "$url/110m_physical/ne_110m_land.dbf" dir = datadir
+    ne_land_prj = @RemoteFile "$url/110m_physical/ne_110m_land.prj" dir = datadir
     # linestring
     ne_coastline_shp = @RemoteFile "$url/110m_physical/ne_110m_coastline.shp" dir = datadir
     ne_coastline_shx = @RemoteFile "$url/110m_physical/ne_110m_coastline.shx" dir = datadir
     ne_coastline_dbf = @RemoteFile "$url/110m_physical/ne_110m_coastline.dbf" dir = datadir
+    ne_coastline_prj = @RemoteFile "$url/110m_physical/ne_110m_coastline.prj" dir = datadir
     # point
     ne_cities_shp = @RemoteFile "$url/110m_cultural/ne_110m_populated_places_simple.shp" dir = datadir
     ne_cities_shx = @RemoteFile "$url/110m_cultural/ne_110m_populated_places_simple.shx" dir = datadir
     ne_cities_dbf = @RemoteFile "$url/110m_cultural/ne_110m_populated_places_simple.dbf" dir = datadir
+    ne_cities_prj = @RemoteFile "$url/110m_cultural/ne_110m_populated_places_simple.prj" dir = datadir
 end
 
 download(natural_earth)
@@ -52,6 +57,8 @@ end
 # without .shp extension it should also work
 @test Shapefile.Table(splitext(path(natural_earth, "ne_land_shp"))[1]) isa Shapefile.Table
 
+wkt = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137.0,298.257223563]],PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.017453292519943295]]"
+
 @testset "ne_land" begin
     @test ne_land isa Shapefile.Table{Union{Shapefile.Polygon,Missing}}
     @test length(ne_land) == 127
@@ -60,6 +67,8 @@ end
     @test propertynames(first(ne_land)) == [:featurecla, :scalerank, :min_zoom]
     @test ne_land.featurecla isa Vector{String}
     @test length(ne_land.scalerank) == length(ne_land)
+    @test GeoInterface.crs(ne_land) == GeoFormatTypes.ESRIWellKnownText(wkt)
+
     @test sum(ne_land.scalerank) == 58
     @test Shapefile.shapes(ne_land) isa Vector{Union{Shapefile.Polygon,Missing}}
     @test Tables.istable(ne_land)
@@ -88,6 +97,7 @@ end
     @test propertynames(ne_coastline) == [:geometry, :scalerank, :featurecla, :min_zoom]
     @test propertynames(first(ne_coastline)) == [:scalerank, :featurecla, :min_zoom]
     @test ne_coastline.featurecla isa Vector{String}
+    @test GeoInterface.crs(ne_coastline) == GeoFormatTypes.ESRIWellKnownText(wkt)
     @test length(ne_coastline.scalerank) == length(ne_coastline)
     @test sum(ne_coastline.scalerank) == 59
     @test Shapefile.shapes(ne_coastline) isa Vector{Union{Shapefile.Polyline,Missing}}
@@ -124,6 +134,7 @@ end
     @test propertynames(ne_cities) == colnames
     @test propertynames(first(ne_cities)) == colnames[2:end]
     @test ne_cities.featurecla isa Vector{String}
+    @test GeoInterface.crs(ne_coastline) == GeoFormatTypes.ESRIWellKnownText(wkt)
     @test length(ne_cities.scalerank) == length(ne_cities)
     @test sum(ne_cities.scalerank) == 612
     @test Shapefile.shapes(ne_cities) isa Vector{Union{Shapefile.Point,Missing}}

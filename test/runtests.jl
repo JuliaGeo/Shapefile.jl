@@ -96,6 +96,8 @@ for test in test_tuples
             end
         end
         shapes = unique(map(typeof, shp.shapes))
+        @test GeoInterface.crs(shp) == nothing
+        @test length(shapes) == 1
         @test length(shapes) == 1
         @test shapes[1] == test.geomtype
         @test eltype(shp.shapes) == Union{test.geomtype,Missing}
