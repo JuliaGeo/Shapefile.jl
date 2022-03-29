@@ -52,7 +52,7 @@ end
 getshp(t::Table) = getfield(t, :shp)
 getdbf(t::Table) = getfield(t, :dbf)
 
-Base.length(t::Table) = length(shapes(getshp(t)))
+Base.length(t::Table) = length(shapes(t))
 
 Tables.istable(::Type{<:Table}) = true
 Tables.rows(t::Table) = t
