@@ -52,7 +52,7 @@ end
 getshp(t::Table) = getfield(t, :shp)
 getdbf(t::Table) = getfield(t, :dbf)
 
-Base.length(t::Table) = length(getshp(t).shapes)
+Base.length(t::Table) = length(shapes(t))
 
 Tables.istable(::Type{<:Table}) = true
 Tables.rows(t::Table) = t
@@ -63,7 +63,7 @@ Tables.columnaccess(::Type{<:Table}) = true
 "Iterate over the rows of a Shapefile.Table, yielding a Shapefile.Row for each row"
 function Base.iterate(t::Table, st = 1)
     st > length(t) && return nothing
-    geom = @inbounds getshp(t).shapes[st]
+    geom = @inbounds shapes(t)[st]
     record = DBFTables.Row(getdbf(t), st)
     return Row(geom, record), st + 1
 end
@@ -108,4 +108,4 @@ end
 "Get the geometry associated with a shapefile row"
 shape(row::Row) = getfield(row, :geometry)
 "Get a vector of the geometries in a shapefile, without any metadata"
-shapes(t::Table) = getshp(t).shapes
+shapes(t::Table) = shapes(getshp(t))

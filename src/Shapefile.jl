@@ -140,9 +140,10 @@ function Handle(path::AbstractString, index=nothing)
     end
 end
 
+shapes(h::Handle) = h.shapes
 
 
-Base.length(shp::Handle) = length(shp.shapes)
+Base.length(shp::Handle) = length(shapes(shp))
 
 function Base.read(io::IO, ::Type{Rect})
     minx = read(io, Float64)
