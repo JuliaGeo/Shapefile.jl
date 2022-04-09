@@ -12,6 +12,9 @@ compatible table, where each row is is a an object such as a (`Point`](@ref),
 
 The `Shapefile.Table` constructor can read either a `String` path to
 a shapefile, or a [`Shapefile.Handle`](@ref) and a `DBFTables.Table`.
+
+Property names accessable by `table.x` are `geometry` for the
+geometry object, and the names of the columns in `dbf`.
 """
 struct Table{T}
     shp::Handle{T}
@@ -58,6 +61,9 @@ end
     Row(geometry, record::DBFTables.Row)
 
 A struct representing a single record in a shapefile.
+
+Property names accessable by `row.x` are `geometry` for the
+geometry object, and the names of the columns in `record`.
 """
 struct Row{T}
     geometry::T
@@ -78,7 +84,7 @@ Tables.columnaccess(::Type{<:Table}) = true
 """
     Base.iterate(t::Table)
 
-Iterate over the rows of a Shapefile.Table, yielding a Shapefile.Row for each row
+Iterate over the rows of a Shapefile.Table, yielding a Shapefile.Row for each row.
 """
 function Base.iterate(t::Table, st = 1)
     st > length(t) && return nothing
