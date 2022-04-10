@@ -492,7 +492,7 @@ function Base.read(io::IO, ::Type{Handle}, index = nothing; path = nothing)
     jltype = SHAPETYPE[shapeType]
     shapes = Vector{Union{jltype,Missing}}(undef, 0)
     crs = nothing
-    if !isnothing(path)
+    if path !== nothing
         prjfile = string(splitext(path)[1], ".prj")
         if isfile(prjfile) 
             try
