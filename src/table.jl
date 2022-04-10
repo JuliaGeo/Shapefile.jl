@@ -47,7 +47,7 @@ function Table(path::AbstractString)
     isfile(dbf_path) || throw(ArgumentError("File not found: $dbf_path"))
 
     shp = if isfile(shx_path)
-        Shapefile.Handle(shp_path,shx_path)
+        Shapefile.Handle(shp_path, shx_path)
     else
         Shapefile.Handle(shp_path)
     end
@@ -144,3 +144,5 @@ shape(row::Row) = getfield(row, :geometry)
 Get a vector of the geometries in a shapefile `Table`, without any metadata.
 """
 shapes(t::Table) = shapes(getshp(t))
+
+GeoInterface.crs(t::Table) = GeoInterface.crs(getshp(t))

@@ -5,12 +5,14 @@ version = "0.7.4"
 
 [deps]
 DBFTables = "75c7ada1-017a-5fb6-b8c7-2125ff2d6c93"
+GeoFormatTypes = "68eda718-8dee-11e9-39e7-89f7f65f511f"
 GeoInterface = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 
 [compat]
 DBFTables = "0.2, 1"
+GeoFormatTypes = "0.4"
 GeoInterface = "0.4, 0.5"
 RecipesBase = "1"
 Tables = "0.2, 1"
