@@ -4,6 +4,13 @@ import GeoInterface, DBFTables, Tables
 
 using RecipesBase
 
+# Types: could we move these to a shapes.jl file?
+
+"""
+    Rect
+
+A rectangle object to represent the bounding box for other shape file shapes.
+"""
 struct Rect
     left::Float64
     bottom::Float64
@@ -11,22 +18,52 @@ struct Rect
     top::Float64
 end
 
+"""
+    Interval
+
+Represents the range of measures or Z dimension, in a shape file.
+"""
 struct Interval
     left::Float64
     right::Float64
 end
 
+"""
+    Point <: GeoInterface.AbstractPoint
+
+Point from a shape file.
+
+Fields `x`, `y` hold the spatial location.
+"""
 struct Point <: GeoInterface.AbstractPoint
     x::Float64
     y::Float64
 end
 
+"""
+    PointM <: GeoInterface.AbstractPoint
+
+Point from a shape file.
+
+Fields `x`, `y` hold the spatial location.
+
+Includes a measure field `m`, holding a value for the point.
+"""
 struct PointM <: GeoInterface.AbstractPoint
     x::Float64
     y::Float64
     m::Float64  # measure
 end
 
+"""
+    PointZ <: GeoInterface.AbstractPoint
+
+Three dimensional point, from a shape file.
+
+Fields `x`, `y`, `z` hold the spatial location.
+
+Includes a measure field `m`, holding a value for the point.
+"""
 struct PointZ <: GeoInterface.AbstractPoint
     x::Float64
     y::Float64
@@ -34,12 +71,33 @@ struct PointZ <: GeoInterface.AbstractPoint
     m::Float64  # measure
 end
 
+"""
+    Polyline <: GeoInterface.AbstractMultiLineString
+
+Represents a single or multiple polylines from a shape file.
+
+# Fields
+- `points`: a `Vector` of [`Point`](@ref) represents a one or multiple lines. 
+- `parts`: a `Vector` of `Int32` indicating the line each point belongs to.
+- `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
+"""
 struct Polyline <: GeoInterface.AbstractMultiLineString
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
 end
 
+"""
+    PolylineM <: GeoInterface.AbstractMultiLineString
+
+Polyline from a shape file, with measures.
+
+# Fields
+- `points`: a `Vector` of [`Point`](@ref) represents a one or multiple lines. 
+- `parts`: a `Vector` of `Int32` indicating the line each point belongs to.
+- `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
+- `measures`: holds values from each point.
+"""
 struct PolylineM <: GeoInterface.AbstractMultiLineString
     MBR::Rect
     parts::Vector{Int32}
@@ -47,6 +105,18 @@ struct PolylineM <: GeoInterface.AbstractMultiLineString
     measures::Vector{Float64}
 end
 
+"""
+    PolylineZ <: GeoInterface.AbstractMultiLineString
+
+Three dimensional polyline of from a shape file. 
+
+# Fields
+- `points`: a `Vector` of [`Point`](@ref) represents a one or multiple lines. 
+- `parts`: a `Vector` of `Int32` indicating the line each point belongs to.
+- `zvalues`: a `Vector` of `Float64` representing the z dimension values.
+- `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
+- `measures`: holds values from each point.
+"""
 struct PolylineZ <: GeoInterface.AbstractMultiLineString
     MBR::Rect
     parts::Vector{Int32}
@@ -55,6 +125,16 @@ struct PolylineZ <: GeoInterface.AbstractMultiLineString
     measures::Vector{Float64}
 end
 
+"""
+    Polygon <: GeoInterface.AbstractMultiPolygon
+
+Represents a polygon from a shape file. 
+
+# Fields
+- `points`: a `Vector` of [`Point`](@ref) represents a one or multiple closed areas. 
+- `parts`: a `Vector` of `Int32` indicating the polygon each point belongs to.
+- `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
+"""
 struct Polygon <: GeoInterface.AbstractMultiPolygon
     MBR::Rect
     parts::Vector{Int32}
@@ -64,6 +144,17 @@ end
 Base.show(io::IO, p::Polygon) =
     print(io, "Polygon(", length(p.points), " Points)")
 
+"""
+    PolygonM <: GeoInterface.AbstractMultiPolygon
+
+Represents a polygon from a shape file
+
+# Fields
+- `points`: a `Vector` of [`Point`](@ref) represents a one or multiple closed areas. 
+- `parts`: a `Vector` of `Int32` indicating the polygon each point belongs to.
+- `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
+- `measures`: holds values from each point.
+"""
 struct PolygonM <: GeoInterface.AbstractMultiPolygon
     MBR::Rect
     parts::Vector{Int32}
@@ -71,6 +162,18 @@ struct PolygonM <: GeoInterface.AbstractMultiPolygon
     measures::Vector{Float64}
 end
 
+"""
+    PolygonZ <: GeoInterface.AbstractMultiPolygon
+
+A three dimensional polygon from a shape file.
+
+# Fields
+- `points`: a `Vector` of [`Point`](@ref) represents a one or multiple closed areas. 
+- `parts`: a `Vector` of `Int32` indicating the polygon each point belongs to.
+- `zvalues`: a `Vector` of `Float64` representing the z dimension values.
+- `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
+- `measures`: holds values from each point.
+"""
 struct PolygonZ <: GeoInterface.AbstractMultiPolygon
     MBR::Rect
     parts::Vector{Int32}
@@ -79,17 +182,49 @@ struct PolygonZ <: GeoInterface.AbstractMultiPolygon
     measures::Vector{Float64}
 end
 
+"""
+    MultiPoint <: GeoInterface.AbstractMultiPoint
+
+Collection of points, from a shape file.
+
+# Fields
+- `points`: a `Vector` of [`Point`](@ref). 
+- `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
+"""
 struct MultiPoint <: GeoInterface.AbstractMultiPoint
     MBR::Rect
     points::Vector{Point}
 end
 
+"""
+    MultiPointM <: GeoInterface.AbstractMultiPoint
+
+Collection of points, from a shape file. 
+
+Includes a `measures` field, holding values from each point.
+
+May have a known bounding box, which can be retrieved with `GeoInterface.bbox`.
+
+# Fields
+- `points`: a `Vector` of [`Point`](@ref). 
+- `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
+- `measures`: holds values from each point.
+"""
 struct MultiPointM <: GeoInterface.AbstractMultiPoint
     MBR::Rect
     points::Vector{Point}
     measures::Vector{Float64}
 end
 
+"""
+    MultiPointZ <: GeoInterface.AbstractMultiPoint
+
+# Fields
+- `points`: a `Vector` of [`Point`](@ref). 
+- `zvalues`: a `Vector` of `Float64` representing the z dimension values.
+- `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
+- `measures`: holds values from each point.
+"""
 struct MultiPointZ <: GeoInterface.AbstractMultiPoint
     MBR::Rect
     points::Vector{Point}
@@ -97,6 +232,15 @@ struct MultiPointZ <: GeoInterface.AbstractMultiPoint
     measures::Vector{Float64}
 end
 
+"""
+    MultiPatch <: GeoInterface.AbstractGeometry
+
+# Fields
+- `points`: a `Vector` of [`Point`](@ref) represents a one or multiple spatial objects. 
+- `parts`: a `Vector` of `Int32` indicating the object each point belongs to.
+- `parttypes`: a `Vector` of `Int32` indicating the type of object each point belongs to.
+- `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
+"""
 struct MultiPatch <: GeoInterface.AbstractGeometry
     MBR::Rect
     parts::Vector{Int32}
@@ -123,6 +267,18 @@ const SHAPETYPE = Dict{Int32,DataType}(
     31 => MultiPatch,
 )
 
+"""
+    Handle
+
+    Handle(path::AbstractString, [indexpath::AbstractString])
+
+Load a shapefile into GeoInterface compatible objects. This can be plotted
+with Plots.jl `plot`.
+
+The Vector of shape object can be accessed with `shapes(handle)`.
+
+`Handle` may have a known bounding box, which can be retrieved with `GeoInterface.bbox`.
+"""
 mutable struct Handle{T<:Union{<:GeoInterface.AbstractGeometry,Missing}}
     code::Int32
     length::Int32
