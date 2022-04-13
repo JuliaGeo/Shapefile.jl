@@ -1,5 +1,8 @@
 # Shapefile
 
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaGeo.github.io/Shapefile.jl/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaGeo.github.io/Shapefile.jl/dev)
+[![CI](https://github.com/JuliaGeo/Shapefile.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeo/Shapefile.jl/actions?query=workflow%3ACI)
 [![CI](https://github.com/JuliaGeo/Shapefile.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeo/Shapefile.jl/actions?query=workflow%3ACI)
 
 This library supports reading ESRI Shapefiles in pure Julia.
