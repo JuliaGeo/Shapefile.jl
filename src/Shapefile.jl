@@ -1,6 +1,6 @@
 module Shapefile
 
-import GeoInterface, DBFTables, Tables, GeoFormatTypes
+import GeoFormatTypes, GeoInterface, DBFTables, Extents, Tables
 
 using RecipesBase
 
@@ -18,6 +18,13 @@ struct Rect
     top::Float64
 end
 
+abstract type AbstractShape end
+
+isgeometry(::AbstractShape) = true
+GeoInterface.ncoord(::AbstractShape) = 2 # With specific methods when 3
+
+GeoInterface.@enable_geo_plots AbstractShape
+
 """
     Interval
 
@@ -28,20 +35,26 @@ struct Interval
     right::Float64
 end
 
+abstract type AbstractPoint <: AbstractShape end
+
+GeoInterface.geomtype(point::Type{<:AbstractPoint}) = GeoInterface.PointTrait()
+GeoInterface.x(point::AbstractPoint) = point.x
+GeoInterface.y(point::AbstractPoint) = point.y
+
 """
-    Point <: GeoInterface.AbstractPoint
+    Point <: AbstractPoint
 
 Point from a shape file.
 
 Fields `x`, `y` hold the spatial location.
 """
-struct Point <: GeoInterface.AbstractPoint
+struct Point <: AbstractPoint
     x::Float64
     y::Float64
 end
 
 """
-    PointM <: GeoInterface.AbstractPoint
+    PointM <: AbstractPoint
 
 Point from a shape file.
 
@@ -49,14 +62,16 @@ Fields `x`, `y` hold the spatial location.
 
 Includes a measure field `m`, holding a value for the point.
 """
-struct PointM <: GeoInterface.AbstractPoint
+struct PointM <: AbstractPoint
     x::Float64
     y::Float64
     m::Float64  # measure
 end
 
+GeoInterface.m(point::PointM) = point.m
+
 """
-    PointZ <: GeoInterface.AbstractPoint
+    PointZ <: AbstractPoint
 
 Three dimensional point, from a shape file.
 
@@ -64,15 +79,23 @@ Fields `x`, `y`, `z` hold the spatial location.
 
 Includes a measure field `m`, holding a value for the point.
 """
-struct PointZ <: GeoInterface.AbstractPoint
+struct PointZ <: AbstractPoint
     x::Float64
     y::Float64
     z::Float64
     m::Float64  # measure
 end
 
+GeoInterface.m(point::PointZ) = point.m
+GeoInterface.z(point::PointZ) = point.z
+GeoInterface.ncoord(::PointZ) = 3
+
+abstract type AbstractPolyline <: AbstractShape end
+
+GeoInterface.geomtype(::Type{<:AbstractPolyline}) = GeoInterface.MultiLineStringTrait()
+
 """
-    Polyline <: GeoInterface.AbstractMultiLineString
+    Polyline <: AbstractPolyline
 
 Represents a single or multiple polylines from a shape file.
 
@@ -81,14 +104,14 @@ Represents a single or multiple polylines from a shape file.
 - `parts`: a `Vector` of `Int32` indicating the line each point belongs to.
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 """
-struct Polyline <: GeoInterface.AbstractMultiLineString
+struct Polyline <: AbstractPolyline
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
 end
 
 """
-    PolylineM <: GeoInterface.AbstractMultiLineString
+    PolylineM <: AbstractPolyline
 
 Polyline from a shape file, with measures.
 
@@ -98,7 +121,7 @@ Polyline from a shape file, with measures.
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 - `measures`: holds values from each point.
 """
-struct PolylineM <: GeoInterface.AbstractMultiLineString
+struct PolylineM <: AbstractPolyline
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
@@ -106,7 +129,7 @@ struct PolylineM <: GeoInterface.AbstractMultiLineString
 end
 
 """
-    PolylineZ <: GeoInterface.AbstractMultiLineString
+    PolylineZ <: AbstractPolyline
 
 Three dimensional polyline of from a shape file. 
 
@@ -117,7 +140,7 @@ Three dimensional polyline of from a shape file.
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 - `measures`: holds values from each point.
 """
-struct PolylineZ <: GeoInterface.AbstractMultiLineString
+struct PolylineZ <: AbstractPolyline
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
@@ -125,8 +148,14 @@ struct PolylineZ <: GeoInterface.AbstractMultiLineString
     measures::Vector{Float64}
 end
 
+GeoInterface.ncoord(::PolylineZ) = 3
+
+abstract type AbstractPolygon <: AbstractShape end
+
+GeoInterface.geomtype(::Type{<:AbstractPolygon}) = GeoInterface.PolygonTrait()
+
 """
-    Polygon <: GeoInterface.AbstractMultiPolygon
+    Polygon <: AbstractPolygon
 
 Represents a polygon from a shape file. 
 
@@ -135,7 +164,7 @@ Represents a polygon from a shape file.
 - `parts`: a `Vector` of `Int32` indicating the polygon each point belongs to.
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 """
-struct Polygon <: GeoInterface.AbstractMultiPolygon
+struct Polygon <: AbstractPolygon
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
@@ -145,7 +174,7 @@ Base.show(io::IO, p::Polygon) =
     print(io, "Polygon(", length(p.points), " Points)")
 
 """
-    PolygonM <: GeoInterface.AbstractMultiPolygon
+    PolygonM <: AbstractPolygon
 
 Represents a polygon from a shape file
 
@@ -155,7 +184,7 @@ Represents a polygon from a shape file
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 - `measures`: holds values from each point.
 """
-struct PolygonM <: GeoInterface.AbstractMultiPolygon
+struct PolygonM <: AbstractPolygon
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
@@ -163,7 +192,7 @@ struct PolygonM <: GeoInterface.AbstractMultiPolygon
 end
 
 """
-    PolygonZ <: GeoInterface.AbstractMultiPolygon
+    PolygonZ <: AbstractPolygon
 
 A three dimensional polygon from a shape file.
 
@@ -174,7 +203,7 @@ A three dimensional polygon from a shape file.
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 - `measures`: holds values from each point.
 """
-struct PolygonZ <: GeoInterface.AbstractMultiPolygon
+struct PolygonZ <: AbstractPolygon
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
@@ -182,8 +211,14 @@ struct PolygonZ <: GeoInterface.AbstractMultiPolygon
     measures::Vector{Float64}
 end
 
+GeoInterface.ncoord(::PolygonZ) = 3
+
+abstract type AbstractMultiPoint <: AbstractShape end
+
+GeoInterface.geomtype(::Type{<:AbstractMultiPoint}) = GeoInterface.MultiPointTrait()
+
 """
-    MultiPoint <: GeoInterface.AbstractMultiPoint
+    MultiPoint <: AbstractMultiPoint
 
 Collection of points, from a shape file.
 
@@ -191,13 +226,13 @@ Collection of points, from a shape file.
 - `points`: a `Vector` of [`Point`](@ref). 
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 """
-struct MultiPoint <: GeoInterface.AbstractMultiPoint
+struct MultiPoint <: AbstractMultiPoint
     MBR::Rect
     points::Vector{Point}
 end
 
 """
-    MultiPointM <: GeoInterface.AbstractMultiPoint
+    MultiPointM <: AbstractMultiPoint
 
 Collection of points, from a shape file. 
 
@@ -210,14 +245,20 @@ May have a known bounding box, which can be retrieved with `GeoInterface.bbox`.
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 - `measures`: holds values from each point.
 """
-struct MultiPointM <: GeoInterface.AbstractMultiPoint
+struct MultiPointM <: AbstractMultiPoint
     MBR::Rect
     points::Vector{Point}
     measures::Vector{Float64}
 end
 
 """
-    MultiPointZ <: GeoInterface.AbstractMultiPoint
+    MultiPointZ <: AbstractMultiPoint
+
+Collection of 3d points, from a shape file. 
+
+Includes a `measures` field, holding values from each point.
+
+May have a known bounding box, which can be retrieved with `GeoInterface.bbox`.
 
 # Fields
 - `points`: a `Vector` of [`Point`](@ref). 
@@ -225,23 +266,28 @@ end
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 - `measures`: holds values from each point.
 """
-struct MultiPointZ <: GeoInterface.AbstractMultiPoint
+struct MultiPointZ <: AbstractMultiPoint
     MBR::Rect
     points::Vector{Point}
     zvalues::Vector{Float64}
     measures::Vector{Float64}
 end
 
+GeoInterface.ncoord(::MultiPointZ) = 3
+
 """
-    MultiPatch <: GeoInterface.AbstractGeometry
+    MultiPatch
+
+Stores a collection of patch representing the boundary of a 3d object.
 
 # Fields
 - `points`: a `Vector` of [`Point`](@ref) represents a one or multiple spatial objects. 
 - `parts`: a `Vector` of `Int32` indicating the object each point belongs to.
 - `parttypes`: a `Vector` of `Int32` indicating the type of object each point belongs to.
+- `zvalues`: a `Vector` of `Float64` indicating absolute or relative heights.
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 """
-struct MultiPatch <: GeoInterface.AbstractGeometry
+struct MultiPatch <: AbstractShape
     MBR::Rect
     parts::Vector{Int32}
     parttypes::Vector{Int32}
@@ -249,6 +295,10 @@ struct MultiPatch <: GeoInterface.AbstractGeometry
     zvalues::Vector{Float64}
     # measures::Vector{Float64}  # (optional)
 end
+
+GeoInterface.geomtype(::Type{<:MultiPatch}) = GeoInterface.MultiPointTrait()
+
+GeoInterface.ncoord(::MultiPatch) = 3
 
 const SHAPETYPE = Dict{Int32,DataType}(
     0 => Missing,
@@ -279,7 +329,7 @@ The Vector of shape object can be accessed with `shapes(handle)`.
 
 `Handle` may have a known bounding box, which can be retrieved with `GeoInterface.bbox`.
 """
-mutable struct Handle{T<:Union{<:GeoInterface.AbstractGeometry,Missing}}
+mutable struct Handle{T<:Union{<:AbstractShape,Missing}}
     code::Int32
     length::Int32
     version::Int32

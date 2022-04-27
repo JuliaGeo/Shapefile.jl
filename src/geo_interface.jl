@@ -1,17 +1,17 @@
-GeoInterface.coordinates(obj::Union{Point,PointM}) = Float64[obj.x, obj.y]
-GeoInterface.coordinates(obj::PointZ) = Float64[obj.x, obj.y, obj.z]
+GeoInterface.coordinates(::GeoInterface.PointTrait, obj::Union{Point,PointM}) = [obj.x, obj.y]
+GeoInterface.coordinates(::GeoInterface.PointTrait, obj::PointZ) = [obj.x, obj.y, obj.z]
 
 GeoInterface.coordinates(obj::Union{MultiPoint,MultiPointM,MultiPointZ}) =
     Vector{Float64}[GeoInterface.coordinates(p) for p in obj.points]
 
-function GeoInterface.coordinates(obj::Union{Polyline,PolylineM,PolylineZ})
+function GeoInterface.coordinates(::GeoInterface.MultiLineStringTrait, obj::Union{Polyline,PolylineM,PolylineZ})
     npoints = length(obj.points)
     nparts = length(obj.parts)
     @assert obj.parts[nparts] <= npoints
     push!(obj.parts, npoints)
     coords = Vector{Vector{Float64}}[Vector{Float64}[GeoInterface.coordinates(obj.points[j+1]) for j = obj.parts[i]:(obj.parts[i+1]-1)] for i = 1:nparts]
     pop!(obj.parts)
-    coords
+    return coords
 end
 
 # Only supports 2D geometries for now
@@ -26,11 +26,11 @@ function inring(pt::Vector{Float64}, ring::Vector{Vector{Float64}})
     for k = 2:length(ring)
         isinside = intersect(ring[k], ring[k-1]) ? !isinside : isinside
     end
-    isinside
+    return isinside
 end
 
 # ported from https://github.com/Esri/terraformer-arcgis-parser/blob/master/terraformer-arcgis-parser.js#L168-L253
-function GeoInterface.coordinates(obj::Union{Polygon,PolygonZ,PolygonM})
+function GeoInterface.coordinates(::GeoInterface.PolygonTrait, obj::Union{Polygon,PolygonZ,PolygonM})
     npoints = length(obj.points)
     nparts = length(obj.parts)
     @assert obj.parts[end] <= npoints
@@ -68,17 +68,16 @@ function GeoInterface.coordinates(obj::Union{Polygon,PolygonZ,PolygonM})
             end
         end
         if !found
-            push!(coords, Vector{Vector{Float64}}[hole]) # hole is not inside any ring; make it a polygon
+            push!(coords, [hole]) # hole is not inside any ring; make it a polygon
         end
     end
-    coords
+    return coords
 end
 
 # bbox
-const HasMBR = Union{Polyline,PolylineM, PolylineZ, Polygon, PolygonM, PolygonZ, 
-                     MultiPoint, MultiPointM, MultiPointZ, MultiPatch, Handle}
+const HasMBR = Union{AbstractPolyline,AbstractPolygon,AbstractMultiPoint,MultiPatch,Handle}
 
-function GeoInterface.bbox(x::HasMBR)
+function GeoInterface.extent(x::HasMBR)
     rect = x.MBR 
-    return rect.left, rect.bottom, rect.right, rect.top
+    return Extents.Extent(X=(rect.left, rect.right), Y=(rect.bottom, rect.top))
 end
