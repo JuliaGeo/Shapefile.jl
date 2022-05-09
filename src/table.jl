@@ -145,4 +145,5 @@ Get a vector of the geometries in a shapefile `Table`, without any metadata.
 """
 shapes(t::Table) = shapes(getshp(t))
 
+GeoInterface.extent(t::Table) = GeoInterface.extent(getshp(t))
 GeoInterface.crs(t::Table) = GeoInterface.crs(getshp(t))
