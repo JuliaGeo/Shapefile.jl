@@ -83,16 +83,18 @@ test_tuples = [
     )
 ]
 
-@testset "Shapefile" begin
+# Visual plot check
+# for t in test_tuples
+#     if !(t.geomtype <: Union{Missing,Shapefile.MultiPatch})
+#         @show t.path t.geomtype
+#         sh = Shapefile.Handle(t.path)
+#         p = sh.shapes
+#         display(plot(p; opacity=.5))
+#         sleep(1)
+#     end
+# end
 
-for t in test_tuples
-    if !(t.geomtype <: Union{Missing,Shapefile.MultiPatch})
-        sh = Shapefile.Handle(t.path)
-        p = sh.shapes
-        display(plot(p))
-        sleep(1)
-    end
-end
+@testset "Shapefile" begin
 
 for test in test_tuples
     for use_shx in (false, true)

@@ -52,6 +52,7 @@ abstract type AbstractPolygon{T} <: AbstractShape end
 # Shapefile polygons are OGC multipolygons
 GI.geomtrait(geom::AbstractPolygon) = GI.MultiPolygonTrait()
 GI.nring(::GI.MultiPolygonTrait, geom::AbstractPolygon) = length(geom.parts)
+GI.npoint(::GI.MultiPolygonTrait, geom::AbstractPolygon) = length(geom.points)
 function GI.ngeom(::GI.MultiPolygonTrait, geom::AbstractPolygon)
     n = 0
     for ring in GI.getring(geom)
@@ -60,16 +61,6 @@ function GI.ngeom(::GI.MultiPolygonTrait, geom::AbstractPolygon)
         end
     end
     return n
-end
-
-function _isclockwise(ring)
-    clockwise_test = 0.0
-    for i in 1:GI.npoint(ring)-1
-        prev = ring[i]
-        cur = ring[i+1]
-        clockwise_test += (cur.x - prev.x) * (cur.y + prev.y)
-    end
-    clockwise_test > 0
 end
 
 function GI.getring(t::GI.MultiPolygonTrait, geom::AbstractPolygon)
@@ -127,6 +118,16 @@ function _inring(pt::Point, ring::LinearRing)
         isinside = intersect(ring[k], ring[k-1]) ? !isinside : isinside
     end
     return isinside
+end
+
+function _isclockwise(ring)
+    clockwise_test = 0.0
+    for i in 1:GI.npoint(ring)-1
+        prev = ring[i]
+        cur = ring[i + 1]
+        clockwise_test += (cur.x - prev.x) * (cur.y + prev.y)
+    end
+    clockwise_test > 0
 end
 
 
