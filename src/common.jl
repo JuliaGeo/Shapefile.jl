@@ -1,7 +1,7 @@
 
 abstract type AbstractShape end
 
-isgeometry(::AbstractShape) = true
+GeoInterface.isgeometry(::Type{<:AbstractShape}) = true
 GeoInterface.ncoord(::GI.AbstractGeometryTrait, ::AbstractShape) = 2 # With specific methods when 3
 
 """
