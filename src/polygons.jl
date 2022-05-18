@@ -12,11 +12,11 @@ struct LinearRing{P,Z,M} <: AbstractVector{P}
     m::M
 end
 LinearRing{P}(xy, z::Z, m::M) where {P,Z,M} = LinearRing{P,Z,M}(xy, z, m)
-LinearRing{P}(xy; z=nothing, m=nothing) where P = LinearRing{P}(xy, z, m)
+LinearRing{P}(xy; z=nothing, m=nothing) where {P} = LinearRing{P}(xy, z, m)
 
 GI.isgeometry(::Type{<:LinearRing}) = true
-GI.geomtype(::LinearRing) = GI.LinearRingTrait()
-GI.ncoord(lr::LinearRing{P}) where P = _ncoord(P)
+GI.geomtrait(::LinearRing) = GI.LinearRingTrait()
+GI.ncoord(lr::LinearRing{P}) where {P} = _ncoord(P)
 GI.ngeom(::GI.LinearRingTrait, lr::LinearRing) = length(lr)
 # GI.getgeom(::GI.LinearRingTrait, lr::LinearRing) = (getindex(lr, i) for i in 1:ngeom(lr))
 
@@ -35,8 +35,8 @@ struct SubPolygon{L<:LinearRing} <: AbstractVector{L}
     rings::Vector{L}
 end
 GI.isgeometry(::Type{<:SubPolygon}) = true
-GI.geomtype(::SubPolygon) = GI.PolygonTrait()
-GI.ncoord(::GI.PolygonTrait, ::SubPolygon{LinearRing{P}}) where P = _ncoord(P)
+GI.geomtrait(::SubPolygon) = GI.PolygonTrait()
+GI.ncoord(::GI.PolygonTrait, ::SubPolygon{LinearRing{P}}) where {P} = _ncoord(P)
 GI.ngeom(::GI.PolygonTrait, sp::SubPolygon) = length(sp)
 GI.getgeom(::GI.PolygonTrait, sp::SubPolygon, i::Integer) = getindex(sp, i)
 
@@ -50,7 +50,7 @@ Base.push!(p::SubPolygon, x) = Base.push!(parent(p), x)
 abstract type AbstractPolygon{T} <: AbstractShape end
 
 # Shapefile polygons are OGC multipolygons
-GI.geomtype(geom::AbstractPolygon) = GI.MultiPolygonTrait()
+GI.geomtrait(geom::AbstractPolygon) = GI.MultiPolygonTrait()
 GI.nring(::GI.MultiPolygonTrait, geom::AbstractPolygon) = length(geom.parts)
 function GI.ngeom(::GI.MultiPolygonTrait, geom::AbstractPolygon)
     n = 0
@@ -66,7 +66,7 @@ function _isclockwise(ring)
     clockwise_test = 0.0
     for i in 1:GI.npoint(ring)-1
         prev = ring[i]
-        cur = ring[i + 1]
+        cur = ring[i+1]
         clockwise_test += (cur.x - prev.x) * (cur.y + prev.y)
     end
     clockwise_test > 0
@@ -75,7 +75,7 @@ end
 function GI.getring(t::GI.MultiPolygonTrait, geom::AbstractPolygon)
     return (GI.getring(t, geom, i) for i in eachindex(geom.parts))
 end
-function GI.getring(::GI.MultiPolygonTrait, geom::AbstractPolygon{P}, i::Integer) where P
+function GI.getring(::GI.MultiPolygonTrait, geom::AbstractPolygon{P}, i::Integer) where {P}
     pa = geom.parts
     range = pa[i]+1:(i == lastindex(pa) ? lastindex(geom.points) : pa[i+1])
     xy = view(geom.points, range)
@@ -90,7 +90,7 @@ end
 # Warning: getgeom is very slow for a Shapefile. Use `getpolygons`,
 # or if you don't need exteriors and holes to be separated, `getring`.
 GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon, i::Integer) = collect(GI.getgeom(geom))[i]
-function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon{T}) where T
+function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon{T}) where {T}
     r1 = GI.getring(geom, 1)
     polygons = SubPolygon{typeof(r1)}[]
     holes = typeof(r1)[]
@@ -230,4 +230,3 @@ function Base.read(io::IO, ::Type{PolygonZ})
     read!(io, measures)
     PolygonZ(box, parts, points, zrange, zvalues, mrange, measures)
 end
-

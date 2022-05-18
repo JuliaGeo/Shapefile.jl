@@ -1,11 +1,11 @@
 
 abstract type AbstractPoint <: AbstractShape end
 
-GI.geomtype(::AbstractPoint) = GI.PointTrait()
+GI.geomtrait(::AbstractPoint) = GI.PointTrait()
 GI.x(::GI.PointTrait, point::AbstractPoint) = point.x
 GI.y(::GI.PointTrait, point::AbstractPoint) = point.y
 GI.getcoord(::GI.PointTrait, p::AbstractPoint, i::Integer) = getfield(p, i)
-GI.ncoord(::GI.PointTrait, p::T) where T <: AbstractPoint = _ncoord(T)
+GI.ncoord(::GI.PointTrait, p::T) where {T<:AbstractPoint} = _ncoord(T)
 
 _ncoord(::Type{<:AbstractPoint}) = 2
 
@@ -81,4 +81,3 @@ GI.m(::GI.PointTrait, point::PointZ) = point.m
 GI.z(::GI.PointTrait, point::PointZ) = point.z
 
 _ncoord(::Type{PointZ}) = 3
-

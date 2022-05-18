@@ -1,9 +1,9 @@
 
 abstract type AbstractMultiPoint{T} <: AbstractShape end
 
-GI.geomtype(::AbstractMultiPoint) = GI.MultiPointTrait()
+GI.geomtrait(::AbstractMultiPoint) = GI.MultiPointTrait()
 GI.ngeom(::GI.MultiPointTrait, geom::AbstractMultiPoint) = length(geom.points)
-GI.ncoord(::GI.MultiPointTrait, geom::AbstractMultiPoint{T}) where T = _ncoord(T)
+GI.ncoord(::GI.MultiPointTrait, geom::AbstractMultiPoint{T}) where {T} = _ncoord(T)
 GI.npoint(::GI.MultiPointTrait, geom::AbstractMultiPoint) = length(geom.points)
 
 """
@@ -12,7 +12,7 @@ GI.npoint(::GI.MultiPointTrait, geom::AbstractMultiPoint) = length(geom.points)
 Collection of points, from a shape file.
 
 # Fields
-- `points`: a `Vector` of [`Point`](@ref). 
+- `points`: a `Vector` of [`Point`](@ref).
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 """
 struct MultiPoint <: AbstractMultiPoint{Point}
@@ -33,14 +33,14 @@ GI.getgeom(::GI.MultiPointTrait, geom::MultiPoint, i::Integer) = geom.points[i]
 """
     MultiPointM <: AbstractMultiPoint
 
-Collection of points, from a shape file. 
+Collection of points, from a shape file.
 
 Includes a `measures` field, holding values from each point.
 
 May have a known bounding box, which can be retrieved with `GeoInterface.bbox`.
 
 # Fields
-- `points`: a `Vector` of [`Point`](@ref). 
+- `points`: a `Vector` of [`Point`](@ref).
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 - `measures`: holds values from each point.
 """
@@ -68,14 +68,14 @@ GI.getgeom(::GI.MultiPointTrait, geom::MultiPointM, i::Integer) =
 """
     MultiPointZ <: AbstractMultiPoint
 
-Collection of 3d points, from a shape file. 
+Collection of 3d points, from a shape file.
 
 Includes a `measures` field, holding values from each point.
 
 May have a known bounding box, which can be retrieved with `GeoInterface.bbox`.
 
 # Fields
-- `points`: a `Vector` of [`Point`](@ref). 
+- `points`: a `Vector` of [`Point`](@ref).
 - `zvalues`: a `Vector` of `Float64` representing the z dimension values.
 - `MBR`: `nothing` or the known bounding box. Can be retrieved with `GeoInterface.bbox`.
 - `measures`: holds values from each point.
