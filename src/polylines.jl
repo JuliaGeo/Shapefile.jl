@@ -19,10 +19,15 @@ Base.size(p::LineString) = (length(p),)
 Base.length(lr::LineString) = length(parent(lr))
 Base.getindex(lr::LineString{Point}, i) = lr.xy[i]
 Base.getindex(lr::LineString{PointM}, i) = PointM(lr.xy[i], lr.m[i])
-Base.getindex(lr::LineString{PointZ}, i) = PointZ(lr.xy[i], lr.m[i], lr.z[i])
+Base.getindex(lr::LineString{PointZ}, i) = PointZ(lr.xy[i], lr.z[i], lr.m[i])
 
 
 abstract type AbstractPolyline{T} <: AbstractShape end
+
+_pointtype(::Type{<:AbstractPolyline{T}}) where T = T
+
+Base.convert(::Type{T}, ::GI.MultiLineStringTrait, geom) where T<:AbstractPolyline =
+    T(_convertparts(_pointtype(T), geom)...)
 
 GI.geomtrait(::AbstractPolyline) = GI.MultiLineStringTrait()
 GI.ngeom(::GI.MultiLineStringTrait, geom::AbstractPolyline) = length(geom.parts)
@@ -59,10 +64,8 @@ function Base.read(io::IO, ::Type{Polyline})
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
-    parts = Vector{Int32}(undef, numparts)
-    read!(io, parts)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
+    parts = _readparts(io, numparts)
+    points = _readpoints(io, numpoints)
     Polyline(box, parts, points)
 end
 
@@ -94,13 +97,9 @@ function Base.read(io::IO, ::Type{PolylineM})
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
-    parts = Vector{Int32}(undef, numparts)
-    read!(io, parts)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
-    mrange = read(io, Interval)
-    measures = Vector{Float64}(undef, numpoints)
-    read!(io, measures)
+    parts = _readparts(io, numparts)
+    points = _readpoints(io, numpoints)
+    mrange, measures = _readm(io, numpoints)
     PolylineM(box, parts, points, mrange, measures)
 end
 
@@ -133,15 +132,9 @@ function Base.read(io::IO, ::Type{PolylineZ})
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
-    parts = Vector{Int32}(undef, numparts)
-    read!(io, parts)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
-    zrange = read(io, Interval)
-    zvalues = Vector{Float64}(undef, numpoints)
-    read!(io, zvalues)
-    mrange = read(io, Interval)
-    measures = Vector{Float64}(undef, numpoints)
-    read!(io, measures)
+    parts = _readparts(io, numparts)
+    points = _readpoints(io, numpoints)
+    zrange, zvalues = _readz(io, numpoints)
+    mrange, measures = _readm(io, numpoints)
     PolylineZ(box, parts, points, zrange, zvalues, mrange, measures)
 end

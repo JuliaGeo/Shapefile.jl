@@ -12,6 +12,7 @@ include("polygons.jl")
 include("polylines.jl")
 include("multipoints.jl")
 include("multipatch.jl")
+include("utils.jl")
 
 # Handle/Table
 

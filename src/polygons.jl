@@ -23,7 +23,7 @@ GI.getgeom(::GI.LinearRingTrait, lr::LinearRing, i::Integer) = lr[i]
 
 Base.getindex(lr::LinearRing{Point}, i) = lr.xy[i]
 Base.getindex(lr::LinearRing{PointM}, i) = PointM(lr.xy[i], lr.m[i])
-Base.getindex(lr::LinearRing{PointZ}, i) = PointZ(lr.xy[i], lr.m[i], lr.z[i])
+Base.getindex(lr::LinearRing{PointZ}, i) = PointZ(lr.xy[i], lr.z[i], lr.m[i])
 Base.size(lr::LinearRing) = (length(lr),)
 Base.length(lr::LinearRing) = length(lr.xy)
 
@@ -45,6 +45,11 @@ Base.push!(p::SubPolygon, x) = Base.push!(parent(p), x)
 
 abstract type AbstractPolygon{T} <: AbstractShape end
 
+_pointtype(::Type{<:AbstractPolygon{T}}) where T = T
+
+Base.convert(::Type{T}, ::GI.MultiPolygonTrait, geom) where T<:AbstractPolygon =
+    T(_convertparts(_pointtype(T), geom)...)
+
 # Shapefile polygons are OGC multipolygons
 GI.geomtrait(geom::AbstractPolygon) = GI.MultiPolygonTrait()
 GI.nring(::GI.MultiPolygonTrait, geom::AbstractPolygon) = length(geom.parts)
@@ -58,6 +63,7 @@ function GI.ngeom(::GI.MultiPolygonTrait, geom::AbstractPolygon)
     end
     return n
 end
+
 
 function GI.getring(t::GI.MultiPolygonTrait, geom::AbstractPolygon)
     return (GI.getring(t, geom, i) for i in eachindex(geom.parts))
@@ -146,10 +152,8 @@ function Base.read(io::IO, ::Type{Polygon})
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
-    parts = Vector{Int32}(undef, numparts)
-    read!(io, parts)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
+    parts = _readparts(io, numparts)
+    points = _readpoints(io, numpoints)
     Polygon(box, parts, points)
 end
 
@@ -176,13 +180,9 @@ function Base.read(io::IO, ::Type{PolygonM})
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
-    parts = Vector{Int32}(undef, numparts)
-    read!(io, parts)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
-    mrange = read(io, Interval)
-    measures = Vector{Float64}(undef, numpoints)
-    read!(io, measures)
+    parts = _readparts(io, numparts)
+    points = _readpoints(io, numpoints)
+    mrange, measures = _readm(io, numpoints)
     PolygonM(box, parts, points, mrange, measures)
 end
 
@@ -212,15 +212,9 @@ function Base.read(io::IO, ::Type{PolygonZ})
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
-    parts = Vector{Int32}(undef, numparts)
-    read!(io, parts)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
-    zrange = read(io, Interval)
-    zvalues = Vector{Float64}(undef, numpoints)
-    read!(io, zvalues)
-    mrange = read(io, Interval)
-    measures = Vector{Float64}(undef, numpoints)
-    read!(io, measures)
+    parts = _readparts(io, numparts)
+    points = _readpoints(io, numpoints)
+    zrange, zvalues = _readz(io, numpoints)
+    mrange, measures = _readm(io, numpoints)
     PolygonZ(box, parts, points, zrange, zvalues, mrange, measures)
 end

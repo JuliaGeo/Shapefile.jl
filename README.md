@@ -20,7 +20,7 @@ table = Shapefile.Table(path)
 geoms = Shapefile.shapes(table)
 
 # whole columns can be retrieved by their name
-table.Descriptio  # => Union{String, Missing}["Square with triangle missing", "Smaller triangle", missing]
+table.Description  # => Union{String, Missing}["Square with triangle missing", "Smaller triangle", missing]
 
 # example function that iterates over the rows and gathers shapes that meet specific criteria
 function selectshapes(table)
@@ -50,6 +50,7 @@ julia> GeoInterface.coordinates(Shapefile.shape(first(table)))
 ```
 
 ## Alternative packages
+
 If you want another lightweight pure Julia package for reading feature files, consider
 also [GeoJSON.jl](https://github.com/JuliaGeo/GeoJSON.jl).
 

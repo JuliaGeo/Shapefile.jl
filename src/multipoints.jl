@@ -1,6 +1,11 @@
 
 abstract type AbstractMultiPoint{T} <: AbstractShape end
 
+_pointtype(::Type{<:AbstractMultiPoint{T}}) where T = T
+
+Base.convert(::Type{T}, ::GI.MultiPointTrait, geom) where T<:AbstractMultiPoint =
+    T(_convert(_pointtype(T), geom)...)
+
 GI.geomtrait(::AbstractMultiPoint) = GI.MultiPointTrait()
 GI.ngeom(::GI.MultiPointTrait, geom::AbstractMultiPoint) = length(geom.points)
 GI.ncoord(::GI.MultiPointTrait, geom::AbstractMultiPoint{T}) where {T} = _ncoord(T)
@@ -23,12 +28,12 @@ end
 function Base.read(io::IO, ::Type{MultiPoint})
     box = read(io, Rect)
     numpoints = read(io, Int32)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
-    MultiPoint(box, points)
+    points = _readpoints(io, numpoints)
+    return MultiPoint(box, points)
 end
 
 GI.getgeom(::GI.MultiPointTrait, geom::MultiPoint, i::Integer) = geom.points[i]
+
 
 """
     MultiPointM <: AbstractMultiPoint
@@ -54,11 +59,8 @@ end
 function Base.read(io::IO, ::Type{MultiPointM})
     box = read(io, Rect)
     numpoints = read(io, Int32)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
-    mrange = read(io, Interval)
-    measures = Vector{Float64}(undef, numpoints)
-    read!(io, measures)
+    points = _readpoints(io, numpoints)
+    mrange, measures = _readm(io, numpoints)
     MultiPointM(box, points, mrange, measures)
 end
 
@@ -95,13 +97,8 @@ GI.getgeom(::GI.MultiPointTrait, geom::MultiPointZ, i::Integer) =
 function Base.read(io::IO, ::Type{MultiPointZ})
     box = read(io, Rect)
     numpoints = read(io, Int32)
-    points = Vector{Point}(undef, numpoints)
-    read!(io, points)
-    zrange = read(io, Interval)
-    zvalues = Vector{Float64}(undef, numpoints)
-    read!(io, zvalues)
-    mrange = read(io, Interval)
-    measures = Vector{Float64}(undef, numpoints)
-    read!(io, measures)
+    points = _readpoints(io, numpoints)
+    zrange, zvalues = _readz(io, numpoints)
+    mrange, measures = _readm(io, numpoints)
     MultiPointZ(box, points, zrange, zvalues, mrange, measures)
 end
