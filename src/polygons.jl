@@ -18,7 +18,6 @@ GI.isgeometry(::Type{<:LinearRing}) = true
 GI.geomtrait(::LinearRing) = GI.LinearRingTrait()
 GI.ncoord(lr::LinearRing{P}) where {P} = _ncoord(P)
 GI.ngeom(::GI.LinearRingTrait, lr::LinearRing) = length(lr)
-# GI.getgeom(::GI.LinearRingTrait, lr::LinearRing) = (getindex(lr, i) for i in 1:ngeom(lr))
 
 GI.getgeom(::GI.LinearRingTrait, lr::LinearRing{Point}, i::Integer) = lr.xy[i]
 GI.getgeom(::GI.LinearRingTrait, lr::LinearRing{PointM}, i::Integer) =
@@ -75,11 +74,8 @@ function GI.getring(::GI.MultiPolygonTrait, geom::AbstractPolygon{P}, i::Integer
     LinearRing{P}(xy, z, m)
 end
 
-# function GI.gethole(::GI.MultiPolygonTrait, geom::AbstractPolygon)
-# end
-
-# Warning: getgeom is very slow for a Shapefile. Use `getpolygons`,
-# or if you don't need exteriors and holes to be separated, `getring`.
+# Warning: getgeom is very slow for a Shapefile. 
+# If you don't need exteriors and holes to be separated, use `getring`.
 GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon, i::Integer) = collect(GI.getgeom(geom))[i]
 function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon{T}) where {T}
     r1 = GI.getring(geom, 1)
