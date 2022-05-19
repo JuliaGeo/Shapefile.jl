@@ -19,16 +19,13 @@ GI.geomtrait(::LinearRing) = GI.LinearRingTrait()
 GI.ncoord(lr::LinearRing{P}) where {P} = _ncoord(P)
 GI.ngeom(::GI.LinearRingTrait, lr::LinearRing) = length(lr)
 
-GI.getgeom(::GI.LinearRingTrait, lr::LinearRing{Point}, i::Integer) = lr.xy[i]
-GI.getgeom(::GI.LinearRingTrait, lr::LinearRing{PointM}, i::Integer) =
-    PointM(lr.xy[i], lr.m[i])
-GI.getgeom(::GI.LinearRingTrait, lr::LinearRing{PointZ}, i::Integer) =
-    PointZ(lr.xy[i], lr.z[i], lr.m[i])
+GI.getgeom(::GI.LinearRingTrait, lr::LinearRing, i::Integer) = lr[i]
 
-Base.parent(lr::LinearRing) = lr.xy
-Base.getindex(lr::LinearRing, i) = getindex(parent(lr), i)
-Base.size(p::LinearRing) = (length(p),)
-Base.length(lr::LinearRing) = length(parent(lr))
+Base.getindex(lr::LinearRing{Point}, i) = lr.xy[i]
+Base.getindex(lr::LinearRing{PointM}, i) = PointM(lr.xy[i], lr.m[i])
+Base.getindex(lr::LinearRing{PointZ}, i) = PointZ(lr.xy[i], lr.m[i], lr.z[i])
+Base.size(lr::LinearRing) = (length(lr),)
+Base.length(lr::LinearRing) = length(lr.xy)
 
 struct SubPolygon{L<:LinearRing} <: AbstractVector{L}
     rings::Vector{L}
@@ -105,7 +102,7 @@ function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon{T}) where {T}
     return polygons
 end
 
-function _inring(pt::Point, ring::LinearRing)
+function _inring(pt::AbstractPoint, ring::LinearRing)
     intersect(i, j) =
         (i.y >= pt.y) != (j.y >= pt.y) &&
         (pt.x <= (j.x - i.x) * (pt.y - i.y) / (j.y - i.y) + i.x)
