@@ -20,7 +20,7 @@ table = Shapefile.Table(path)
 geoms = Shapefile.shapes(table)
 
 # whole columns can be retrieved by their name
-table.Description  # => Union{String, Missing}["Square with triangle missing", "Smaller triangle", missing]
+table.Descriptio  # => Union{String, Missing}["Square with triangle missing", "Smaller triangle", missing]
 
 # example function that iterates over the rows and gathers shapes that meet specific criteria
 function selectshapes(table)
