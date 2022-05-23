@@ -24,6 +24,13 @@ GeoInterface.geometry(t::Row) = getfield(t, :geometry)
 GeoInterface.properties(t::Row) = getfield(t, :record)
 
 """
+    shape(row::Row)
+
+Get the geometry associated with a `Row` from a shapefile `Table`.
+"""
+shape(row::Row) = getfield(row, :geometry)
+
+"""
     Table 
 
     Table(path::AbstractString)
