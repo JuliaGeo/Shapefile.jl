@@ -42,7 +42,6 @@ function _convert(::Type{<:PointM}, geom)
         points[i] = Point(GI.x(point), GI.y(point))
         measures[i] = hasm ? GI.m(point) : 0.0
     end
-    @show measures geom.measures
     mrange = Interval(extrema(measures)...)
     MBR = _getbounds(points)
     return MBR, points, mrange, measures

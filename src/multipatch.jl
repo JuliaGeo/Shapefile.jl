@@ -25,17 +25,6 @@ GI.geomtrait(::MultiPatch) = GI.GeometryCollectionTrait()
 GI.ngeom(geom::MultiPatch) = length(geom.parts)
 GeoInterface.ncoord(::MultiPatch) = 3
 
-# TODO implement the rest of this
-function GI.getgeom(::GI.GeometryCollectionTrait, geom::MultiPatch, i::Integer)
-    error("`getgeom` not implemented for `MultiPatch`: open a github issue at JuliaGeo/Shapefile.jl if you need this.")
-    # T = SHAPETYPE[geom.parttypes[i]]
-end
-function GI.subtrait(geom::MultiPatch)
-    error("`subtype` not implemented for `MultiPatch`: open a github issue at JuliaGeo/Shapefile.jl if you need this.")
-    # types = map(i -> SHAPETYPE[i], union(geom.parttypes))
-end
-
-
 function Base.read(io::IO, ::Type{MultiPatch})
     box = read(io, Rect)
     numparts = read(io, Int32)
