@@ -18,14 +18,20 @@ struct MultiPatch <: AbstractShape
     points::Vector{Point}
     zrange::Interval
     zvalues::Vector{Float64}
-    # measures::Vector{Float64}  # (optional)
+    # Optional, not implemented
+    # measures::Vector{Float64}  
 end
 
 GI.geomtrait(::MultiPatch) = GI.GeometryCollectionTrait()
 GI.ngeom(geom::MultiPatch) = length(geom.parts)
 GeoInterface.ncoord(::MultiPatch) = 3
 
+function GI.getgeom(::GI.GeometryCollectionTrait, geom::MultiPatch, i::Integer)
+    error("`getgeom` not implemented for `MultiPatch`: open a github issue at JuliaGeo/Shapefile.jl if you need this.")
+end
+
 function Base.read(io::IO, ::Type{MultiPatch})
+    @info "MultiPatch objects are not fully supported in Shapefile.jl"
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
@@ -34,6 +40,7 @@ function Base.read(io::IO, ::Type{MultiPatch})
     read!(io, parttypes)
     points = _readpoints(io, numpoints)
     zrange, zvalues = _readfloats(io, numpoints)
+    # Optional, not implemented. This may cause `read` bugs if measures are present.
     # mrange = Vector{Float64}(2)
     # read!(io, mrange)
     # measures = Vector{Float64}(numpoints)
