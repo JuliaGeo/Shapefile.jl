@@ -44,12 +44,13 @@ Use `GeoInterface.coordinates` to fully decompose the shape data into parts.
 ```julia
 # Example of converting the 1st shape of the file into parts (array of coordinates)
 julia> GeoInterface.coordinates(Shapefile.shape(first(table)))
-2-element Array{Array{Array{Array{Float64,1},1},1},1}:
- Array{Array{Float64,1},1}[Array{Float64,1}[[20.0, 20.0], ...]]
- Array{Array{Float64,1},1}[Array{Float64,1}[[0.0, 0.0], ...]]
+2-element Vector{Vector{Vector{Vector{Float64}}}}:
+ [[[20.0, 20.0], [20.0, 30.0], [30.0, 30.0], [20.0, 20.0]]]
+ [[[0.0, 0.0], [100.0, 0.0], [100.0, 100.0], [0.0, 100.0], [0.0, 0.0]]]
 ```
 
 ## Alternative packages
+
 If you want another lightweight pure Julia package for reading feature files, consider
 also [GeoJSON.jl](https://github.com/JuliaGeo/GeoJSON.jl).
 

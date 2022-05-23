@@ -1,6 +1,36 @@
 import GeoInterface, DBFTables, Tables
 
 """
+    Row
+
+    Row(geometry, record::DBFTables.Row)
+
+A struct representing a single record in a shapefile.
+
+Property names accessable by `row.x` are `geometry` for the
+geometry object, and the names of the columns in `record`.
+"""
+struct Row{T}
+    geometry::T
+    record::DBFTables.Row
+end
+
+
+Base.getproperty(row::Row, name::Symbol) = getproperty(getfield(row, :record), name)
+Base.propertynames(row::Row) = propertynames(getfield(row, :record))
+
+GeoInterface.isfeature(t::Row) = true
+GeoInterface.geometry(t::Row) = getfield(t, :geometry)
+GeoInterface.properties(t::Row) = getfield(t, :record)
+
+"""
+    shape(row::Row)
+
+Get the geometry associated with a `Row` from a shapefile `Table`.
+"""
+shape(row::Row) = getfield(row, :geometry)
+
+"""
     Table 
 
     Table(path::AbstractString)
@@ -55,21 +85,6 @@ function Table(path::AbstractString)
     return Shapefile.Table(shp, dbf)
 end
 
-"""
-    Row
-
-    Row(geometry, record::DBFTables.Row)
-
-A struct representing a single record in a shapefile.
-
-Property names accessable by `row.x` are `geometry` for the
-geometry object, and the names of the columns in `record`.
-"""
-struct Row{T}
-    geometry::T
-    record::DBFTables.Row
-end
-
 getshp(t::Table) = getfield(t, :shp)
 getdbf(t::Table) = getfield(t, :dbf)
 
@@ -88,12 +103,10 @@ Iterate over the rows of a Shapefile.Table, yielding a Shapefile.Row for each ro
 """
 function Base.iterate(t::Table, st = 1)
     st > length(t) && return nothing
-    geom = @inbounds shapes(t)[st]
+    geom = shapes(t)[st]
     record = DBFTables.Row(getdbf(t), st)
     return Row(geom, record), st + 1
 end
-
-Base.getproperty(row::Row, name::Symbol) = getproperty(getfield(row, :record), name)
 
 function Base.getproperty(t::Table, name::Symbol)
     if name === :geometry
@@ -102,8 +115,6 @@ function Base.getproperty(t::Table, name::Symbol)
         getproperty(getdbf(t), name)
     end
 end
-
-Base.propertynames(row::Row) = propertynames(getfield(row, :record))
 
 function Base.propertynames(t::Table)
     names = propertynames(getdbf(t))
@@ -132,17 +143,11 @@ end
 # should probably be geometry/geometries but don't want to claim these names yet
 
 """
-    shapes(row::Row)
-
-Get the geometry associated with a `Row` from a shapefile `Table`.
-"""
-shape(row::Row) = getfield(row, :geometry)
-
-"""
     shapes(t::Table)
 
 Get a vector of the geometries in a shapefile `Table`, without any metadata.
 """
 shapes(t::Table) = shapes(getshp(t))
 
+GeoInterface.extent(t::Table) = GeoInterface.extent(getshp(t))
 GeoInterface.crs(t::Table) = GeoInterface.crs(getshp(t))

@@ -1,86 +1,161 @@
-using Shapefile, GeoInterface, Plots
+using Shapefile, GeoInterface, Plots, Extents
+using Shapefile
 using Test
+
+using Shapefile: Point, PointM, PointZ, Polygon, PolygonM, PolygonZ, Polyline,
+    PolylineM, PolylineZ, MultiPoint, MultiPointM, MultiPointZ,
+    MultiPatch, LineString, LinearRing, SubPolygon, Rect, Interval
+
+shp = Shapefile.Handle(joinpath("shapelib_testcases", "test.shp"))
 
 test_tuples = [
     (
-     path=joinpath("shapelib_testcases", "test.shp"),
-        geomtype=Shapefile.Polygon,
-        coordinates=Array{Array{Array{Array{Float64,1},1},1},1}[Array{Array{Array{Float64,1},1},1}[Array{Array{Float64,1},1}[Array{Float64,1}[[20.0,20.0],[20.0,30.0],[30.0,30.0],[20.0,20.0]]],Array{Array{Float64,1},1}[Array{Float64,1}[[0.0,0.0],[100.0,0.0],[100.0,100.0],[0.0,100.0],[0.0,0.0]]]],Array{Array{Array{Float64,1},1},1}[Array{Array{Float64,1},1}[Array{Float64,1}[[150.0,150.0],[160.0,150.0],[180.0,170.0],[150.0,150.0]]]],Array{Array{Array{Float64,1},1},1}[Array{Array{Float64,1},1}[Array{Float64,1}[[150.0,150.0],[160.0,150.0],[180.0,170.0],[150.0,150.0]]]]],
-        bbox=(0.0, 0.0, 180.0, 170.0),
+        path=joinpath("shapelib_testcases", "test.shp"),
+        geomtype=Polygon,
+        coordinates=[[[[[20.0,20.0],[20.0,30.0],[30.0,30.0],[20.0,20.0]]],[[[0.0,0.0],[100.0,0.0],[100.0,100.0],[0.0,100.0],[0.0,0.0]]]],[[[[150.0,150.0],[160.0,150.0],[180.0,170.0],[150.0,150.0]]]],[[[[150.0,150.0],[160.0,150.0],[180.0,170.0],[150.0,150.0]]]]],
+        extent=Extent(X=(0.0, 180.0), Y=(0.0, 170.0), Z=(0.0, 0.0)),
     ),(
         path=joinpath("shapelib_testcases", "test0.shp"),
         geomtype=Missing,
         coordinates=nothing,
-        bbox=(0.0, 0.0, 10.0, 20.0),
+        extent=Extent(X=(0.0, 10.0), Y=(0.0, 20.0), Z=(0.0, 0.0)),
     ),(
         path=joinpath("shapelib_testcases", "test1.shp"),
-        geomtype=Shapefile.Point,
-        coordinates=Array{Float64,1}[[1.0,2.0],[10.0,20.0]],
-        bbox=(1.0, 2.0, 10.0, 20.0),
+        geomtype=Point,
+        coordinates=[[1.0,2.0],[10.0,20.0]],
+        extent=Extent(X=(1.0, 10.0), Y=(2.0, 20.0), Z=(0.0, 0.0)),
     ),(
         path=joinpath("shapelib_testcases", "test2.shp"),
-        geomtype=Shapefile.PointZ,
-        coordinates=Array{Float64,1}[[1.0,2.0,3.0],[10.0,20.0,30.0]],
-        bbox=(1.0, 2.0, 10.0, 20.0),
+        geomtype=PointZ,
+        coordinates=[[1.0,2.0,3.0],[10.0,20.0,30.0]],
+        extent=Extent(X=(1.0, 10.0), Y=(2.0, 20.0), Z=(3.0, 30.0)),
     ),(
         path=joinpath("shapelib_testcases", "test3.shp"),
-        geomtype=Shapefile.PointM,
-        coordinates=Array{Float64,1}[[1.0,2.0],[10.0,20.0]],
-        bbox=(1.0, 2.0, 10.0, 20.0),
+        geomtype=PointM,
+        coordinates=[[1.0,2.0],[10.0,20.0]],
+        extent=Extent(X=(1.0, 10.0), Y=(2.0, 20.0), Z=(0.0, 0.0)),
     ),(
         path=joinpath("shapelib_testcases", "test4.shp"),
-        geomtype=Shapefile.MultiPoint,
-        coordinates=Array{Array{Float64,1},1}[Array{Float64,1}[[1.15,2.25],[2.15,3.25],[3.15,4.25],[4.15,5.25]],Array{Float64,1}[[11.15,12.25],[12.15,13.25],[13.15,14.25],[14.15,15.25]],Array{Float64,1}[[21.15,22.25],[22.15,23.25],[23.15,24.25],[24.15,25.25]]],
-        bbox=(1.15, 2.25, 24.15, 25.25),
+        geomtype=MultiPoint,
+        coordinates=[[[1.15,2.25],[2.15,3.25],[3.15,4.25],[4.15,5.25]],[[11.15,12.25],[12.15,13.25],[13.15,14.25],[14.15,15.25]],[[21.15,22.25],[22.15,23.25],[23.15,24.25],[24.15,25.25]]],
+        extent=Extent(X=(1.15, 24.15), Y=(2.25, 25.25), Z=(0.0, 0.0)),
     ),(
         path=joinpath("shapelib_testcases", "test5.shp"),
-        geomtype=Shapefile.MultiPointZ,
-        coordinates=Array{Array{Float64,1},1}[Array{Float64,1}[[1.15,2.25],[2.15,3.25],[3.15,4.25],[4.15,5.25]],Array{Float64,1}[[11.15,12.25],[12.15,13.25],[13.15,14.25],[14.15,15.25]],Array{Float64,1}[[21.15,22.25],[22.15,23.25],[23.15,24.25],[24.15,25.25]]],
-        bbox=(1.15, 2.25, 24.15, 25.25),
+        geomtype=MultiPointZ,
+        coordinates=[[[1.15,2.25,3.35],[2.15,3.25,4.35],[3.15,4.25,5.35],[4.15,5.25,6.35]],[[11.15,12.25,13.35],[12.15,13.25,14.35],[13.15,14.25,15.35],[14.15,15.25,16.35]],[[21.15,22.25,23.35],[22.15,23.25,24.35],[23.15,24.25,25.35],[24.15,25.25,26.35]]],
+        extent=Extent(X=(1.15, 24.15), Y=(2.25, 25.25), Z=(3.35, 26.35)),
     ),(
         path=joinpath("shapelib_testcases", "test6.shp"),
-        geomtype=Shapefile.MultiPointM,
-        coordinates=Array{Array{Float64,1},1}[Array{Float64,1}[[1.15,2.25],[2.15,3.25],[3.15,4.25],[4.15,5.25]],Array{Float64,1}[[11.15,12.25],[12.15,13.25],[13.15,14.25],[14.15,15.25]],Array{Float64,1}[[21.15,22.25],[22.15,23.25],[23.15,24.25],[24.15,25.25]]],
-        bbox=(1.15, 2.25, 24.15, 25.25),
+        geomtype=MultiPointM,
+        coordinates=[[[1.15,2.25],[2.15,3.25],[3.15,4.25],[4.15,5.25]],[[11.15,12.25],[12.15,13.25],[13.15,14.25],[14.15,15.25]],[[21.15,22.25],[22.15,23.25],[23.15,24.25],[24.15,25.25]]],
+        extent=Extent(X=(1.15, 24.15), Y=(2.25, 25.25), Z=(0.0, 0.0)),
     ),(
         path=joinpath("shapelib_testcases", "test7.shp"),
-        geomtype=Shapefile.Polyline,
-        coordinates=Array{Array{Array{Float64,1},1},1}[Array{Array{Float64,1},1}[Array{Float64,1}[[1.0,1.0],[2.0,1.0],[2.0,2.0],[1.0,2.0],[1.0,1.0]]],Array{Array{Float64,1},1}[Array{Float64,1}[[1.0,4.0],[2.0,4.0],[2.0,5.0],[1.0,5.0],[1.0,4.0]]],Array{Array{Float64,1},1}[Array{Float64,1}[[1.0,7.0],[2.0,7.0],[2.0,8.0],[1.0,8.0],[1.0,7.0]]],Array{Array{Float64,1},1}[Array{Float64,1}[[0.0,0.0],[0.0,100.0],[100.0,100.0],[100.0,0.0],[0.0,0.0]],Array{Float64,1}[[10.0,20.0],[30.0,20.0],[30.0,40.0],[10.0,40.0],[10.0,20.0]],Array{Float64,1}[[60.0,20.0],[90.0,20.0],[90.0,40.0],[60.0,40.0],[60.0,20.0]]]],
-        bbox=(0.0, 0.0, 100.0, 100.0),
+        geomtype=Polyline,
+        coordinates=[[[[1.0,1.0],[2.0,1.0],[2.0,2.0],[1.0,2.0],[1.0,1.0]]],[[[1.0,4.0],[2.0,4.0],[2.0,5.0],[1.0,5.0],[1.0,4.0]]],[[[1.0,7.0],[2.0,7.0],[2.0,8.0],[1.0,8.0],[1.0,7.0]]],[[[0.0,0.0],[0.0,100.0],[100.0,100.0],[100.0,0.0],[0.0,0.0]],Array{Float64,1}[[10.0,20.0],[30.0,20.0],[30.0,40.0],[10.0,40.0],[10.0,20.0]],Array{Float64,1}[[60.0,20.0],[90.0,20.0],[90.0,40.0],[60.0,40.0],[60.0,20.0]]]],
+        extent=Extent(X=(0.0, 100.0), Y=(0.0, 100.0), Z=(0.0, 0.0)),
     ),(
         path=joinpath("shapelib_testcases", "test8.shp"),
-        geomtype=Shapefile.PolylineZ,
-        coordinates=Array{Array{Array{Float64,1},1},1}[Array{Array{Float64,1},1}[Array{Float64,1}[[1.0,1.0],[2.0,1.0],[2.0,2.0],[1.0,2.0],[1.0,1.0]]],Array{Array{Float64,1},1}[Array{Float64,1}[[1.0,4.0],[2.0,4.0],[2.0,5.0],[1.0,5.0],[1.0,4.0]]],Array{Array{Float64,1},1}[Array{Float64,1}[[1.0,7.0],[2.0,7.0],[2.0,8.0],[1.0,8.0],[1.0,7.0]]],Array{Array{Float64,1},1}[Array{Float64,1}[[0.0,0.0],[0.0,100.0],[100.0,100.0],[100.0,0.0],[0.0,0.0]],Array{Float64,1}[[10.0,20.0],[30.0,20.0],[30.0,40.0],[10.0,40.0],[10.0,20.0]],Array{Float64,1}[[60.0,20.0],[90.0,20.0],[90.0,40.0],[60.0,40.0],[60.0,20.0]]]],
-        bbox=(0.0, 0.0, 100.0, 100.0),
+        geomtype=PolylineZ,
+        coordinates=[[[[1.0,1.0,3.35],[2.0,1.0,4.35],[2.0,2.0,5.35],[1.0,2.0,6.35],[1.0,1.0,7.35]]],[[[1.0,4.0,13.35],[2.0,4.0,14.35],[2.0,5.0,15.35],[1.0,5.0,16.35],[1.0,4.0,17.35]]],[[[1.0,7.0,23.35],[2.0,7.0,24.35],[2.0,8.0,25.35],[1.0,8.0,26.35],[1.0,7.0,27.35]]],[[[0.0,0.0,0.0],[0.0,100.0,1.0],[100.0,100.0,2.0],[100.0,0.0,3.0],[0.0,0.0,4.0]],[[10.0,20.0,5.0],[30.0,20.0,6.0],[30.0,40.0,7.0],[10.0,40.0,8.0],[10.0,20.0,9.0]],[[60.0,20.0,10.0],[90.0,20.0,11.0],[90.0,40.0,12.0],[60.0,40.0,13.0],[60.0,20.0,14.0]]]],
+        extent=Extent(X=(0.0, 100.0), Y=(0.0, 100.0), Z=(0.0, 27.35)),
     ),(
         path=joinpath("shapelib_testcases", "test9.shp"),
-        geomtype=Shapefile.PolylineM,
-        coordinates=Array{Array{Array{Float64,1},1},1}[Array{Array{Float64,1},1}[Array{Float64,1}[[1.0,1.0],[2.0,1.0],[2.0,2.0],[1.0,2.0],[1.0,1.0]]],Array{Array{Float64,1},1}[Array{Float64,1}[[1.0,4.0],[2.0,4.0],[2.0,5.0],[1.0,5.0],[1.0,4.0]]],Array{Array{Float64,1},1}[Array{Float64,1}[[1.0,7.0],[2.0,7.0],[2.0,8.0],[1.0,8.0],[1.0,7.0]]],Array{Array{Float64,1},1}[Array{Float64,1}[[0.0,0.0],[0.0,100.0],[100.0,100.0],[100.0,0.0],[0.0,0.0]],Array{Float64,1}[[10.0,20.0],[30.0,20.0],[30.0,40.0],[10.0,40.0],[10.0,20.0]],Array{Float64,1}[[60.0,20.0],[90.0,20.0],[90.0,40.0],[60.0,40.0],[60.0,20.0]]]],
-        bbox=(0.0, 0.0, 100.0, 100.0),
+        geomtype=PolylineM,
+        coordinates=[[[[1.0,1.0],[2.0,1.0],[2.0,2.0],[1.0,2.0],[1.0,1.0]]],[[[1.0,4.0],[2.0,4.0],[2.0,5.0],[1.0,5.0],[1.0,4.0]]],[[[1.0,7.0],[2.0,7.0],[2.0,8.0],[1.0,8.0],[1.0,7.0]]],[[[0.0,0.0],[0.0,100.0],[100.0,100.0],[100.0,0.0],[0.0,0.0]],[[10.0,20.0],[30.0,20.0],[30.0,40.0],[10.0,40.0],[10.0,20.0]],Array{Float64,1}[[60.0,20.0],[90.0,20.0],[90.0,40.0],[60.0,40.0],[60.0,20.0]]]],
+        extent=Extent(X=(0.0, 100.0), Y=(0.0, 100.0), Z=(0.0, 0.0)),
     ),(
         path=joinpath("shapelib_testcases", "test10.shp"),
-        geomtype=Shapefile.Polygon,
-        coordinates=[[[[[1.0, 1.0], [2.0, 1.0], [2.0, 2.0], [1.0, 2.0], [1.0, 1.0]]]], [[[[1.0, 4.0], [2.0, 4.0], [2.0, 5.0], [1.0, 5.0], [1.0, 4.0]]]], [[[[1.0, 7.0], [2.0, 7.0], [2.0, 8.0], [1.0, 8.0], [1.0, 7.0]]]], [[[[0.0, 0.0], [0.0, 100.0], [100.0, 100.0], [100.0, 0.0], [0.0, 0.0]], [[10.0, 20.0], [30.0, 20.0], [30.0, 40.0], [10.0, 40.0], [10.0, 20.0]], [[60.0, 20.0], [90.0, 20.0], [90.0, 40.0], [60.0, 40.0], [60.0, 20.0]]]]],
-        bbox=(0.0, 0.0, 100.0, 100.0),
+        geomtype=Polygon,
+        coordinates=[[[[[1.0,1.0],[2.0,1.0],[2.0,2.0],[1.0,2.0],[1.0,1.0]]]],[[[[1.0,4.0],[2.0,4.0],[2.0,5.0],[1.0,5.0],[1.0,4.0]]]],[[[[1.0,7.0],[2.0,7.0],[2.0,8.0],[1.0,8.0],[1.0,7.0]]]],[[[[0.0,0.0],[0.0,100.0],[100.0,100.0],[100.0,0.0],[0.0,0.0]],[[10.0,20.0],[30.0,20.0],[30.0,40.0],[10.0,40.0],[10.0,20.0]],[[60.0,20.0],[90.0,20.0],[90.0,40.0],[60.0,40.0],[60.0,20.0]]]]],
+        extent=Extent(X=(0.0, 100.0), Y=(0.0, 100.0), Z=(0.0, 0.0)),
     ),(
         path=joinpath("shapelib_testcases", "test11.shp"),
-        geomtype=Shapefile.PolygonZ,
-        coordinates=[[[[[1.0, 1.0], [2.0, 1.0], [2.0, 2.0], [1.0, 2.0], [1.0, 1.0]]]], [[[[1.0, 4.0], [2.0, 4.0], [2.0, 5.0], [1.0, 5.0], [1.0, 4.0]]]], [[[[1.0, 7.0], [2.0, 7.0], [2.0, 8.0], [1.0, 8.0], [1.0, 7.0]]]], [[[[0.0, 0.0], [0.0, 100.0], [100.0, 100.0], [100.0, 0.0], [0.0, 0.0]], [[10.0, 20.0], [30.0, 20.0], [30.0, 40.0], [10.0, 40.0], [10.0, 20.0]], [[60.0, 20.0], [90.0, 20.0], [90.0, 40.0], [60.0, 40.0], [60.0, 20.0]]]]],
-        bbox=(0.0, 0.0, 100.0, 100.0),
+        geomtype=PolygonZ,
+        coordinates=[[[[[1.0,1.0,3.35],[2.0,1.0,4.35],[2.0,2.0,5.35],[1.0,2.0,6.35],[1.0,1.0,7.35]]]],[[[[1.0,4.0,13.35],[2.0,4.0,14.35],[2.0,5.0,15.35],[1.0,5.0,16.35],[1.0,4.0,17.35]]]],[[[[1.0,7.0,23.35],[2.0,7.0,24.35],[2.0,8.0,25.35],[1.0,8.0,26.35],[1.0,7.0,27.35]]]],[[[[0.0,0.0,0.0],[0.0,100.0,1.0],[100.0,100.0,2.0],[100.0,0.0,3.0],[0.0,0.0,4.0]],[[10.0,20.0,5.0],[30.0,20.0,6.0],[30.0,40.0,7.0],[10.0,40.0,8.0],[10.0,20.0,9.0]],[[60.0,20.0,10.0],[90.0,20.0,11.0],[90.0,40.0,12.0],[60.0,40.0,13.0],[60.0,20.0,14.0]]]]],
+        extent=Extent(X=(0.0, 100.0), Y=(0.0, 100.0), Z=(0.0, 27.35)),
     ),(
         path=joinpath("shapelib_testcases", "test12.shp"),
-        geomtype=Shapefile.PolygonM,
+        geomtype=PolygonM,
         coordinates=[[[[[1.0, 1.0], [2.0, 1.0], [2.0, 2.0], [1.0, 2.0], [1.0, 1.0]]]], [[[[1.0, 4.0], [2.0, 4.0], [2.0, 5.0], [1.0, 5.0], [1.0, 4.0]]]], [[[[1.0, 7.0], [2.0, 7.0], [2.0, 8.0], [1.0, 8.0], [1.0, 7.0]]]], [[[[0.0, 0.0], [0.0, 100.0], [100.0, 100.0], [100.0, 0.0], [0.0, 0.0]], [[10.0, 20.0], [30.0, 20.0], [30.0, 40.0], [10.0, 40.0], [10.0, 20.0]], [[60.0, 20.0], [90.0, 20.0], [90.0, 40.0], [60.0, 40.0], [60.0, 20.0]]]]],
-        bbox=(0.0, 0.0, 100.0, 100.0),
+        extent=Extent(X=(0.0, 100.0), Y=(0.0, 100.0), Z=(0.0, 0.0)),
     ),(
         path=joinpath("shapelib_testcases/test13.shp"),
-        geomtype=Shapefile.MultiPatch,
+        geomtype=MultiPatch,
         coordinates=nothing,
-        bbox=(0.0, 0.0, 100.0, 100.0),
+        extent=Extent(X=(0.0, 100.0), Y=(0.0, 100.0), Z=(0.0, 27.35)),
     )
 ]
 
-@testset "Shapefile" begin
+# Visual plot check
+# for t in test_tuples
+#     if !(t.geomtype <: Union{Missing,MultiPatch})
+#         @show t.path t.geomtype
+#         sh = Shapefile.Handle(t.path)
+#         p = sh.shapes
+#         display(plot(p; opacity=.5))
+#         sleep(1)
+#     end
+# end
+
+points = [Point(1, 3), Point(2, 3), Point(2, 4), Point(1, 4)]
+test_shapes = Dict(
+    Point => Point(1, 2),
+    PointM => PointM(1, 2, 3),
+    PointZ => PointZ(1, 2, 3, 4),
+    MultiPoint => MultiPoint(Rect(1, 3, 2, 4), points),
+    MultiPointM => MultiPointM(Rect(1, 3, 2, 4), points, Interval(10.0, 40.0), [10.0, 20.0, 30.0, 40.0]),
+    MultiPointZ => MultiPointZ(Rect(1, 3, 2, 4), points, Interval(1, 4), [1, 2, 3, 4], Interval(10.0, 40.0), [10.0, 20.0, 30.0, 40.0]),
+    Polygon => Polygon(Rect(1, 3, 2, 4), [0], points),
+    PolygonM => PolygonM(Rect(1, 3, 2, 4), [0], points, Interval(10.0, 40.0), [10.0, 20.0, 30.0, 40.0]),
+    PolygonZ => PolygonZ(Rect(1, 3, 2, 4), [0], points, Interval(1, 4), [1, 2, 3, 4], Interval(10.0, 40.0), [10.0, 20.0, 30.0, 40.0]),
+    Polyline => Polyline(Rect(1, 3, 2, 4), [0], points),
+    PolylineM => PolylineM(Rect(1, 3, 2, 4), [0], points, Interval(10.0, 40.0), [10.0, 20.0, 30.0, 40.0]),
+    PolylineZ => PolylineZ(Rect(1, 3, 2, 4), [0], points, Interval(1, 4), [1, 2, 3, 4], Interval(10.0, 40.0), [10.0, 20.0, 30.0, 40.0]),
+    LineString => LineString{Point}(view(points, 1:4)),
+    LinearRing => LinearRing{Point}(view(points, 1:4)),
+    SubPolygon => SubPolygon([LinearRing{Point}(view(points, 1:4))]),
+)
+
+@testset "GeoInterface compatability" begin
+    @test all(s -> GeoInterface.testgeometry(s), values(test_shapes))
+    @test_broken GeoInterface.testgeometry(MultiPatch(Rect(1, 3, 2, 4), [0], [1], points, Interval(1, 4), [1, 2, 3, 4]))
+end
+
+@testset "convert" begin
+    @test convert(Point, PointZ(1, 2, 3, 4)) == Point(1, 2)
+    @test convert(PointM, PointZ(1, 2, 3, 4)) == PointM(1, 2, 4)
+    @test convert(PointZ, Point(1, 2)) == PointZ(1, 2, 0, 0)
+    pl = convert(Polyline, test_shapes[PolylineZ])
+    @test pl.MBR == test_shapes[Polyline].MBR
+    @test pl.points == test_shapes[Polyline].points
+    pl = convert(PolylineM, test_shapes[PolylineZ])
+    @test pl.MBR == test_shapes[PolylineM].MBR
+    @test pl.points == test_shapes[PolylineM].points
+    @test pl.measures == test_shapes[PolylineM].measures
+    pg = convert(Polygon, test_shapes[PolygonZ])
+    @test pg.MBR == test_shapes[Polygon].MBR
+    @test pg.points == test_shapes[Polygon].points
+    pg = convert(PolygonM, test_shapes[PolygonZ])
+    @test pg.MBR == test_shapes[PolygonM].MBR
+    @test pg.points == test_shapes[PolygonM].points
+    @test pg.measures == test_shapes[PolygonM].measures
+    mp = convert(MultiPoint, test_shapes[MultiPointZ])
+    @test mp.MBR == test_shapes[MultiPoint].MBR
+    @test mp.points == test_shapes[MultiPoint].points
+    mp = convert(MultiPointM, test_shapes[MultiPointZ])
+    @test mp.MBR == test_shapes[PolylineM].MBR
+    @test mp.points == test_shapes[PolylineM].points
+    @test mp.measures == test_shapes[PolylineM].measures
+
+    mp = convert(MultiPointZ, test_shapes[MultiPointM])
+    @test mp.MBR == test_shapes[PolylineZ].MBR
+    @test mp.points == test_shapes[PolylineZ].points
+    @test mp.measures == test_shapes[PolylineM].measures
+    @test mp.zvalues == [0.0, 0.0, 0.0, 0.0]  # Missing Z filled with zeros: is this the best default?
+end
+
+@testset "Loading Shapefiles" begin
 
 for test in test_tuples
     for use_shx in (false, true)
@@ -105,9 +180,9 @@ for test in test_tuples
         if !(test.geomtype <: Union{Missing,Shapefile.MultiPatch})
             @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
         end
-        @test shp.MBR == Shapefile.Rect(test.bbox...)
-        @test GeoInterface.bbox(shp) == test.bbox
-
+        ext = test.extent
+        @test shp.MBR == Shapefile.Rect(ext.X[1], ext.Y[1], ext.X[2], ext.Y[2])
+        @test GeoInterface.extent(shp) == test.extent
         # Multipatch can't be plotted, but it's obscure anyway
         if !(test.geomtype == Shapefile.MultiPatch)
             plot(shp) # Just test that it actually plots
@@ -117,6 +192,7 @@ end
 
 
 # Test all .shx files; the values in .shx must match the .shp offsets
+test = test_tuples[1]
 for test in test_tuples
 
     offsets = Int32[]
@@ -158,6 +234,6 @@ for test in test_tuples
 
 end
 
-include("table.jl")
+end  # @testset "Loading Shapefiles"
 
-end  # @testset "Shapefile"
+include("table.jl")
