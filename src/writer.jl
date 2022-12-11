@@ -1,447 +1,295 @@
-function Base.write(io::IO, rect::Rect)
-    bytes = Int32(0)
-    bytes += write(io, rect.left)
-    bytes += write(io, rect.bottom)
-    bytes += write(io, rect.right)
-    bytes += write(io, rect.top)
-    return bytes
-end
-
-function Base.write(io::IO, point::Point)
-    bytes = Int32(0)
-    bytes += write(io, point.x)
-    bytes += write(io, point.y)
-
-    return bytes
-end
-
-function Base.write(io::IO, point_m::PointM)
-    bytes = Int32(0)
-
-    bytes += write(io, point_m.x )
-    bytes += write(io, point_m.y )
-    bytes += write(io, point_m.m ) # measure
-
-    return bytes
-end
-
-function Base.write(io::IO, point_z::PointZ)
-
-    bytes = Int32(0)
-
-    bytes +=  write(io, point_z.x)
-    bytes +=  write(io, point_z.y)
-    bytes +=  write(io, point_z.z)
-    bytes +=  write(io, point_z.m)
-
-    return bytes
-end
-
-# Write an array of Point, PointZ, PointM
-function Base.write(io::IO, geo::Array{T}) where T<: Union{Point, PointM, PointZ} 
-    bytes = write.(Ref(io), geo)
-    return sum(bytes)
-end
-
-
-function Base.write(io::IO, polyline::Polyline)
-    bytes = Int32(0)
-
-    mbr_box = polyline.MBR
-    numparts  = Int32(length(polyline.parts))
-    numpoints = Int32(length(polyline.points))
-    
-    bytes += write(io, mbr_box)
-    bytes += write(io, numparts)
-    bytes += write(io, numpoints)
-    
-    # Write an array of el_type
-    bytes += write(io, polyline.parts)
-    bytes += write(io, polyline.points)
-
-    return bytes
-end
-
-function Base.write(io::IO, polyline_m::PolylineM)
-    bytes = Int32(0)
-
-    mbr_box = polyline_m.MBR
-    numparts  = Int32(length(polyline_m.parts ))
-    numpoints = Int32(length(polyline_m.points ))
-    
-    bytes += write(io, mbr_box)
-    bytes += write(io, numparts)
-    bytes += write(io, numpoints)
-    
-    bytes += write(io, polyline_m.parts)
-    bytes += write(io, polyline_m.points)
-    
-    mrange = extrema(polyline_m.measures)
-    bytes += write(io, mrange...)
-    bytes += write(io, polyline_m.measures)
-
-    return bytes
-end
-
-function Base.write(io::IO, polyline_z::PolylineZ)
-    bytes = Int32(0)
-
-    mbr_box = polyline_z.MBR
-    numparts  = Int32(length(polyline_z.parts ))
-    numpoints = Int32(length(polyline_z.points ))
-    
-    bytes += write(io, mbr_box)
-    bytes += write(io, numparts)
-    bytes += write(io, numpoints)
-
-    bytes += write(io, polyline_z.parts)
-    bytes += write(io, polyline_z.points)
-    
-    zrange = extrema(polyline_z.zvalues)
-    bytes += write(io, zrange...)
-    bytes += write(io, polyline_z.zvalues)
-    
-    mrange = extrema(polyline_z.measures)
-    bytes += write(io, mrange...)
-    bytes += write(io, polyline_z.measures)
-
-    return bytes
-end
-
-function Base.write(io::IO, polygon::Polygon)
-    bytes = Int32(0)
-
-    mbr_box = polygon.MBR
-    numparts = Int32(length(polygon.parts))
-    numpoints = Int32(length(polygon.points))
-
-    bytes += write(io, mbr_box)
-    bytes += write(io, numparts)
-    bytes += write(io, numpoints)
-    
-    bytes += write(io, polygon.parts)
-    bytes += write(io, polygon.points)
-    
-    return bytes
-end
-
-function Base.write(io::IO, polygon_m::PolygonM)
-    bytes = Int32(0)
-    
-    mbr_box = polygon_m.MBR
-    numparts = Int32(length(polygon_m.parts))
-    numpoints = Int32(length(polygon_m.points))
-    
-    bytes += write(io, mbr_box)
-    bytes += write(io, numparts)
-    bytes += write(io, numpoints)
-
-    bytes += write(io, polygon_m.parts)
-    bytes += write(io, polygon_m.points)
-
-    mrange = extrema(polygon_m.measures)
-    bytes += write(io, mrange...)
-    bytes += write(io, polygon_m.measures)
-    
-    return bytes
-end
-
-function Base.write(io::IO, polygon_z::PolygonZ)
-    bytes = Int32(0)
-
-    mbr_box = polygon_z.MBR
-    numparts = Int32(length(polygon_z.parts))
-    numpoints = Int32(length(polygon_z.points))
-    
-    bytes += write(io, mbr_box)
-    bytes += write(io, numparts)
-    bytes += write(io, numpoints)
-
-    bytes += write(io, polygon_z.parts)
-    bytes += write(io, polygon_z.points)
-
-    zrange = extrema(polygon_z.zvalues)
-    bytes += write(io, zrange...)
-    bytes += write(io, polygon_z.zvalues)
-
-    mrange = extrema(polygon_z.measures)
-    bytes += write(io, mrange...)
-    bytes += write(io, polygon_z.measures)
-
-    return bytes
-end
-
-function Base.write(io::IO, multipoint::MultiPoint)
-    bytes = Int32(0)
-
-    mbr_box  = multipoint.MBR
-    numpoints = Int32(length(multipoint.points))
-
-    bytes += write(io, mbr_box)
-    bytes += write(io, numpoints)
-    bytes += write(io, multipoint.points)
-    
-    return bytes
-end
-
-function Base.write(io::IO, multipoint_m::MultiPointM)
-    bytes = Int32(0)
-
-    mbr_box = multipoint_m.MBR
-    numpoints = Int32(length(multipoint_m.points))
-    bytes += write(io, mbr_box)
-    bytes += write(io, numpoints)
-    bytes += write(io, multipoint_m.points)
-
-    mrange = extrema(multipoint_m.measures)
-    bytes += write(io, mrange...)
-    bytes += write(io, multipoint_m.measures)
-
-    return bytes
-end
-
-function Base.write(io::IO, multipoint_z::MultiPointZ)
-    bytes = Int32(0)
-
-    mbr_box = multipoint_z.MBR
-    numpoints = Int32(length(multipoint_z.points))
-
-    bytes += write(io, mbr_box)
-    bytes += write(io, numpoints)
-    bytes += write(io, multipoint_z.points)
-    
-    zrange = extrema(multipoint_z.zvalues)
-    bytes += write(io, zrange...)
-    bytes += write(io, multipoint_z.zvalues)
-
-    mrange = extrema(multipoint_z.measures)
-    bytes += write(io, mrange...)
-    bytes += write(io, multipoint_z.measures)
-
-    return bytes
-end
-
-function Base.write(io::IO, multipatch::MultiPatch)
-    bytes = Int32(0)
-    
-    mbr_box = multipatch.MBR
-    numparts = Int32(length(multipatch.parts))
-    numpoints = Int32(length(multipatch.points))
-
-    bytes += write(io, mbr_box)
-    bytes += write(io, numparts)
-    bytes += write(io, numpoints)
-
-    bytes += write(io, multipatch.parts)
-    bytes += write(io, multipatch.parttypes)
-    
-    bytes += write(io, multipatch.points)
-    
-    zrange = extrema(multipatch.zvalues)
-    bytes += write(io, zrange...)
-    bytes += write(io, multipatch.zvalues)
-    
-    # mrange = extrema(multipatch.mvalues)
-    # bytes += write(io, mrange...)
-    # bytes += write(io, multipatch.measures)
-    return bytes
-end
-
 # Reverse lookup for Shapetype to Code
-SHAPECODE = Dict(zip(values(Shapefile.SHAPETYPE), keys(Shapefile.SHAPETYPE)))
-
-get_MBR(shapes::Array{Missing}) = Rect(0,0,0,0)
-function get_MBR(shapes::Array{Union{Missing,T}}) where T<:Union{Polyline,Polygon,MultiPoint,PolylineZ,PolygonZ,MultiPointZ,PolylineM,PolygonM,MultiPointM,MultiPatch}
-    most_left   = Inf
-    most_bottom = Inf
-    most_right  = -Inf
-    most_top    = -Inf
-    for shape in skipmissing(shapes)
-        most_left   = min(shape.MBR.left,   most_left)
-        most_bottom = min(shape.MBR.bottom, most_bottom)
-        most_right  = max(shape.MBR.right,  most_right)
-        most_top    = max(shape.MBR.top,    most_top)
+write(path::AbstractString, h::Handle) = write(path, h.shapes)
+function write(path::AbstractString, obj; force=false)
+    paths = _shape_paths(path)
+    if isfile(paths.shp)
+        if force
+            rm(paths.shp)
+        else
+            throw(ArgumentError("File already exists at `$(paths.shp)`. Use `force=true` to write anyway."))
+        end
     end
-    return Rect(most_left, most_bottom, most_right, most_top)
-end
-
-function get_MBR(points::Array{Union{Missing,T}}) where T<:Union{Point,PointM,PointZ}
-    most_left   = Inf
-    most_bottom = Inf
-    most_right  = -Inf
-    most_top    = -Inf
-    for point in skipmissing(points)
-        most_left   = min(point.x, most_left)
-        most_bottom = min(point.y, most_bottom)
-        most_right  = max(point.x, most_right)
-        most_top    = max(point.y, most_top)
+    if Tables.istable(obj)
+        geomcol = GI.geometrycolumn(obj)
+        geoms = Tables.getcolumn(obj, geomcol)
+        # DBFTables.Table(obj) # TODO remove geom column
+        # DBFTables.write # TODO DBF write function
+    else
+        geoms = obj
     end
-    return Rect(most_left, most_bottom, most_right, most_top)
-end
 
-const GeometriesHasNoZValues = Union{          PolygonM,            PolylineM,              MultiPointM,           Polyline, Polygon, MultiPoint, Point, PointM} # PointZ is speically handled 
-const GeometriesHasZValues   = Union{PolygonZ,           PolylineZ,            MultiPointZ,             MultiPatch} 
-const GeometriesHasNoMValues = Union{Polyline, Polygon, MultiPoint, Point, MultiPatch} # PointZ, PointM are speically handled
-const GeometriesHasMValues   = Union{PolygonZ, PolygonM, PolylineZ, PolylineM, MultiPointZ, MultiPointM}
+    # Write .shp file
+    io = open(paths.shp, "a+")
 
-get_zrange(shapes::Array{Missing}) = Interval(0,0)
-get_zrange(shapes::Array{Union{Missing,T}}) where T<:GeometriesHasNoZValues = Interval(0,0)
-function get_zrange(shapes::Array{Union{Missing,T}}) where T<:GeometriesHasZValues
-    # get z range
-    min_z = +Inf
-    max_z = -Inf
-    for shape in skipmissing(shapes)
-        for zvalue in shape.zvalues
-            min_z = min(min_z, zvalue)
-            max_z = max(max_z, zvalue)
-        end 
-    end
-    return Interval(min_z, max_z)    
-end
-function get_zrange(points::Array{Union{Missing,T}}) where T<:PointZ
-    min_z = +Inf
-    max_z = -Inf
-    for point in skipmissing(points)
-        min_z = min(min_z, point.z)
-        max_z = max(max_z, point.z)
-    end
-    return Interval(min_z, max_z)
-end
+    shx_indices = IndexRecord[]
+    bytes = 0
+    content_size = 0
+    first_geom = true
+    local mbr, zrange, mrange
 
-get_mrange(x::Array{Missing}) = Interval(0,0)
-get_mrange(x::Array{Union{Missing,T}}) where T<:GeometriesHasNoMValues = Interval(0.0,0.0)
-function get_mrange(shapes::Array{Union{Missing,T}}) where T<:GeometriesHasMValues
-    # get m range
-    min_m = +Inf
-    max_m = -Inf
-    for shape in skipmissing(shapes)
-        for measure in shape.measures
-            min_m = min(min_m, measure)
-            max_m = max(max_m, measure)
-        end 
-    end
-    return Interval(min_m, max_m)
-end
-function get_mrange(points::Array{Union{Missing,T}}) where T<:Union{PointM, PointZ}
-    min_m = +Inf
-    max_m = -Inf
-    for point in skipmissing(points)
-        min_m = min(min_m, point.m)
-        max_m = max(max_m, point.m)
-    end
-    return Interval(min_m, max_m)
-end
+    # Write an emtpy header 
+    # We go back later and write it properly later, so we don't have to precalculate everything.
+    dummy_header = Header(;
+        filesize=0, 
+        shapecode=SHAPECODE[Missing],
+        mbr=Rect(0.0, 0.0, 0.0, 0.0),
+        zrange=Interval(0.0, 0.0),
+        mrange=Interval(0.0, 0.0),
+    )
+    bytes += Base.write(io, dummy_header)
+    header_bytes = bytes
 
-const AllShapeTypes = Union{Point,Polyline,Polygon,MultiPoint,PointZ,PolylineZ,PolygonZ,MultiPointZ,PointM,PolylineM,PolygonM,MultiPointM,MultiPatch}
-function Base.write(io::IO, ::Type{Handle}, shapes::Array{Union{Missing,T}}) where T<:AllShapeTypes
-    
     # Since all the headers has some sort of content length information before the data block.
     # The code here will write out the data into a IOBuffer first to get the content length.
     # Finally it write the length information and then unload the IOBuffer data into the main block.
-
-    # Define some temorary io buffer to store raw bytes
-    geometries_io = IOBuffer()
-    record_io     = IOBuffer()
-
-    # Write all the shapes into a main block of data (geometries_io)
-    content_size = 0
-    num          = 0
-    rec_length   = 0
-
     
-    # NOTE:
-    # Since if we are allowing shapes to be an array of Union{Missing,AllShapeType}
-    # We have to default the base shapefile is Null shape
-    # Until there is AT LEAST ONE non-null shape type
-    # Then we will set the whole shapefile as such non-null shape type
-    shapeType = SHAPECODE[Missing]
-    for shape in shapes
-        # One -based record number; Increment from 0, and increment after record.
-        num += 1
-        
-        # Write Record to temorary buffer first
-        bytes = 0
-        if !ismissing(shape)
-            shapeType = SHAPECODE[typeof(shape)]
-            bytes += write( record_io, shapeType)
-            bytes += write( record_io, shape)
-        else
-            # Null Shape
-            bytes += write( record_io, SHAPECODE[Missing])
+    # Detect the shape type code from the first available geometry
+    # There can only be one shape type in the file.
+    if iterate(skipmissing(geoms)) == nothing
+        trait = Missing
+        hasz = hasm = false
+        shapecode = 0 
+        mbr = Rect(0.0, 0.0, 0.0, 0.0)
+        zrange = Interval(0.0, 0.0)
+        mrange = Interval(0.0, 0.0)
+    else
+        geom1 = first(skipmissing(geoms))
+        GI.isgeometry(geom1) || error("$(typeof(geom1)) is not a geometry")
+        trait = GI.geomtrait(geom1)
+        if trait isa GI.GeometryCollectionTrait 
+            @warn "Geometry Collections or MultiPatch cannot be written using Shapefile.jl"
+            return nothing
         end
-        
-        @assert bytes == record_io.size "The hardcoded accumulation of bytes should match how much bytes it has written into the buffer!"
+        hasz = GI.is3d(geom1)
+        hasm = GI.ismeasured(geom1)
+        shapecode = if hasz
+            SHAPECODE[TRAITSHAPE_Z[typeof(trait)]]
+        elseif hasm
+            SHAPECODE[TRAITSHAPE_M[typeof(trait)]]
+        else
+            SHAPECODE[TRAITSHAPE[typeof(trait)]]
+        end
+    end
+
+    # @assert bytes == io.size "The hardcoded accumulation of bytes $bytes should match how much bytes it has written into the buffer $(io.size)"
+
+    # Write the main block of data into the rest of the shape file
+    for (num, geom) in enumerate(geoms)
+        (trait === Missing || trait === GI.geomtrait(geom)) || throw(ArgumentError("Shapefiles can only contain geometries of the same type"))
+        # One-based record number; Increment from 0, and increment after record.
+        rec_bytes = Base.write(io, bswap(Int32(num)))
+        calc_recbytes = sizeof(Int32) # shape code
+
+        if ismissing(geom)
+            rec_bytes += Base.write(io, bswap(Int32(calc_recbytes)))
+            rec_bytes += Base.write(io, SHAPECODE[Missing])
+            bytes += rec_bytes
+            content_size += rec_bytes
+
+            # Indices for .shx file
+            offset = bytes ÷ 2
+            push!(shx_indices, IndexRecord(offset, rec_bytes))
+            continue
+        end
+
+        if trait isa GI.PointTrait 
+            calc_recbytes += sizeof(Float64) * 2 # point values
+            if hasz
+                calc_recbytes += sizeof(Float64) # z values
+            end
+            if hasm
+                calc_recbytes += sizeof(Float64) # measures
+            end
+        else
+            # box = read(io, Rect)
+            # numpoints = read(io, Int32)
+            # points = _readpoints(io, numpoints)
+
+            n = GI.npoint(geom)
+            calc_recbytes += sizeof(Rect) # Rect
+            calc_recbytes += sizeof(Int32) # num points
+            calc_recbytes += sizeof(Float64) * n * 2 # point values
+            if hasz
+                calc_recbytes += sizeof(Interval) # z interval
+                calc_recbytes += sizeof(Float64) * n # z values
+            end
+            if hasm
+                calc_recbytes += sizeof(Interval) # m interval
+                calc_recbytes += sizeof(Float64) * n # measures
+            end
+            numparts = _nparts(trait, geom) 
+            if !isnothing(numparts)
+                calc_recbytes += sizeof(Int32) # num parts
+                calc_recbytes += sizeof(Int32) * numparts # parts offsets
+            end
+        end
+
+        # Writing
+        #
+        # length
+        # measured in 16 bit increments, so divid by 2
+        rec_bytes += Base.write(io, bswap(Int32(calc_recbytes ÷ 2)))
+        # code
+        rec_bytes += Base.write(io, shapecode)
+        # geometry
+        geom_bytes, geom_mbr, geom_zrange, geom_mrange = _write(io, trait, geom)
+        rec_bytes += geom_bytes
+
+        if first_geom
+            first_geom = false
+            mbr = geom_mbr
+            zrange = geom_zrange
+            mrange = geom_mrange
+        else
+            mbr = union(mbr, geom_mbr)
+            zrange = union(zrange, geom_zrange)
+            mrange = union(mrange, geom_mrange)
+        end
 
         # Record Header
         # 32-bits (4 bytes) Record Number + 32-bits (4 bytes) Content length = 8 bytes
-        rec_length = bytes + 8 
-        write( geometries_io, bswap(Int32(num)))
-        
-        # Record length measured in 16-bit words (1-unit is 2-bytes (16-bits))
-        # So we divide record length recorded in bytes (8-bits) by 2 into 1 unit (16-bit/2 bytes) 
-        write( geometries_io, bswap(Int32(bytes /2)))
-        write( geometries_io, take!(record_io))
-        
-        content_size += rec_length
+        bytes += rec_bytes
+        content_size += rec_bytes
 
-        # !TODO: Here is where we extract and store the shx file content offset number        
-
-         
+        # Indices for .shx file
+        offset = bytes ÷ 2
+        push!(shx_indices, IndexRecord(offset, rec_bytes)) # TODO div by 2??
     end
 
-    # 
-    # Generate Basic File header information
-    #
-    code        = 9994
-    file_length = content_size + 100 
-    version     = 1000
-    
-    #
-    # Compute Shape-dependent information
-    #   1. MBR; Minimul Bounding Region, a up-right rectangular lat,lon box encapsulating all data point. 
-    #   2. zrange; An 1-dimensional interval encapsulating all z-values presented in the data 
-    #   3. mrange; An 1-dimensional interval encapsulating all measurements values presented in the data
-    #
-    MBR = get_MBR(shapes)
-    zrange = get_zrange(shapes)
-    mrange = get_mrange(shapes)
+    @assert bytes == content_size + header_bytes "The hardcoded accumulation of bytes $(content_size + header_bytes) should match how much bytes it has written into the buffer $bytes"
 
-    #
-    # Write File Header Information into file
-    #
-    bytes = 0
-    bytes += write(io, bswap(Int32(code)))
-    # code = bswap(read(io, Int32))
+    # Finally write the correct header at the start of the file
+    header = Header(; filesize=bytes ÷ 2, shapecode, mbr, zrange, mrange)
+    seek(io, 0)
+    Base.write(io, header)
+    
+    # Write .shx file
+    index_handle = IndexHandle(header, shx_indices)
+    Base.write(paths.shx, index_handle)
+    close(io)
 
-    bytes += write(io, Int32[0,0,0,0,0])
-    # read!(io, Vector{Int32}(undef, 5))
-    
-    # !NOTE: Record in 16-bits words
-    bytes += write(io, bswap(Int32(file_length/2)))
-    # content_size = bswap(read(io, Int32))
-    
-    bytes += write(io, Int32(version))
-    # version = read(io, Int32)
-
-    bytes += write(io, Int32(shapeType))
-    # shapeType = read(io, Int32)
-    
-    bytes += write(io, MBR)
-    # MBR = read(io, Rect)
-    
-    bytes += write(io, zrange.left)
-    bytes += write(io, zrange.right)
-    # zmin = read(io, Float64)
-    # zmax = read(io, Float64)
-    
-    bytes += write(io, mrange.left)
-    bytes += write(io, mrange.right)
-    # mmin = read(io, Float64)
-    # mmax = read(io, Float64)
-
-
-    
-    # Write the maind block of data into the rest of the shape file
-    write(io, take!(geometries_io))
-    
+    return bytes
 end
+
+_write(io::IO, geom; kw...) = _write(io::IO, GI.geomtrait(geom), geom; kw...)
+function _write(io::IO, ::Nothing, obj; kw...)
+    throw(ArgumentError("trying to write an object that is not a geometry: $(typeof(obj))"))
+end
+function _write(io::IO, trait::GI.AbstractGeometryTrait, geom; kw...)
+    bytes = Int64(0)
+    mbr = _calc_mbr(geom)
+    bytes += Base.write(io, mbr)
+    numparts = _nparts(trait, geom)
+    if !isnothing(numparts)
+        bytes += Base.write(io, numparts)
+    end
+    numpoints = Int32(GI.npoint(geom))
+    bytes += Base.write(io, numpoints)
+
+    # Polygons list ring start locations as "parts"
+    if !isnothing(numparts)
+        offset = Int32(0)
+        for part in _get_parts(trait, geom)
+            bytes += Base.write(io, offset)
+            offset += Int32(GI.npoint(part))
+        end
+    end
+    bytes += _write_xy(io, geom)
+    b, zrange, mrange = _write_others(io, geom; kw...)
+    bytes += b
+
+    return bytes, mbr, zrange, mrange
+end
+function _write(io::IO, ::GI.PointTrait, point;
+    hasz=GI.is3d(point), hasm=GI.ismeasured(point) 
+)
+    bytes = Int64(0)
+    x, y = Float64(GI.x(point)), Float64(GI.y(point))
+    mbr = Rect(x, y, x, y)
+    bytes += Base.write(io, x, y)
+    if hasz
+        z = Float64(GI.z(point))
+        bytes += Base.write(io, z)
+        zrange = Interval(z, z)
+    else
+        zrange = Interval(0.0, 0.0)
+    end
+    if hasm
+        m = Float64(GI.m(point))
+        bytes +=  Base.write(io, m)
+        mrange = Interval(m, m)
+    else
+        mrange = Interval(0.0, 0.0)
+    end
+
+    return bytes, mbr, zrange, mrange
+end
+
+function _calc_mbr(geom)
+    low_x = low_y = Inf
+    high_x = high_y = -Inf
+    for point in GI.getpoint(geom)
+        x, y = GI.x(point), GI.y(point)
+        low_x = min(low_x, x)
+        high_x = max(high_x, x)
+        low_y = min(low_y, y)
+        high_y = max(high_y, y)
+    end
+    return Rect(low_x, low_y, high_x, high_y)
+end
+
+function _write_xy(io, geom)
+    bytes = 0
+    for point in GI.getpoint(geom)
+        x, y = GI.x(point), GI.y(point)
+        bytes += Base.write(io, x)
+        bytes += Base.write(io, y)
+    end
+    return bytes
+end
+
+# z and m values are written separately if they exist
+function _write_others(io, geom;
+    hasz=GI.is3d(geom), hasm=GI.ismeasured(geom)
+)
+    bytes = 0
+    # TODO what to do when hasm == false but hasz == true
+    if hasz
+        b, zrange = _write_others(GI.z, io, geom)
+        bytes += b
+    else
+        zrange = Interval(0.0, 0.0)
+    end
+
+    if hasm 
+        b, mrange = _write_others(GI.m, io, geom)
+        bytes += b
+    else
+        mrange = Interval(0.0, 0.0)
+    end
+    return bytes, zrange, mrange
+end
+function _write_others(f, io, geom)
+    low = Inf
+    high = -Inf
+    for point in GI.getpoint(geom)
+        m = f(point)
+        low = min(low, m)
+        high = max(high, m)
+    end
+    range = Interval(low, high)
+    bytes = Base.write(io, range) 
+    for point in GI.getpoint(geom)
+        m = f(point)
+        bytes += Base.write(io, m)
+    end
+    return bytes, range
+end
+
+# Internal trait for shapes that track `parts` data
+_nparts(trait, geom) = nothing
+_nparts(trait::Union{GI.MultiPolygonTrait,GI.PolygonTrait}, geom) = Int32(GI.nring(geom))
+_nparts(trait::GI.MultiLineStringTrait, geom) = Int32(GI.nlinestring(geom))
+
+_get_parts(trait::Union{GI.MultiPolygonTrait,GI.PolygonTrait}, geom) = GI.getring(trait, geom)
+_get_parts(trait, geom) = GI.getgeom(trait, geom)

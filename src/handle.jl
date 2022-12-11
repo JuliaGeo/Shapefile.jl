@@ -11,13 +11,7 @@ The Vector of shape object can be accessed with `shapes(handle)`.
 `Handle` may have a known bounding box, which can be retrieved with `GeoInterface.bbox`.
 """
 mutable struct Handle{T<:Union{<:AbstractShape,Missing}}
-    code::Int32
-    length::Int32
-    version::Int32
-    shapeType::Int32
-    MBR::Rect
-    zrange::Interval
-    mrange::Interval
+    header::Header
     shapes::Vector{T}
     crs::Union{Nothing,GeoFormatTypes.ESRIWellKnownText}
 end
@@ -40,55 +34,36 @@ GeoInterface.crs(h::Handle) = h.crs
 Base.length(shp::Handle) = length(shapes(shp))
 
 function Base.read(io::IO, ::Type{Handle}, index = nothing; path = nothing)
-    code = bswap(read(io, Int32))
-    read!(io, Vector{Int32}(undef, 5))
-    fileSize = bswap(read(io, Int32))
-    version = read(io, Int32)
-    shapeType = read(io, Int32)
-    MBR = read(io, Rect)
-    zmin = read(io, Float64)
-    zmax = read(io, Float64)
-    mmin = read(io, Float64)
-    mmax = read(io, Float64)
-    jltype = SHAPETYPE[shapeType]
+    header = read(io, Header)
+    jltype = SHAPETYPE[header.shapecode]
     shapes = Vector{Union{jltype,Missing}}(undef, 0)
-    crs = nothing
-    if path !== nothing
-        prjfile = string(splitext(path)[1], ".prj")
-        if isfile(prjfile) 
-            try
-                crs = GeoFormatTypes.ESRIWellKnownText(read(open(prjfile), String))
-            catch
-                @warn "Projection file $prjfile appears to be corrupted. `nothing` used for `crs`"
-            end
-        end
-    end
     num = Int32(0)
     while (!eof(io))
         seeknext(io, num, index)
         num = bswap(read(io, Int32))
         rlength = bswap(read(io, Int32))
-        shapeType = read(io, Int32)
-        if shapeType === Int32(0)
+        shapecode = read(io, Int32)
+        if shapecode === Int32(0)
             push!(shapes, missing)
         else
             push!(shapes, read(io, jltype))
         end
     end
-    return Handle(
-        code,
-        fileSize,
-        version,
-        shapeType,
-        MBR,
-        Interval(zmin, zmax),
-        Interval(mmin, mmax),
-        shapes,
-        crs,
-    )
+    crs = nothing
+    if path !== nothing
+        prjpath = _shape_paths(path).prj
+        if isfile(prjpath)
+            try
+                crs = GeoFormatTypes.ESRIWellKnownText(read(open(prjpath), String))
+            catch
+                @warn "Projection file $prjpath appears to be corrupted. `nothing` used for `crs`"
+            end
+        end
+    end
+    return Handle(header, shapes, crs)
 end
 
 function seeknext(io, num, index::IndexHandle)
-    seek(io, index.indices[num+1].offset * 2)
+    seek(io, index.indices[num + 1].offset * 2)
 end
 seeknext(io, num, ::Nothing) = nothing

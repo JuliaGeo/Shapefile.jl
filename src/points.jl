@@ -94,3 +94,4 @@ GI.m(::GI.PointTrait, point::PointZ) = point.m
 GI.z(::GI.PointTrait, point::PointZ) = point.z
 
 _ncoord(::Type{PointZ}) = 3
+_ncoord(::Type{PointZ}) = 3

@@ -24,6 +24,8 @@ Base.getindex(lr::LineString{PointZ}, i) = PointZ(lr.xy[i], lr.z[i], lr.m[i])
 
 abstract type AbstractPolyline{T} <: AbstractShape end
 
+_hasparts(::GI.MultiLineStringTrait) = true
+
 _pointtype(::Type{<:AbstractPolyline{T}}) where T = T
 
 Base.convert(::Type{T}, ::GI.MultiLineStringTrait, geom) where T<:AbstractPolyline =
@@ -69,6 +71,9 @@ function Base.read(io::IO, ::Type{Polyline})
     Polyline(box, parts, points)
 end
 
+Base.:(==)(p1::Polyline, p2::Polyline) =
+    (p1.parts == p2.parts) && (p1.points == p2.points)
+
 LineString(geom::Polyline, range) = @views LineString{Point}(geom.points[range])
 
 """
@@ -89,6 +94,9 @@ struct PolylineM <: AbstractPolyline{PointM}
     mrange::Interval
     measures::Vector{Float64}
 end
+
+Base.:(==)(p1::PolylineM, p2::PolylineM) =
+    (p1.parts == p2.parts) && (p1.points == p2.points) && (p1.measures == p2.measures)
 
 LineString(geom::PolylineM, range) =
     @views LineString{PointM}(geom.points[range]; m=geom.measures[range])
@@ -124,6 +132,9 @@ struct PolylineZ <: AbstractPolyline{PointZ}
     mrange::Interval
     measures::Vector{Float64}
 end
+
+Base.:(==)(p1::PolylineZ, p2::PolylineZ) =
+    (p1.parts == p2.parts) && (p1.points == p2.points) && (p1.zvalues == p2.zvalues) && (p1.measures == p2.measures)
 
 LineString(geom::PolylineZ, range) =
     @views LineString{PointZ}(geom.points[range]; z=geom.zvalues[range], m=geom.measures[range])

@@ -61,27 +61,16 @@ function Table(shp::Handle{T}, dbf::DBFTables.Table) where {T}
     Table{T}(shp, dbf)
 end
 function Table(path::AbstractString)
-    stempath, ext = splitext(path)
-    if lowercase(ext) == ".shp"
-        shp_path = path
-        shx_path = string(stempath, ".shx")
-        dbf_path = string(stempath, ".dbf")
-    elseif ext == ""
-        shp_path = string(stempath, ".shp")
-        shx_path = string(stempath, ".shx")
-        dbf_path = string(stempath, ".dbf")
-    else
-        throw(ArgumentError("Provide the shapefile with either .shp or no extension"))
-    end
-    isfile(shp_path) || throw(ArgumentError("File not found: $shp_path"))
-    isfile(dbf_path) || throw(ArgumentError("File not found: $dbf_path"))
+    paths = _shape_paths(path)
+    isfile(paths.shp) || throw(ArgumentError("File not found: $shp_path"))
+    isfile(paths.dbf) || throw(ArgumentError("File not found: $dbf_path"))
 
-    shp = if isfile(shx_path)
-        Shapefile.Handle(shp_path, shx_path)
+    shp = if isfile(paths.shx)
+        Shapefile.Handle(paths.shp, paths.shx)
     else
-        Shapefile.Handle(shp_path)
+        Shapefile.Handle(paths.shp)
     end
-    dbf = DBFTables.Table(dbf_path)
+    dbf = DBFTables.Table(paths.dbf)
     return Shapefile.Table(shp, dbf)
 end
 

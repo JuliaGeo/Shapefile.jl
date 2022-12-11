@@ -25,6 +25,8 @@ struct MultiPoint <: AbstractMultiPoint{Point}
     points::Vector{Point}
 end
 
+Base.:(==)(p1::MultiPoint, p2::MultiPoint) = p1.points == p2.points
+
 function Base.read(io::IO, ::Type{MultiPoint})
     box = read(io, Rect)
     numpoints = read(io, Int32)
@@ -55,6 +57,9 @@ struct MultiPointM <: AbstractMultiPoint{PointM}
     mrange::Interval
     measures::Vector{Float64}
 end
+
+Base.:(==)(p1::MultiPointM, p2::MultiPointM) =
+    (p1.points == p2.points) && (p1.measures == p2.measures)
 
 function Base.read(io::IO, ::Type{MultiPointM})
     box = read(io, Rect)
@@ -91,6 +96,9 @@ struct MultiPointZ <: AbstractMultiPoint{PointZ}
     measures::Vector{Float64}
 end
 
+Base.:(==)(p1::MultiPointZ, p2::MultiPointZ) =
+    (p1.points == p2.points) && (p1.zvalues == p2.zvalues) && (p1.measures == p2.measures)
+
 GI.getgeom(::GI.MultiPointTrait, geom::MultiPointZ, i::Integer) =
     PointZ(geom.points[i], geom.zvalues[i], geom.measures[i])
 
@@ -101,4 +109,20 @@ function Base.read(io::IO, ::Type{MultiPointZ})
     zrange, zvalues = _readz(io, numpoints)
     mrange, measures = _readm(io, numpoints)
     MultiPointZ(box, points, zrange, zvalues, mrange, measures)
+end
+
+
+# MultiPoint has no parts
+function _write(io::IO, trait::GI.MultiPointTrait, geom; kw...)
+    bytes = Int64(0)
+    mbr = _calc_mbr(geom)
+    bytes += Base.write(io, mbr)
+    numpoints = Int32(GI.npoint(geom))
+    bytes += Base.write(io, numpoints)
+
+    bytes += _write_xy(io, geom)
+    b, zrange, mrange = _write_others(io, geom; kw...)
+    bytes += b
+
+    return (; bytes, mbr, zrange, mrange)
 end

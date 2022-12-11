@@ -18,7 +18,8 @@ function GI.extent(x::AbstractShape)
     rect = x.MBR
     return Extents.Extent(X=(rect.left, rect.right), Y=(rect.bottom, rect.top))
 end
-function GI.extent(x::Union{ShapeZ,Handle})
+GI.extent(x::Handle) = GI.extent(x.header)
+function GI.extent(x::Union{ShapeZ,Header})
     rect = x.MBR
     return Extents.Extent(X=(rect.left, rect.right), Y=(rect.bottom, rect.top), Z=(x.zrange.left, x.zrange.right))
 end

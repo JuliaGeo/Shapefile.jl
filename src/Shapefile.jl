@@ -33,6 +33,42 @@ const SHAPETYPE = Dict{Int32,DataType}(
     31 => MultiPatch,
 )
 
+const SHAPECODE = Dict((v => k for (k, v) in SHAPETYPE))
+
+const TRAITSHAPE = Dict{Type,Type}(
+    Nothing => Missing,
+    Missing => Missing,
+    GI.PointTrait => Point,
+    GI.MultiLineStringTrait => Polyline,
+    GI.MultiPolygonTrait => Polygon,
+    GI.MultiPointTrait => MultiPoint,
+)
+const TRAITSHAPE_Z = Dict{Type,Type}(
+    Nothing => Missing,
+    Missing => Missing,
+    GI.PointTrait => PointZ,
+    GI.MultiLineStringTrait => PolylineZ,
+    GI.MultiPolygonTrait => PolygonZ,
+    GI.MultiPointTrait => MultiPointZ,
+)
+
+const TRAITSHAPE_M = Dict{Type,Type}(
+    Nothing => Missing,
+    Missing => Missing,
+    GI.PointTrait => PointM,
+    GI.MultiLineStringTrait => PolylineM,
+    GI.MultiPolygonTrait => PolygonM,
+    GI.MultiPointTrait => MultiPointM,
+)
+
+trait_geom_type(::GI.PolygonTrait) = SubPolygon
+trait_geom_type(::GI.LinearRingTrait) = LinearRing
+trait_geom_type(::GI.PointTrait) = Point
+trait_geom_type(::GI.MultiLineStringTrait) = Polyline
+trait_geom_type(::GI.PolygonTrait) = PolygonTrait
+trait_geom_type(::GI.MultiPointTrait) = MultiPoint
+
+
 include("shx.jl")
 include("handle.jl")
 include("table.jl")

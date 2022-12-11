@@ -1,5 +1,5 @@
 
-# Shapefiles Polygons are actually MultiPolygons Made up of unsorted rings.
+# Shapefile Polygons are actually MultiPolygons made up of unsorted rings.
 # To handle this we add additional types not in the Shapefile specification.
 # LinearRing represents individual rings while `SubPolygon` is a single external
 # ring and n internal rings (holes).
@@ -44,6 +44,9 @@ Base.push!(p::SubPolygon, x) = Base.push!(parent(p), x)
 
 
 abstract type AbstractPolygon{T} <: AbstractShape end
+
+_hasparts(::GI.MultiPolygonTrait) = true
+_hasparts(::GI.PolygonTrait) = true
 
 _pointtype(::Type{<:AbstractPolygon{T}}) where T = T
 
@@ -157,6 +160,8 @@ function Base.read(io::IO, ::Type{Polygon})
     Polygon(box, parts, points)
 end
 
+Base.:(==)(p1::Polygon, p2::Polygon) = (p1.parts == p2.parts) && (p1.points == p2.points)
+
 """
     PolygonM <: AbstractPolygon
 
@@ -175,6 +180,9 @@ struct PolygonM <: AbstractPolygon{PointM}
     mrange::Interval
     measures::Vector{Float64}
 end
+
+Base.:(==)(p1::PolygonM, p2::PolygonM) =
+    (p1.parts == p2.parts) && (p1.points == p2.points) && (p1.measures == p2.measures)
 
 function Base.read(io::IO, ::Type{PolygonM})
     box = read(io, Rect)
@@ -207,6 +215,9 @@ struct PolygonZ <: AbstractPolygon{PointZ}
     mrange::Interval
     measures::Vector{Float64}
 end
+
+Base.:(==)(p1::PolygonZ, p2::PolygonZ) =
+    (p1.parts == p2.parts) && (p1.points == p2.points) && (p1.zvalues == p2.zvalues) && (p1.measures == p2.measures)
 
 function Base.read(io::IO, ::Type{PolygonZ})
     box = read(io, Rect)
