@@ -12,7 +12,11 @@ struct IndexRecord
     contentlen::Int32
 end
 
-function Base.write(io, ir::IndexRecord)
+function Base.read(io::IO, ir::Type{IndexRecord})
+    IndexRecord(ntoh(read(io, Int32)), ntoh(read(io, Int32)))
+end
+
+function Base.write(io::IO, ir::IndexRecord)
     Base.write(io, hton(ir.offset), hton(ir.contentlen))
 end
 
@@ -25,13 +29,15 @@ function Base.read(io::IO,  ::Type{IndexHandle})
     header = read(io, Header)
     records = Vector{IndexRecord}(undef,  0)
     while !eof(io)
-        push!(records,  IndexRecord(ntoh(read(io, Int32)), ntoh(read(io, Int32))))
+        push!(records, read(io, IndexRecord))
     end
     return IndexHandle(header, records)
 end
 
 function Base.write(io::IO,  ih::IndexHandle)
     bytes = Base.write(io, ih.header)
-    bytes += Base.write(io, ih.indices)
+    for ir in ih.indices
+        bytes += Base.write(io, ir)
+    end
     return bytes
 end

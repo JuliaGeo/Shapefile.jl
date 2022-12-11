@@ -110,19 +110,3 @@ function Base.read(io::IO, ::Type{MultiPointZ})
     mrange, measures = _readm(io, numpoints)
     MultiPointZ(box, points, zrange, zvalues, mrange, measures)
 end
-
-
-# MultiPoint has no parts
-function _write(io::IO, trait::GI.MultiPointTrait, geom; kw...)
-    bytes = Int64(0)
-    mbr = _calc_mbr(geom)
-    bytes += Base.write(io, mbr)
-    numpoints = Int32(GI.npoint(geom))
-    bytes += Base.write(io, numpoints)
-
-    bytes += _write_xy(io, geom)
-    b, zrange, mrange = _write_others(io, geom; kw...)
-    bytes += b
-
-    return (; bytes, mbr, zrange, mrange)
-end

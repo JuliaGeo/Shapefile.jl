@@ -1,7 +1,19 @@
-# Reverse lookup for Shapetype to Code
+
+"""
+    write(path::AbstractString, handle::Shapefile.Handle)
+    write(path::AbstractString, geoms)
+
+Write geometries to file. `geoms` can be a table or any iterable of GeoInterface.jl
+combatible geometry objects, with `missing` values allowed.
+
+Note: As DBFTables.jl does not yet write, we can't write Table or FeatureCollection
+data besides geometries. Only .shp and .shx files are written currently.
+"""
 write(path::AbstractString, h::Handle) = write(path, h.shapes)
 function write(path::AbstractString, obj; force=false)
     paths = _shape_paths(path)
+
+    # File existance check
     if isfile(paths.shp)
         if force
             rm(paths.shp)
@@ -9,23 +21,27 @@ function write(path::AbstractString, obj; force=false)
             throw(ArgumentError("File already exists at `$(paths.shp)`. Use `force=true` to write anyway."))
         end
     end
+
+    # Handle tabular data
     if Tables.istable(obj)
         geomcol = GI.geometrycolumn(obj)
         geoms = Tables.getcolumn(obj, geomcol)
+        @warn "DBFTables.jl does not yet `write`, so no .dbx file can be written"
         # DBFTables.Table(obj) # TODO remove geom column
         # DBFTables.write # TODO DBF write function
     else
         geoms = obj
     end
 
-    # Write .shp file
-    io = open(paths.shp, "a+")
-
+    # Initialisation
     shx_indices = IndexRecord[]
     bytes = 0
     content_size = 0
     first_geom = true
     local mbr, zrange, mrange
+
+    # Open the .shp file as an IO stream
+    io = open(paths.shp, "a+")
 
     # Write an emtpy header 
     # We go back later and write it properly later, so we don't have to precalculate everything.
@@ -39,12 +55,9 @@ function write(path::AbstractString, obj; force=false)
     bytes += Base.write(io, dummy_header)
     header_bytes = bytes
 
-    # Since all the headers has some sort of content length information before the data block.
-    # The code here will write out the data into a IOBuffer first to get the content length.
-    # Finally it write the length information and then unload the IOBuffer data into the main block.
-    
     # Detect the shape type code from the first available geometry
     # There can only be one shape type in the file.
+    # If all values are missing, the shape type is Missing
     if iterate(skipmissing(geoms)) == nothing
         trait = Missing
         hasz = hasm = false
@@ -71,64 +84,63 @@ function write(path::AbstractString, obj; force=false)
         end
     end
 
-    # @assert bytes == io.size "The hardcoded accumulation of bytes $bytes should match how much bytes it has written into the buffer $(io.size)"
-
-    # Write the main block of data into the rest of the shape file
+    # Write the geometry data into io
     for (num, geom) in enumerate(geoms)
         (trait === Missing || trait === GI.geomtrait(geom)) || throw(ArgumentError("Shapefiles can only contain geometries of the same type"))
+
         # One-based record number; Increment from 0, and increment after record.
-        rec_bytes = Base.write(io, bswap(Int32(num)))
-        calc_recbytes = sizeof(Int32) # shape code
+        rec_bytes = 0
+        rec_start = bytes
+        calc_rec_bytes = sizeof(Int32) # shape code
+
+        # Write record number
+        bytes += Base.write(io, bswap(Int32(num)))
 
         if ismissing(geom)
-            rec_bytes += Base.write(io, bswap(Int32(calc_recbytes)))
+            bytes += Base.write(io, bswap(Int32(calc_rec_bytes ÷ 2)))
             rec_bytes += Base.write(io, SHAPECODE[Missing])
-            bytes += rec_bytes
-            content_size += rec_bytes
 
             # Indices for .shx file
-            offset = bytes ÷ 2
-            push!(shx_indices, IndexRecord(offset, rec_bytes))
+            offset = rec_start ÷ 2
+            rec_len = rec_bytes ÷ 2 # 16 bit words
+            push!(shx_indices, IndexRecord(offset, rec_len))
+
+            # Update bytes
+            bytes += rec_bytes
             continue
         end
 
+        # Calculate record size
         if trait isa GI.PointTrait 
-            calc_recbytes += sizeof(Float64) * 2 # point values
+            calc_rec_bytes += sizeof(Float64) * 2 # point values
             if hasz
-                calc_recbytes += sizeof(Float64) # z values
+                calc_rec_bytes += sizeof(Float64) # z values
             end
             if hasm
-                calc_recbytes += sizeof(Float64) # measures
+                calc_rec_bytes += sizeof(Float64) # measures
             end
         else
-            # box = read(io, Rect)
-            # numpoints = read(io, Int32)
-            # points = _readpoints(io, numpoints)
-
             n = GI.npoint(geom)
-            calc_recbytes += sizeof(Rect) # Rect
-            calc_recbytes += sizeof(Int32) # num points
-            calc_recbytes += sizeof(Float64) * n * 2 # point values
+            calc_rec_bytes += sizeof(Rect) # Rect
+            calc_rec_bytes += sizeof(Int32) # num points
+            calc_rec_bytes += sizeof(Float64) * n * 2 # point values
             if hasz
-                calc_recbytes += sizeof(Interval) # z interval
-                calc_recbytes += sizeof(Float64) * n # z values
+                calc_rec_bytes += sizeof(Interval) # z interval
+                calc_rec_bytes += sizeof(Float64) * n # z values
             end
             if hasm
-                calc_recbytes += sizeof(Interval) # m interval
-                calc_recbytes += sizeof(Float64) * n # measures
+                calc_rec_bytes += sizeof(Interval) # m interval
+                calc_rec_bytes += sizeof(Float64) * n # measures
             end
             numparts = _nparts(trait, geom) 
             if !isnothing(numparts)
-                calc_recbytes += sizeof(Int32) # num parts
-                calc_recbytes += sizeof(Int32) * numparts # parts offsets
+                calc_rec_bytes += sizeof(Int32) # num parts
+                calc_rec_bytes += sizeof(Int32) * numparts # parts offsets
             end
         end
 
-        # Writing
-        #
-        # length
-        # measured in 16 bit increments, so divid by 2
-        rec_bytes += Base.write(io, bswap(Int32(calc_recbytes ÷ 2)))
+        # length: measured in 16 bit increments, so divid by 2
+        bytes += Base.write(io, bswap(Int32(calc_rec_bytes ÷ 2)))
         # code
         rec_bytes += Base.write(io, shapecode)
         # geometry
@@ -146,31 +158,37 @@ function write(path::AbstractString, obj; force=false)
             mrange = union(mrange, geom_mrange)
         end
 
+        @assert rec_bytes == calc_rec_bytes
+
+        # Indices for .shx file
+        offset = rec_start ÷ 2 # 16 bit words
+        rec_len = rec_bytes ÷ 2 # 16 bit words
+        push!(shx_indices, IndexRecord(offset, rec_len))
+
         # Record Header
         # 32-bits (4 bytes) Record Number + 32-bits (4 bytes) Content length = 8 bytes
         bytes += rec_bytes
-        content_size += rec_bytes
-
-        # Indices for .shx file
-        offset = bytes ÷ 2
-        push!(shx_indices, IndexRecord(offset, rec_bytes)) # TODO div by 2??
     end
 
-    @assert bytes == content_size + header_bytes "The hardcoded accumulation of bytes $(content_size + header_bytes) should match how much bytes it has written into the buffer $bytes"
+    # @assert bytes == content_size + header_bytes "The hardcoded accumulation of bytes $(content_size + header_bytes) should match how much bytes it has written into the buffer $bytes"
 
     # Finally write the correct header at the start of the file
     header = Header(; filesize=bytes ÷ 2, shapecode, mbr, zrange, mrange)
     seek(io, 0)
     Base.write(io, header)
+
+    # Close .shp file
+    close(io)
     
     # Write .shx file
     index_handle = IndexHandle(header, shx_indices)
     Base.write(paths.shx, index_handle)
-    close(io)
+
 
     return bytes
 end
 
+# Geometry writing
 _write(io::IO, geom; kw...) = _write(io::IO, GI.geomtrait(geom), geom; kw...)
 function _write(io::IO, ::Nothing, obj; kw...)
     throw(ArgumentError("trying to write an object that is not a geometry: $(typeof(obj))"))
@@ -194,7 +212,13 @@ function _write(io::IO, trait::GI.AbstractGeometryTrait, geom; kw...)
             offset += Int32(GI.npoint(part))
         end
     end
-    bytes += _write_xy(io, geom)
+    # write x/y part of points
+    for point in GI.getpoint(geom)
+        x, y = GI.x(point), GI.y(point)
+        bytes += Base.write(io, x)
+        bytes += Base.write(io, y)
+    end
+    # write the other z/m parts if they exist
     b, zrange, mrange = _write_others(io, geom; kw...)
     bytes += b
 
@@ -236,16 +260,6 @@ function _calc_mbr(geom)
         high_y = max(high_y, y)
     end
     return Rect(low_x, low_y, high_x, high_y)
-end
-
-function _write_xy(io, geom)
-    bytes = 0
-    for point in GI.getpoint(geom)
-        x, y = GI.x(point), GI.y(point)
-        bytes += Base.write(io, x)
-        bytes += Base.write(io, y)
-    end
-    return bytes
 end
 
 # z and m values are written separately if they exist
