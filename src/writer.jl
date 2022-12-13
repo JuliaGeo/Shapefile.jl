@@ -24,9 +24,9 @@ function write(path::AbstractString, obj; force=false)
 
     # Handle tabular data
     if Tables.istable(obj)
-        geomcol = GI.geometrycolumn(obj)
+        geomcol = first(GI.geometrycolumns(obj))
         geoms = Tables.getcolumn(obj, geomcol)
-        @warn "DBFTables.jl does not yet `write`, so no .dbx file can be written"
+        @warn "DBFTables.jl does not yet `write`, so only .shp and .shx file can be written"
         # DBFTables.Table(obj) # TODO remove geom column
         # DBFTables.write # TODO DBF write function
     else

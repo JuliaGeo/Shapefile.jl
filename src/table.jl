@@ -62,8 +62,8 @@ function Table(shp::Handle{T}, dbf::DBFTables.Table) where {T}
 end
 function Table(path::AbstractString)
     paths = _shape_paths(path)
-    isfile(paths.shp) || throw(ArgumentError("File not found: $shp_path"))
-    isfile(paths.dbf) || throw(ArgumentError("File not found: $dbf_path"))
+    isfile(paths.shp) || throw(ArgumentError("File not found: $(paths.dbf)"))
+    isfile(paths.dbf) || throw(ArgumentError("File not found: $(paths.dbf)"))
 
     shp = if isfile(paths.shx)
         Shapefile.Handle(paths.shp, paths.shx)
