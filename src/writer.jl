@@ -36,24 +36,19 @@ function write(path::AbstractString, obj; force=false)
     # Initialisation
     shx_indices = IndexRecord[]
     bytes = 0
-    content_size = 0
     first_geom = true
-    local mbr, zrange, mrange
+    shapecode = SHAPECODE[Missing] 
+    mbr = Rect(0.0, 0.0, 0.0, 0.0)
+    zrange = Interval(0.0, 0.0)
+    mrange = Interval(0.0, 0.0)
 
     # Open the .shp file as an IO stream
     io = open(paths.shp, "a+")
 
     # Write an emtpy header 
     # We go back later and write it properly later, so we don't have to precalculate everything.
-    dummy_header = Header(;
-        filesize=0, 
-        shapecode=SHAPECODE[Missing],
-        mbr=Rect(0.0, 0.0, 0.0, 0.0),
-        zrange=Interval(0.0, 0.0),
-        mrange=Interval(0.0, 0.0),
-    )
+    dummy_header = Header(; filesize=0, shapecode, mbr, zrange, mrange)
     bytes += Base.write(io, dummy_header)
-    header_bytes = bytes
 
     # Detect the shape type code from the first available geometry
     # There can only be one shape type in the file.
@@ -61,10 +56,6 @@ function write(path::AbstractString, obj; force=false)
     if iterate(skipmissing(geoms)) == nothing
         trait = Missing
         hasz = hasm = false
-        shapecode = 0 
-        mbr = Rect(0.0, 0.0, 0.0, 0.0)
-        zrange = Interval(0.0, 0.0)
-        mrange = Interval(0.0, 0.0)
     else
         geom1 = first(skipmissing(geoms))
         GI.isgeometry(geom1) || error("$(typeof(geom1)) is not a geometry")
@@ -95,68 +86,62 @@ function write(path::AbstractString, obj; force=false)
         # Write record number
         bytes += Base.write(io, hton(Int32(num)))
 
+        # Shortcut if the geom is missing
         if ismissing(geom)
             bytes += Base.write(io, hton(Int32(calc_rec_bytes ÷ 2)))
             rec_bytes += Base.write(io, SHAPECODE[Missing])
-
-            # Indices for .shx file
-            offset = rec_start ÷ 2
-            rec_len = rec_bytes ÷ 2 # 16 bit words
-            push!(shx_indices, IndexRecord(offset, rec_len))
-
-            # Update bytes
-            bytes += rec_bytes
-            continue
-        end
-
-        # Calculate record size
-        if trait isa GI.PointTrait 
-            calc_rec_bytes += sizeof(Float64) * 2 # point values
-            if hasz
-                calc_rec_bytes += sizeof(Float64) # z values
-            end
-            if hasm
-                calc_rec_bytes += sizeof(Float64) # measures
-            end
         else
-            n = GI.npoint(geom)
-            calc_rec_bytes += sizeof(Rect) # Rect
-            calc_rec_bytes += sizeof(Int32) # num points
-            calc_rec_bytes += sizeof(Float64) * n * 2 # point values
-            if hasz
-                calc_rec_bytes += sizeof(Interval) # z interval
-                calc_rec_bytes += sizeof(Float64) * n # z values
+            # Calculate record size
+            if trait isa GI.PointTrait 
+                calc_rec_bytes += sizeof(Float64) * 2 # point values
+                if hasz
+                    calc_rec_bytes += sizeof(Float64) # z values
+                end
+                if hasm
+                    calc_rec_bytes += sizeof(Float64) # measures
+                end
+            else
+                n = GI.npoint(geom)
+                calc_rec_bytes += sizeof(Rect) # Rect
+                calc_rec_bytes += sizeof(Int32) # num points
+                calc_rec_bytes += sizeof(Float64) * n * 2 # point values
+                if hasz
+                    calc_rec_bytes += sizeof(Interval) # z interval
+                    calc_rec_bytes += sizeof(Float64) * n # z values
+                end
+                if hasm
+                    calc_rec_bytes += sizeof(Interval) # m interval
+                    calc_rec_bytes += sizeof(Float64) * n # measures
+                end
+                numparts = _nparts(trait, geom) 
+                if !isnothing(numparts)
+                    calc_rec_bytes += sizeof(Int32) # num parts
+                    calc_rec_bytes += sizeof(Int32) * numparts # parts offsets
+                end
             end
-            if hasm
-                calc_rec_bytes += sizeof(Interval) # m interval
-                calc_rec_bytes += sizeof(Float64) * n # measures
+
+            # length: measured in 16 bit increments, so divid by 2
+            bytes += Base.write(io, hton(Int32(calc_rec_bytes ÷ 2)))
+            # code
+            rec_bytes += Base.write(io, shapecode)
+            # geometry
+            geom_bytes, geom_mbr, geom_zrange, geom_mrange = _write(io, trait, geom)
+            rec_bytes += geom_bytes
+
+            if first_geom
+                first_geom = false
+                mbr = geom_mbr
+                zrange = geom_zrange
+                mrange = geom_mrange
+            else
+                mbr = union(mbr, geom_mbr)
+                zrange = union(zrange, geom_zrange)
+                mrange = union(mrange, geom_mrange)
             end
-            numparts = _nparts(trait, geom) 
-            if !isnothing(numparts)
-                calc_rec_bytes += sizeof(Int32) # num parts
-                calc_rec_bytes += sizeof(Int32) * numparts # parts offsets
-            end
+
         end
 
-        # length: measured in 16 bit increments, so divid by 2
-        bytes += Base.write(io, hton(Int32(calc_rec_bytes ÷ 2)))
-        # code
-        rec_bytes += Base.write(io, shapecode)
-        # geometry
-        geom_bytes, geom_mbr, geom_zrange, geom_mrange = _write(io, trait, geom)
-        rec_bytes += geom_bytes
-
-        if first_geom
-            first_geom = false
-            mbr = geom_mbr
-            zrange = geom_zrange
-            mrange = geom_mrange
-        else
-            mbr = union(mbr, geom_mbr)
-            zrange = union(zrange, geom_zrange)
-            mrange = union(mrange, geom_mrange)
-        end
-
+        # Check we precalculated the same number of bytes that we wrote
         @assert rec_bytes == calc_rec_bytes
 
         # Indices for .shx file
@@ -168,8 +153,6 @@ function write(path::AbstractString, obj; force=false)
         # 32-bits (4 bytes) Record Number + 32-bits (4 bytes) Content length = 8 bytes
         bytes += rec_bytes
     end
-
-    # @assert bytes == content_size + header_bytes "The hardcoded accumulation of bytes $(content_size + header_bytes) should match how much bytes it has written into the buffer $bytes"
 
     # Finally write the correct header at the start of the file
     header = Header(; filesize=bytes ÷ 2, shapecode, mbr, zrange, mrange)
