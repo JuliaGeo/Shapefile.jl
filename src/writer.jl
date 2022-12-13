@@ -45,7 +45,7 @@ function write(path::AbstractString, obj; force=false)
     # Open the .shp file as an IO stream
     io = open(paths.shp, "a+")
 
-    # Write an emtpy header 
+    # Write an empty header 
     # We go back later and write it properly later, so we don't have to precalculate everything.
     dummy_header = Header(; filesize=0, shapecode, mbr, zrange, mrange)
     bytes += Base.write(io, dummy_header)
