@@ -61,14 +61,6 @@ const TRAITSHAPE_M = Dict{Type,Type}(
     GI.MultiPointTrait => MultiPointM,
 )
 
-trait_geom_type(::GI.PolygonTrait) = SubPolygon
-trait_geom_type(::GI.LinearRingTrait) = LinearRing
-trait_geom_type(::GI.PointTrait) = Point
-trait_geom_type(::GI.MultiLineStringTrait) = Polyline
-trait_geom_type(::GI.PolygonTrait) = PolygonTrait
-trait_geom_type(::GI.MultiPointTrait) = MultiPoint
-
-
 include("shx.jl")
 include("handle.jl")
 include("table.jl")
