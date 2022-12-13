@@ -70,8 +70,7 @@ function write(path::AbstractString, obj; force=false)
         GI.isgeometry(geom1) || error("$(typeof(geom1)) is not a geometry")
         trait = GI.geomtrait(geom1)
         if trait isa GI.GeometryCollectionTrait 
-            @warn "Geometry Collections or MultiPatch cannot be written using Shapefile.jl"
-            return nothing
+            throw(ArgumentError("Geometry collections or `MultiPatch` cannot currently be written using Shapefile.jl"))
         end
         hasz = GI.is3d(geom1)
         hasm = GI.ismeasured(geom1)
@@ -94,10 +93,10 @@ function write(path::AbstractString, obj; force=false)
         calc_rec_bytes = sizeof(Int32) # shape code
 
         # Write record number
-        bytes += Base.write(io, bswap(Int32(num)))
+        bytes += Base.write(io, hton(Int32(num)))
 
         if ismissing(geom)
-            bytes += Base.write(io, bswap(Int32(calc_rec_bytes ÷ 2)))
+            bytes += Base.write(io, hton(Int32(calc_rec_bytes ÷ 2)))
             rec_bytes += Base.write(io, SHAPECODE[Missing])
 
             # Indices for .shx file
@@ -140,7 +139,7 @@ function write(path::AbstractString, obj; force=false)
         end
 
         # length: measured in 16 bit increments, so divid by 2
-        bytes += Base.write(io, bswap(Int32(calc_rec_bytes ÷ 2)))
+        bytes += Base.write(io, hton(Int32(calc_rec_bytes ÷ 2)))
         # code
         rec_bytes += Base.write(io, shapecode)
         # geometry

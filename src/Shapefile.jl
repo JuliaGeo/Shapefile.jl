@@ -35,7 +35,7 @@ const SHAPETYPE = Dict{Int32,DataType}(
 
 const SHAPECODE = Dict((v => k for (k, v) in SHAPETYPE))
 
-const TRAITSHAPE = Dict{Type,Type}(
+const TRAITSHAPE = Dict{DataType,DataType}(
     Nothing => Missing,
     Missing => Missing,
     GI.PointTrait => Point,
@@ -43,7 +43,7 @@ const TRAITSHAPE = Dict{Type,Type}(
     GI.MultiPolygonTrait => Polygon,
     GI.MultiPointTrait => MultiPoint,
 )
-const TRAITSHAPE_Z = Dict{Type,Type}(
+const TRAITSHAPE_Z = Dict{DataType,DataType}(
     Nothing => Missing,
     Missing => Missing,
     GI.PointTrait => PointZ,
@@ -52,7 +52,7 @@ const TRAITSHAPE_Z = Dict{Type,Type}(
     GI.MultiPointTrait => MultiPointZ,
 )
 
-const TRAITSHAPE_M = Dict{Type,Type}(
+const TRAITSHAPE_M = Dict{DataType,DataType}(
     Nothing => Missing,
     Missing => Missing,
     GI.PointTrait => PointM,

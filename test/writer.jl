@@ -41,7 +41,6 @@ for i in eachindex(test_tuples)[1:end-1] # We dont write 15 - multipatch
         shp1 = Shapefile.Handle(path)
         shp2 = Shapefile.Handle("testshape.shp")
         shp3 = Shapefile.Handle("testshape.shp", "testshape.shx")
-        # shp2 = Shapefile.Handle("testshape.shp", "testshape.shx")
         @test all(map(shp1.shapes, shp2.shapes) do s1, s2
             ismissing(s1) && ismissing(s2) || s1 == s2
         end)

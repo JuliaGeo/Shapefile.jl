@@ -88,8 +88,8 @@ struct Header
     mrange::Interval
 end
 function Header(; filesize, shapecode, mbr, zrange, mrange)
-    code = Int32(9994)
-    version = Int32(1000)
+    code = Int32(9994) # Shapefile file code is 9994
+    version = Int32(1000) # Shapefile version is 1000
     return Header(code, filesize, version, shapecode, mbr, zrange, mrange)
 end
 
@@ -109,7 +109,7 @@ function Base.write(io::IO, h::Header)
     bytes = 0
     bytes += Base.write(io, hton(h.code))
     bytes += Base.write(io, zeros(Int32,  5))
-    bytes += Base.write(io, ntoh(h.filesize))
+    bytes += Base.write(io, hton(h.filesize))
     bytes += Base.write(io, h.version)
     bytes += Base.write(io, h.shapecode)
     bytes += Base.write(io, h.MBR)
