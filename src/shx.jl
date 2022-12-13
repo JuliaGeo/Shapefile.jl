@@ -9,36 +9,35 @@
 #
 struct IndexRecord
     offset::Int32
-    contentLen::Int32
+    contentlen::Int32
+end
+
+function Base.read(io::IO, ir::Type{IndexRecord})
+    IndexRecord(ntoh(read(io, Int32)), ntoh(read(io, Int32)))
+end
+
+function Base.write(io::IO, ir::IndexRecord)
+    Base.write(io, hton(ir.offset), hton(ir.contentlen))
 end
 
 struct IndexHandle
-    code::Int32
-    length::Int32
-    version::Int32
-    shapeType::Int32
-    MBR::Rect
-    zrange::Interval
-    mrange::Interval
+    header::Header
     indices::Vector{IndexRecord}
 end
 
-function Base.read(io::IO,::Type{IndexHandle})
-    code = ntoh(read(io,Int32))
-    read!(io, Vector{Int32}(undef, 5))
-    fileSize = ntoh(read(io,Int32))
-    version = read(io,Int32)
-    shapeType = read(io,Int32)
-    MBR = read(io,Rect)
-    zmin = read(io,Float64)
-    zmax = read(io,Float64)
-    mmin = read(io,Float64)
-    mmax = read(io,Float64)
-    jltype = SHAPETYPE[shapeType]
-    records = Vector{IndexRecord}(undef, 0)
-    file = IndexHandle(code,fileSize,version,shapeType,MBR,Interval(zmin,zmax),Interval(mmin,mmax),records)
+function Base.read(io::IO,  ::Type{IndexHandle})
+    header = read(io, Header)
+    records = Vector{IndexRecord}(undef,  0)
     while !eof(io)
-        push!(records, IndexRecord(ntoh(read(io,Int32)),ntoh(read(io,Int32))))
+        push!(records, read(io, IndexRecord))
     end
-    file
+    return IndexHandle(header, records)
+end
+
+function Base.write(io::IO,  ih::IndexHandle)
+    bytes = Base.write(io, ih.header)
+    for ir in ih.indices
+        bytes += Base.write(io, ir)
+    end
+    return bytes
 end

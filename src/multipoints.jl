@@ -25,6 +25,8 @@ struct MultiPoint <: AbstractMultiPoint{Point}
     points::Vector{Point}
 end
 
+Base.:(==)(p1::MultiPoint, p2::MultiPoint) = p1.points == p2.points
+
 function Base.read(io::IO, ::Type{MultiPoint})
     box = read(io, Rect)
     numpoints = read(io, Int32)
@@ -55,6 +57,9 @@ struct MultiPointM <: AbstractMultiPoint{PointM}
     mrange::Interval
     measures::Vector{Float64}
 end
+
+Base.:(==)(p1::MultiPointM, p2::MultiPointM) =
+    (p1.points == p2.points) && (p1.measures == p2.measures)
 
 function Base.read(io::IO, ::Type{MultiPointM})
     box = read(io, Rect)
@@ -90,6 +95,9 @@ struct MultiPointZ <: AbstractMultiPoint{PointZ}
     mrange::Interval
     measures::Vector{Float64}
 end
+
+Base.:(==)(p1::MultiPointZ, p2::MultiPointZ) =
+    (p1.points == p2.points) && (p1.zvalues == p2.zvalues) && (p1.measures == p2.measures)
 
 GI.getgeom(::GI.MultiPointTrait, geom::MultiPointZ, i::Integer) =
     PointZ(geom.points[i], geom.zvalues[i], geom.measures[i])

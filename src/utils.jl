@@ -97,3 +97,21 @@ function _getbounds(points::Vector{Point})
     yrange = extrema(GI.y(p) for p in points)
     return Rect(xrange[1], yrange[1], xrange[2], yrange[2])
 end
+
+
+function _shape_paths(path)
+    stempath, ext = splitext(path)
+    if lowercase(ext) == ".shp"
+        shp = path
+    elseif ext == ""
+        shp = string(stempath, ".shp")
+    else
+        throw(ArgumentError("Provide the shapefile with either `.shp` or no extension"))
+    end
+
+    shx = string(stempath, ".shx")
+    dbf = string(stempath, ".dbf")
+    prj = string(stempath, ".prj")
+
+    return (; shp, shx, dbf, prj)
+end

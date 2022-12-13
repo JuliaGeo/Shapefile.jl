@@ -40,6 +40,14 @@ ne_land = Shapefile.Table(path(natural_earth, "ne_land_shp"))
 ne_coastline = Shapefile.Table(path(natural_earth, "ne_coastline_shp"))
 ne_cities = Shapefile.Table(path(natural_earth, "ne_cities_shp"))
 
+@testset "write tables" begin
+    Shapefile.write("cities_write", ne_cities; force=true)
+    @test_throws ArgumentError Shapefile.Table("cities_write")
+    written = Shapefile.Handle("cities_write.shp")
+    shp = Shapefile.Handle(path(natural_earth, "ne_cities_shp"))
+    @test written.shapes == shp.shapes
+end
+
 @testset "Create from parts" begin
     ne_land_shp = open(path(natural_earth, "ne_land_shp")) do io
         read(io, Shapefile.Handle)

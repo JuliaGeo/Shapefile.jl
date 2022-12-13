@@ -19,6 +19,9 @@ test_tuples = [
         geomtype=Missing,
         coordinates=nothing,
         extent=Extent(X=(0.0, 10.0), Y=(0.0, 20.0), Z=(0.0, 0.0)),
+        # This data has no shape, the correct bbox should be all zeros.
+        # However the data contain some non-zero box values
+        skip_check_mask = [43:44..., 51:52..., 59:60..., 67:68...],
     ),(
         path=joinpath("shapelib_testcases", "test1.shp"),
         geomtype=Point,
@@ -84,6 +87,7 @@ test_tuples = [
         geomtype=MultiPatch,
         coordinates=nothing,
         extent=Extent(X=(0.0, 100.0), Y=(0.0, 100.0), Z=(0.0, 27.35)),
+        skip_check_mask = 93:100,
     )
 ]
 
@@ -181,7 +185,7 @@ for test in test_tuples
             @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
         end
         ext = test.extent
-        @test shp.MBR == Shapefile.Rect(ext.X[1], ext.Y[1], ext.X[2], ext.Y[2])
+        @test shp.header.MBR == Shapefile.Rect(ext.X[1], ext.Y[1], ext.X[2], ext.Y[2])
         @test GeoInterface.extent(shp) == test.extent
         # Multipatch can't be plotted, but it's obscure anyway
         if !(test.geomtype == Shapefile.MultiPatch)
@@ -228,7 +232,7 @@ for test in test_tuples
             shx = read(fd, Shapefile.IndexHandle)
             for sIdx = 1:lastindex(shx.indices)
                 @test shx.indices[sIdx].offset * 2 == offsets[sIdx]
-                @test shx.indices[sIdx].contentLen * 2 + 8 == contentlens[sIdx]
+                @test shx.indices[sIdx].contentlen * 2 + 8 == contentlens[sIdx]
             end
         end
 
@@ -237,3 +241,5 @@ end
 end  # @testset "Loading Shapefiles"
 
 include("table.jl")
+include("writer.jl")
+
