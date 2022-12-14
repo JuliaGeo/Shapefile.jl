@@ -176,7 +176,7 @@ function write(path::AbstractString, obj; force=false)
         try
             crs isa GeoFormatTypes.ESRIWellKnownText && Base.write(paths.prj, crs.val)
         catch
-            @warn "Could not write .prj file.  ArchGDAL may need to be loaded."
+            @warn "Input has a CRS, but it is not in Shapefile's required GeoFormatTypes.ESRIWellKnownText format."
         end
     end
 
