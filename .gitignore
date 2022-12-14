@@ -4,3 +4,7 @@
 /docs/build/
 /docs/site/
 /test/data/
+*.shp
+*.prj
+*.shx
+*.dbf
