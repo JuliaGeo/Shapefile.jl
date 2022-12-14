@@ -168,14 +168,13 @@ function write(path::AbstractString, obj; force=false)
 
     # Write .prj file
     crs = try
-        GI.crs(geoms)
+        GI.crs(obj)
     catch
         nothing
     end
     if !isnothing(crs)
         try
-            wkt = convert(GeoFormatTypes.ESRIWellKnownText, crs)
-            Base.write(paths.prj, wkt.val)
+            crs isa GeoFormatTypes.ESRIWellKnownText && Base.write(paths.prj, crs.val)
         catch
             @warn "Could not write .prj file.  ArchGDAL may need to be loaded."
         end
