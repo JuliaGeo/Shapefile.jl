@@ -46,8 +46,9 @@ for i in eachindex(test_tuples)[1:end-1] # We dont write 15 - multipatch
         end)
     end
     @testset "prjs match" begin
-        if isfile(replace(path, ".shp" => ".prj"))
-            prj1 = GeoInterface.crs(Shapefile.Table(path)).val
+        prjpath = replace(path, ".shp" => ".prj")
+        if isfile(prjpath)
+            prj1 = read(prjpath, String)
             prj2 = read("testshape.prj", String)
             @test prj1 == prj2
         end

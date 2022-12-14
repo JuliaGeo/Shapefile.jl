@@ -167,9 +167,18 @@ function write(path::AbstractString, obj; force=false)
     Base.write(paths.shx, index_handle)
 
     # Write .prj file
-    if obj isa Shapefile.Table
-        crs = GeoInterface.crs(obj)
-        crs isa GeoFormatTypes.ESRIWellKnownText && Base.write(paths.prj, crs.val)
+    crs = try
+        GI.crs(geoms)
+    catch
+        nothing
+    end
+    if !isnothing(crs)
+        try
+            wkt = convert(GeoFormatTypes.ESRIWellKnownText, crs)
+            Base.write(paths.prj, wkt.val)
+        catch
+            @warn "Could not write .prj file.  ArchGDAL may need to be loaded."
+        end
     end
 
     return bytes
