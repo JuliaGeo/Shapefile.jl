@@ -174,9 +174,11 @@ function write(path::AbstractString, obj; force=false)
     end
     if !isnothing(crs)
         try
-            crs isa GeoFormatTypes.ESRIWellKnownText && Base.write(paths.prj, crs.val)
+            Base.write(paths.prj, convert(GeoFormatTypes.ESRIWellKnownText, crs).val)
         catch
-            @warn "Input has a CRS, but it is not in Shapefile's required GeoFormatTypes.ESRIWellKnownText format."
+            @warn ".prj write failure: Could not convert CRS of type `$(typeof(crs))` to " *
+            "`GeoFormatTypes.ESRIWellKnownText`.  `using ArchGDAL` may load the necessary " *
+            "`Base.convert` method."
         end
     end
 
