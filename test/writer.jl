@@ -4,6 +4,30 @@
 
 @testset "Shapefile (.shp) writers" begin
 
+    @testset "write/read round trip" begin
+        struct T end
+        GCT = GeoInterface.GeometryCollectionTrait
+        GeoInterface.isgeometry(::T) = true
+        GeoInterface.geomtrait(::T) = GCT()
+        GeoInterface.ngeom(::GCT, ::T) = 1
+        GeoInterface.getgeom(::GCT, ::T, i) = Point(1,2)
+        GeoInterface.crs(::GCT, ::T) = EPSG(4326)
+        # test for warning before loading ArchGDAL
+        @test_throws MethodError convert(GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}, EPSG(4326))
+        @test_warn ".prj write failure" Shapefile.write("roundtrip.shp", T(); force=true)
+        @test !isfile("roundtrip.prj")
+
+        # test for no warning after loading ArchGDAL
+        using ArchGDAL
+        @test_nowarn Shapefile.write("roundtrip.shp", T(); force=true)
+        @test isfile("roundtrip.prj")
+
+        # Uncomment when DBFTables.jl write lands:
+        # t = Shapefile.Table("roundtrip.shp")
+        # @test first(t.geometry) == Point(1,2)
+        # @test GeoInterface.crs(t) == convert(GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}, EPSG(4326))
+    end
+
 for i in eachindex(test_tuples)[1:end-1] # We dont write 15 - multipatch
 
     test = test_tuples[i]

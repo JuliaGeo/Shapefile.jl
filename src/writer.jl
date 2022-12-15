@@ -9,7 +9,7 @@ combatible geometry objects, with `missing` values allowed.
 Note: As DBFTables.jl does not yet write, we can't write Table or FeatureCollection
 data besides geometries. Only .shp and .shx files are written currently.
 """
-write(path::AbstractString, h::Handle) = write(path, h.shapes)
+# write(path::AbstractString, h::Handle) = write(path, h.shapes)
 function write(path::AbstractString, obj; force=false)
     paths = _shape_paths(path)
 
@@ -18,7 +18,7 @@ function write(path::AbstractString, obj; force=false)
         if force
             rm(paths.shp)
         else
-            throw(ArgumentError("File already exists at `$(paths.shp)`. Use `force=true` to write anyway."))
+            throw(ArgumentError("File already superexists at `$(paths.shp)`. Use `force=true` to write anyway."))
         end
     end
 
@@ -29,6 +29,8 @@ function write(path::AbstractString, obj; force=false)
         @warn "DBFTables.jl does not yet `write`, so only .shp, .shx, and .prj files can be written."
         # DBFTables.Table(obj) # TODO remove geom column
         # DBFTables.write # TODO DBF write function
+    elseif GI.geomtrait(obj) isa GI.AbstractGeometryCollectionTrait
+        geoms = (GI.getgeom(obj, i) for i in 1:GI.ngeom(obj))
     else
         geoms = obj
     end
@@ -174,11 +176,11 @@ function write(path::AbstractString, obj; force=false)
     end
     if !isnothing(crs)
         try
-            Base.write(paths.prj, convert(GeoFormatTypes.ESRIWellKnownText, crs).val)
+            Base.write(paths.prj, convert(GFT.ESRIWellKnownText{GFT.CRS}, crs).val)
         catch
             @warn ".prj write failure: Could not convert CRS of type `$(typeof(crs))` to " *
-            "`GeoFormatTypes.ESRIWellKnownText`.  `using ArchGDAL` may load the necessary " *
-            "`Base.convert` method."
+            "`GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}`.  `using ArchGDAL` may " *
+            "load the necessary `Base.convert` method."
         end
     end
 

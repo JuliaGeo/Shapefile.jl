@@ -75,7 +75,7 @@ wkt = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",637813
     @test propertynames(first(ne_land)) == [:featurecla, :scalerank, :min_zoom]
     @test ne_land.featurecla isa Vector{String}
     @test length(ne_land.scalerank) == length(ne_land)
-    @test GeoInterface.crs(ne_land) == GeoFormatTypes.ESRIWellKnownText(wkt)
+    @test GeoInterface.crs(ne_land) == GeoFormatTypes.ESRIWellKnownText(GeoFormatTypes.CRS(), wkt)
 
     @test sum(ne_land.scalerank) == 58
     @test Shapefile.shapes(ne_land) isa Vector{Union{Shapefile.Polygon,Missing}}
@@ -105,7 +105,7 @@ end
     @test propertynames(ne_coastline) == [:geometry, :scalerank, :featurecla, :min_zoom]
     @test propertynames(first(ne_coastline)) == [:scalerank, :featurecla, :min_zoom]
     @test ne_coastline.featurecla isa Vector{String}
-    @test GeoInterface.crs(ne_coastline) == GeoFormatTypes.ESRIWellKnownText(wkt)
+    @test GeoInterface.crs(ne_coastline) == GeoFormatTypes.ESRIWellKnownText(GeoFormatTypes.CRS(), wkt)
     @test length(ne_coastline.scalerank) == length(ne_coastline)
     @test sum(ne_coastline.scalerank) == 59
     @test Shapefile.shapes(ne_coastline) isa Vector{Union{Shapefile.Polyline,Missing}}
@@ -142,7 +142,7 @@ end
     @test propertynames(ne_cities) == colnames
     @test propertynames(first(ne_cities)) == colnames[2:end]
     @test ne_cities.featurecla isa Vector{String}
-    @test GeoInterface.crs(ne_coastline) == GeoFormatTypes.ESRIWellKnownText(wkt)
+    @test GeoInterface.crs(ne_coastline) == GeoFormatTypes.ESRIWellKnownText(GeoFormatTypes.CRS(), wkt)
     @test length(ne_cities.scalerank) == length(ne_cities)
     @test sum(ne_cities.scalerank) == 612
     @test Shapefile.shapes(ne_cities) isa Vector{Union{Shapefile.Point,Missing}}

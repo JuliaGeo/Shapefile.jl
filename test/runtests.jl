@@ -1,12 +1,23 @@
 using Shapefile, GeoInterface, Plots, Extents
 using Shapefile
+using GeoFormatTypes
 using Test
+
 
 using Shapefile: Point, PointM, PointZ, Polygon, PolygonM, PolygonZ, Polyline,
     PolylineM, PolylineZ, MultiPoint, MultiPointM, MultiPointZ,
     MultiPatch, LineString, LinearRing, SubPolygon, Rect, Interval
 
 shp = Shapefile.Handle(joinpath("shapelib_testcases", "test.shp"))
+
+function cleanup()
+    files = filter(readdir(@__DIR__)) do file
+        any(ext -> endswith(file, ext), [".shp", ".shx", ".dbf", ".prj"])
+    end
+    rm.(files)
+end
+
+cleanup()
 
 test_tuples = [
     (
@@ -243,3 +254,4 @@ end  # @testset "Loading Shapefiles"
 include("table.jl")
 include("writer.jl")
 
+cleanup()
