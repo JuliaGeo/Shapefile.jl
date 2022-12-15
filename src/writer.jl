@@ -18,7 +18,7 @@ function write(path::AbstractString, obj; force=false)
         if force
             rm(paths.shp)
         else
-            throw(ArgumentError("File already superexists at `$(paths.shp)`. Use `force=true` to write anyway."))
+            throw(ArgumentError("File already exists at `$(paths.shp)`. Use `force=true` to write anyway."))
         end
     end
 
