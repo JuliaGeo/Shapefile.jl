@@ -9,7 +9,7 @@ combatible geometry objects, with `missing` values allowed.
 Note: As DBFTables.jl does not yet write, we can't write Table or FeatureCollection
 data besides geometries. Only .shp and .shx files are written currently.
 """
-# write(path::AbstractString, h::Handle) = write(path, h.shapes)
+
 function write(path::AbstractString, obj; force=false)
     paths = _shape_paths(path)
 
