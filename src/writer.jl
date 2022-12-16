@@ -9,7 +9,7 @@ combatible geometry objects, with `missing` values allowed.
 Note: As DBFTables.jl does not yet write, we can't write Table or FeatureCollection
 data besides geometries. Only .shp and .shx files are written currently.
 """
-write(path::AbstractString, h::Handle) = write(path, h.shapes)
+
 function write(path::AbstractString, obj; force=false)
     paths = _shape_paths(path)
 
@@ -26,9 +26,11 @@ function write(path::AbstractString, obj; force=false)
     if Tables.istable(obj)
         geomcol = first(GI.geometrycolumns(obj))
         geoms = Tables.getcolumn(obj, geomcol)
-        @warn "DBFTables.jl does not yet `write`, so only .shp and .shx file can be written"
+        @warn "DBFTables.jl does not yet `write`, so only .shp, .shx, and .prj files can be written."
         # DBFTables.Table(obj) # TODO remove geom column
         # DBFTables.write # TODO DBF write function
+    elseif GI.geomtrait(obj) isa GI.AbstractGeometryCollectionTrait
+        geoms = (GI.getgeom(obj, i) for i in 1:GI.ngeom(obj))
     else
         geoms = obj
     end
@@ -37,7 +39,7 @@ function write(path::AbstractString, obj; force=false)
     shx_indices = IndexRecord[]
     bytes = 0
     first_geom = true
-    shapecode = SHAPECODE[Missing] 
+    shapecode = SHAPECODE[Missing]
     mbr = Rect(0.0, 0.0, 0.0, 0.0)
     zrange = Interval(0.0, 0.0)
     mrange = Interval(0.0, 0.0)
@@ -45,7 +47,7 @@ function write(path::AbstractString, obj; force=false)
     # Open the .shp file as an IO stream
     io = open(paths.shp, "a+")
 
-    # Write an empty header 
+    # Write an empty header
     # We go back later and write it properly later, so we don't have to precalculate everything.
     dummy_header = Header(; filesize=0, shapecode, mbr, zrange, mrange)
     bytes += Base.write(io, dummy_header)
@@ -60,7 +62,7 @@ function write(path::AbstractString, obj; force=false)
         geom1 = first(skipmissing(geoms))
         GI.isgeometry(geom1) || error("$(typeof(geom1)) is not a geometry")
         trait = GI.geomtrait(geom1)
-        if trait isa GI.GeometryCollectionTrait 
+        if trait isa GI.GeometryCollectionTrait
             throw(ArgumentError("Geometry collections or `MultiPatch` cannot currently be written using Shapefile.jl"))
         end
         hasz = GI.is3d(geom1)
@@ -92,7 +94,7 @@ function write(path::AbstractString, obj; force=false)
             rec_bytes += Base.write(io, SHAPECODE[Missing])
         else
             # Calculate record size
-            if trait isa GI.PointTrait 
+            if trait isa GI.PointTrait
                 calc_rec_bytes += sizeof(Float64) * 2 # point values
                 if hasz
                     calc_rec_bytes += sizeof(Float64) # z values
@@ -113,7 +115,7 @@ function write(path::AbstractString, obj; force=false)
                     calc_rec_bytes += sizeof(Interval) # m interval
                     calc_rec_bytes += sizeof(Float64) * n # measures
                 end
-                numparts = _nparts(trait, geom) 
+                numparts = _nparts(trait, geom)
                 if !isnothing(numparts)
                     calc_rec_bytes += sizeof(Int32) # num parts
                     calc_rec_bytes += sizeof(Int32) * numparts # parts offsets
@@ -161,11 +163,26 @@ function write(path::AbstractString, obj; force=false)
 
     # Close .shp file
     close(io)
-    
+
     # Write .shx file
     index_handle = IndexHandle(header, shx_indices)
     Base.write(paths.shx, index_handle)
 
+    # Write .prj file
+    crs = try
+        GI.crs(obj)
+    catch
+        nothing
+    end
+    if !isnothing(crs)
+        try
+            Base.write(paths.prj, convert(GFT.ESRIWellKnownText{GFT.CRS}, crs).val)
+        catch
+            @warn ".prj write failure: Could not convert CRS of type `$(typeof(crs))` to " *
+            "`GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}`.  `using ArchGDAL` may " *
+            "load the necessary `Base.convert` method."
+        end
+    end
 
     return bytes
 end
@@ -207,7 +224,7 @@ function _write(io::IO, trait::GI.AbstractGeometryTrait, geom; kw...)
     return bytes, mbr, zrange, mrange
 end
 function _write(io::IO, ::GI.PointTrait, point;
-    hasz=GI.is3d(point), hasm=GI.ismeasured(point) 
+    hasz=GI.is3d(point), hasm=GI.ismeasured(point)
 )
     bytes = Int64(0)
     x, y = Float64(GI.x(point)), Float64(GI.y(point))
@@ -257,7 +274,7 @@ function _write_others(io, geom;
         zrange = Interval(0.0, 0.0)
     end
 
-    if hasm 
+    if hasm
         b, mrange = _write_others(GI.m, io, geom)
         bytes += b
     else
@@ -274,7 +291,7 @@ function _write_others(f, io, geom)
         high = max(high, m)
     end
     range = Interval(low, high)
-    bytes = Base.write(io, range) 
+    bytes = Base.write(io, range)
     for point in GI.getpoint(geom)
         m = f(point)
         bytes += Base.write(io, m)

@@ -13,7 +13,7 @@ The Vector of shape object can be accessed with `shapes(handle)`.
 mutable struct Handle{T<:Union{<:AbstractShape,Missing}}
     header::Header
     shapes::Vector{T}
-    crs::Union{Nothing,GeoFormatTypes.ESRIWellKnownText}
+    crs::Union{Nothing, GFT.ESRIWellKnownText{GFT.CRS}}
 end
 function Handle(path::AbstractString, index=nothing)
     open(path) do io
@@ -29,7 +29,13 @@ end
 
 shapes(h::Handle) = h.shapes
 
-GeoInterface.crs(h::Handle) = h.crs
+# GeoInterface
+GI.geomtrait(::Handle) = GI.GeometryCollectionTrait()
+GI.ncoord(::GI.GeometryCollectionTrait, h::Handle) = GI.ncoord(first(h.shapes))
+GI.ngeom(::GI.GeometryCollectionTrait, h::Handle) = length(h.shapes)
+GI.getgeom(::GI.GeometryCollectionTrait, h::Handle, i) = h.shapes[i]
+GI.crs(h::Handle) = h.crs
+
 
 Base.length(shp::Handle) = length(shapes(shp))
 
@@ -54,7 +60,7 @@ function Base.read(io::IO, ::Type{Handle}, index = nothing; path = nothing)
         prjpath = _shape_paths(path).prj
         if isfile(prjpath)
             try
-                crs = GeoFormatTypes.ESRIWellKnownText(read(open(prjpath), String))
+                crs = GFT.ESRIWellKnownText(GFT.CRS(), read(open(prjpath), String))
             catch
                 @warn "Projection file $prjpath appears to be corrupted. `nothing` used for `crs`"
             end
