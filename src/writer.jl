@@ -9,8 +9,7 @@ combatible geometry objects, with `missing` values allowed.
 Note: As DBFTables.jl does not yet write, we can't write Table or FeatureCollection
 data besides geometries. Only .shp and .shx files are written currently.
 """
-
-function write(path::AbstractString, obj; force=false)
+function write(path::AbstractString, obj; force=false, crs=nothing)
     paths = _shape_paths(path)
 
     # File existance check
@@ -168,12 +167,15 @@ function write(path::AbstractString, obj; force=false)
     index_handle = IndexHandle(header, shx_indices)
     Base.write(paths.shx, index_handle)
 
-    # Write .prj file
-    crs = try
-        GI.crs(obj)
-    catch
-        nothing
+    # If there is no `crs` keyword try to get it from obj
+    if isnothing(crs)
+        crs = try
+            GI.crs(obj)
+        catch
+            nothing
+        end
     end
+    # If we have crs now try to write a .prj file
     if !isnothing(crs)
         try
             Base.write(paths.prj, convert(GFT.ESRIWellKnownText{GFT.CRS}, crs).val)
