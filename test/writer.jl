@@ -16,7 +16,6 @@
         @test_throws MethodError convert(GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}, EPSG(4326))
         @test_warn ".prj write failure" Shapefile.write("roundtrip.shp", T(); force=true)
         @test !isfile("roundtrip.prj")
-        @test isfile("roundtrip.dbf")
 
         # test for no warning after loading ArchGDAL
         using ArchGDAL

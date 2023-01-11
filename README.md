@@ -5,7 +5,7 @@
 [![CI](https://github.com/JuliaGeo/Shapefile.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeo/Shapefile.jl/actions?query=workflow%3ACI)
 [![CI](https://github.com/JuliaGeo/Shapefile.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeo/Shapefile.jl/actions?query=workflow%3ACI)
 
-This library supports reading ESRI Shapefiles in pure Julia.
+This library supports reading and writing ESRI Shapefiles in pure Julia.
 
 ## Quick Start
 Basic example of reading a shapefile from test cases:
@@ -54,7 +54,6 @@ julia> GeoInterface.coordinates(Shapefile.shape(first(table)))
 If you want another lightweight pure Julia package for reading feature files, consider
 also [GeoJSON.jl](https://github.com/JuliaGeo/GeoJSON.jl).
 
-For much more fully featured support for reading and writing geospatial data, at the
-cost of a larger binary dependency, look at [GDAL.jl](https://github.com/JuliaGeo/GDAL.jl)
-or [ArchGDAL.jl](https://github.com/yeesian/ArchGDAL.jl/) packages.
-The latter builds a higher level API on top of GDAL.jl.
+For more fully featured support for reading and writing geospatial data, at the
+cost of a larger binary dependency, look at [ArchGDAL.jl](https://github.com/yeesian/ArchGDAL.jl/) 
+or [GeoDataFrames.jl](https://github.com/evetion/GeoDataFrames.jl).
