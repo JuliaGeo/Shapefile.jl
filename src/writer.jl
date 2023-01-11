@@ -22,17 +22,25 @@ function write(path::AbstractString, obj; force=false)
         end
     end
 
-    # Handle tabular data
     if Tables.istable(obj)
-        geomcol = first(GI.geometrycolumns(obj))
-        geoms = Tables.getcolumn(obj, geomcol)
-        @warn "DBFTables.jl does not yet `write`, so only .shp, .shx, and .prj files can be written."
-        # DBFTables.Table(obj) # TODO remove geom column
-        # DBFTables.write # TODO DBF write function
+        sch = Tables.schema(obj)
+        tbl = Dict(field => Tables.getcolumn(obj, field) for field in sch.names)
+        # find first column that only contains geometries (and possibly missing)
+        geomcol = findfirst(tbl) do data
+            all(x -> ismissing(x) || GI.geomtrait(x) isa GI.AbstractGeometryTrait, data) && any(!ismissing, data)
+        end
+        geoms = pop!(tbl, geomcol)
     elseif GI.geomtrait(obj) isa GI.AbstractGeometryCollectionTrait
         geoms = (GI.getgeom(obj, i) for i in 1:GI.ngeom(obj))
+        tbl = fill((;feature=missing), length(geoms))  # fill .dbf with missing so that it exists
+    elseif GI.geomtrait(obj) isa GI.AbstractFeatureCollectionTrait
+        geomcol = first(GI.geometrycolumns(obj))
+        geoms = GI.getgeom(obj)
+        features = GI.getfeature(obj)
+        tbl = features
     else
         geoms = obj
+        tbl = fill((;feature=missing), length(geoms))
     end
 
     # Initialisation
@@ -167,6 +175,9 @@ function write(path::AbstractString, obj; force=false)
     # Write .shx file
     index_handle = IndexHandle(header, shx_indices)
     Base.write(paths.shx, index_handle)
+
+    # Write .dbf file
+    DBFTables.write(paths.dbf, tbl)
 
     # Write .prj file
     crs = try
