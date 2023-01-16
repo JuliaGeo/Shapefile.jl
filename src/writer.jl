@@ -34,7 +34,7 @@ function write(path::AbstractString, obj; force=false)
         geoms = (GI.getgeom(obj, i) for i in 1:GI.ngeom(obj))
         tbl = fill((;feature=missing), length(geoms))  # fill .dbf with missing so that it exists
     elseif GI.geomtrait(obj) isa GI.AbstractFeatureCollectionTrait
-        tbl = GI.properties.(obj)
+    tbl = [properties(f) for f in getfeature(obj)]
         geoms = GI.geometry.(obj)
         # geomcol = first(GI.geometrycolumns(obj))
         # geoms = GI.getgeom(obj)
