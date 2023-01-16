@@ -27,7 +27,7 @@ function write(path::AbstractString, obj; force=false)
         tbl = Dict(field => Tables.getcolumn(obj, field) for field in sch.names)
         # find first column that only contains geometries (and possibly missing)
         geomcol = findfirst(tbl) do data
-            all(x -> ismissing(x) || GI.geomtrait(x) isa GI.AbstractGeometryTrait, data) && any(!ismissing, data)
+            all(x -> ismissing(x) || GI.isgeometry(x), data) && any(!ismissing, data)
         end
         geoms = pop!(tbl, geomcol)
     elseif GI.geomtrait(obj) isa GI.AbstractGeometryCollectionTrait
