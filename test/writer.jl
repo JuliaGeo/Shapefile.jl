@@ -5,6 +5,12 @@
 @testset "Shapefile (.shp) writers" begin
 
     @testset "write/read round trip" begin
+        # missing
+        file = tempname()
+        Shapefile.write(file, missing)
+        t = Shapefile.Table(file)
+        @test ismissing(only(t.geometry))
+
         # geometry
         file = tempname()
         Shapefile.write(file, Point(0,0))
@@ -29,11 +35,11 @@
         GI.geomtrait(::GC) = GI.GeometryCollectionTrait()
         GI.ncoord(::GI.GeometryCollectionTrait, geom::GC) = 2
         GI.ngeom(::GI.GeometryCollectionTrait, geom::GC) = 2
-        GI.getgeom(::GI.GeometryCollectionTrait, geom::GC) = [Point(0,0), Point(1,1)]
+        GI.getgeom(::GI.GeometryCollectionTrait, geom::GC) = [missing, Point(1,1)]
         file = tempname()
         Shapefile.write(file, GC())
         t = Shapefile.Table(file)
-        @test t.geometry == [Point(0,0), Point(1,1)]
+        @test all(isequal.(t.geometry, [missing, Point(1,1)]))
 
         # feature collection
         struct FC end

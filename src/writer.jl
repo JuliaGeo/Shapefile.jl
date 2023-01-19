@@ -50,7 +50,7 @@ emptytable(itr) = [(;all_missing=missing) for _ in itr]
 function get_writer(obj)
     crs = try; GI.crs(obj); catch; nothing; end
 
-    if GI.isgeometry(obj)
+    if GI.isgeometry(obj) || ismissing(obj)
         return Writer([obj], emptytable(1), crs)
     elseif GI.isfeature(obj)
         return Writer([GI.geometry(obj)], [GI.properties(obj)], crs)
