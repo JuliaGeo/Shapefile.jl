@@ -94,3 +94,19 @@ GI.m(::GI.PointTrait, point::PointZ) = point.m
 GI.z(::GI.PointTrait, point::PointZ) = point.z
 
 _ncoord(::Type{PointZ}) = 3
+
+function Base.convert(::Type{<: AbstractPoint}, ::GI.PointTrait, geom)
+    N = GeoInterface.ncoord(geom)
+    if N == 2
+        if GI.ismeasured(geom)
+            return convert(PointM, GI.PointTrait(), geom)
+        else
+            return convert(Point, GI.PointTrait(), geom)
+        end
+    elseif N == 3
+        return convert(PointZ, GI.PointTrait(), geom
+    else
+        @error("Dimensions other than 2 or 3 cannot be changed into Shapefile points.")
+    end
+
+end
