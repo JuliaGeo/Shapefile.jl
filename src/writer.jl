@@ -1,13 +1,13 @@
 #-----------------------------------------------------------------------------# Writer
 # Pre-processing for writing arbitrary objects as shapefile.
-# 1) Get `geoms` as iterator with missings removed.
+# 1) Get `geoms` as iterator
 # 2) Get `features` (Tables.jl table) that matches `geoms`.
 # 3) Get CRS as GeoFormatTypes.ESRIWellKnownText
 """
     Writer(geoms, tbl = Shapefile.emptytable(geoms), crs = nothing)
 
 Prepared data for writing as shapefile.
-- `geoms` must be an iterator where elements satisfy `GeoInterface.isgeometry(x)`.
+- `geoms` must be an iterator where elements satisfy `GeoInterface.isgeometry(x)` or `ismissing(x)`.
 - `tbl` must be a Tables.jl table of features associated with the `geoms`.
 - `crs` can be `nothing` or something that can be converted to `GeoFormatTypes.ESRI.WellKnownText{GeoFormatTypes.CRS}`.
 """
@@ -32,7 +32,7 @@ struct Writer
 
         Tables.istable(feats) || error("Provided feature table (of type $(typeof(feats))) is not a valid Tables.jl table.")
 
-        all(x -> GI.isgeometry(x) || ismissing(x) || isnothing(x), geoms) || error("Not all geoms satisfy `GeoInterface.isgeometry`.")
+        all(x -> GI.isgeometry(x) || ismissing(x), geoms) || error("Not all geoms satisfy `GeoInterface.isgeometry`.")
 
         ngeoms = sum(1 for _ in geoms)
         nfeats = sum(1 for _ in Tables.rows(feats))
