@@ -17,25 +17,22 @@ struct Writer
     crs::Union{Nothing, GFT.ESRIWellKnownText{GFT.CRS}}  # (.prj)
 
     function Writer(geoms, feats = emptytable(geoms), crs=nothing)
-        crs = try
-            convert(GFT.ESRIWellKnownText{GFT.CRS}, crs)
-        catch
-            @warn "Could not convert CRS of type `$(typeof(crs))` to " *
-            "`GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}`.  `using ArchGDAL` may " *
-            "load the necessary `Base.convert` method.  The CRS WILL NOT BE SAVED as a .prj file."
+        crs = if isnothing(crs)
             nothing
+        else
+            try
+                convert(GFT.ESRIWellKnownText{GFT.CRS}, crs)
+            catch
+                @warn "Could not convert CRS of type `$(typeof(crs))` to " *
+                "`GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}`.  `using ArchGDAL` may " *
+                "load the necessary `Base.convert` method.  The CRS WILL NOT BE SAVED as a .prj file."
+                nothing
+            end
         end
 
         Tables.istable(feats) || error("Provided feature table (of type $(typeof(feats))) is not a valid Tables.jl table.")
 
-        if any(ismissing, geoms)
-            @warn "Missing geometries cannot be written by Shapefile.jl.  Missing values will be dropped."
-            idx = Set(findall(ismissing, geoms))
-            geoms = (x for (i,x) in enumerate(geoms) if i ∉ idx)
-            feats = (x for (i,x) in enumerate(Tables.rows(feats)) if i ∉ idx)
-        end
-
-        all(GI.isgeometry, geoms) || error("Not all geoms satisfy `GeoInterface.isgeometry`.")
+        all(x -> GI.isgeometry(x) || ismissing(x) || isnothing(x), geoms) || error("Not all geoms satisfy `GeoInterface.isgeometry`.")
 
         ngeoms = sum(1 for _ in geoms)
         nfeats = sum(1 for _ in Tables.rows(feats))
@@ -146,7 +143,7 @@ function write(path::AbstractString, o::Writer; force=false)
 
     # Write the geometry data into io
     for (num, geom) in enumerate(geoms)
-        (trait === Missing || trait === GI.geomtrait(geom)) || throw(ArgumentError("Shapefiles can only contain geometries of the same type"))
+        (ismissing(geom) || trait === GI.geomtrait(geom)) || throw(ArgumentError("Shapefiles can only contain geometries of the same type"))
 
         # One-based record number; Increment from 0, and increment after record.
         rec_bytes = 0

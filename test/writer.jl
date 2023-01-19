@@ -48,7 +48,7 @@
         @test t.one == [1, 1]
         @test t.two == [2, 2]
 
-        # table
+        # table (with missing)
         tbl = [
             (geo=Point(0,0), feature=1),
             (geo=Point(1,1), feature=2),
@@ -58,8 +58,8 @@
         file = tempname()
         Shapefile.write(file, tbl)
         t = Shapefile.Table(file)
-        @test t.geometry == [Point(0,0), Point(1,1), Point(2,2)]
-        @test all(t.feature .=== [1, 2, missing])
+        @test all(isequal.(t.geometry, [Point(0,0), Point(1,1), missing, Point(2,2)]))
+        @test all(isequal.(t.feature, [1, 2, 3, missing]))
 
         # iterator of geometries
         geoms = (Point(i, i) for i in 1:10)
