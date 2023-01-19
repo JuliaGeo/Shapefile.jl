@@ -17,17 +17,13 @@ struct Writer
     crs::Union{Nothing, GFT.ESRIWellKnownText{GFT.CRS}}  # (.prj)
 
     function Writer(geoms, feats = emptytable(geoms), crs=nothing)
-        crs = if isnothing(crs)
+        crs = try
+            convert(GFT.ESRIWellKnownText{GFT.CRS}, crs)
+        catch
+            @warn "Could not convert CRS of type `$(typeof(crs))` to " *
+            "`GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}`.  `using ArchGDAL` may " *
+            "load the necessary `Base.convert` method.  The CRS WILL NOT BE SAVED as a .prj file."
             nothing
-        else
-            try
-                convert(GFT.ESRIWellKnownText{GFT.CRS}, crs)
-            catch
-                @warn "Could not convert CRS of type `$(typeof(crs))` to " *
-                "`GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}`.  `using ArchGDAL` may " *
-                "load the necessary `Base.convert` method.  The CRS WILL NOT BE SAVED as a .prj file."
-                nothing
-            end
         end
 
         Tables.istable(feats) || error("Provided feature table (of type $(typeof(feats))) is not a valid Tables.jl table.")
