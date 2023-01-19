@@ -1,19 +1,94 @@
-
+#-----------------------------------------------------------------------------# Writer
+# Pre-processing for writing arbitrary objects as shapefile.
+# 1) Get `geoms` as iterator of geometry/missing/nothing
+# 2) Get `features` (Tables.jl table) that matches `geoms`.
+# 3) Get CRS as GeoFormatTypes.ESRIWellKnownText
 """
-    write(path::AbstractString, handle::Shapefile.Handle)
-    write(path::AbstractString, geoms)
+    Writer(geoms, tbl = Shapefile.emptytable(geoms), crs = nothing)
 
-Write geometries to file. `geoms` can be a table or any iterable of GeoInterface.jl
-combatible geometry objects, with `missing` values allowed.
-
-Note: As DBFTables.jl does not yet write, we can't write Table or FeatureCollection
-data besides geometries. Only .shp and .shx files are written currently.
+Prepared data for writing as shapefile.
+- `geoms` must be an iterator where elements satisfy `GeoInterface.isgeometry(x)`.
+- `tbl` must be a Tables.jl table of features associated with the `geoms`.
+- `crs` can be `nothing` or something that can be converted to `GeoFormatTypes.ESRI.WellKnownText{GeoFormatTypes.CRS}`.
 """
+struct Writer
+    geoms       # iterator of geometries, nothing, and missing (for .shp/.shx)
+    features    # Tables.jl table with same number of rows as geoms (for .dbf)
+    crs::Union{Nothing, GFT.ESRIWellKnownText{GFT.CRS}}  # (for .prj)
 
-function write(path::AbstractString, obj; force=false)
+    function Writer(geoms, feats = emptytable(geoms), crs=nothing)
+        crs = if isnothing(crs)
+            nothing
+        else
+            try
+                convert(GFT.ESRIWellKnownText{GFT.CRS}, crs)
+            catch
+                @warn "Could not convert CRS of type `$(typeof(crs))` to " *
+                "`GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}`.  `using ArchGDAL` may " *
+                "load the necessary `Base.convert` method.  The CRS WILL NOT BE SAVED as a .prj file."
+                nothing
+            end
+        end
+
+        Tables.istable(feats) || error("Provided feature table (of type $(typeof(feats))) is not a valid Tables.jl table.")
+
+        all(x -> ismissing(x) || isnothing(x) || GI.isgeometry(x), geoms) || error("Not all geoms satisfy `GeoInterface.isgeometry`.")
+
+        ngeoms = sum(1 for _ in geoms)
+        nfeats = sum(1 for _ in Tables.rows(feats))
+
+        ngeoms == nfeats || error("Number of geoms does not match number of features.  Found: $ngeoms ≠ $nfeats.")
+
+        new(geoms, feats, crs)
+    end
+end
+
+emptytable(n::Integer) = [(;all_missing=missing) for _ in 1:n]
+emptytable(itr) = [(;all_missing=missing) for _ in itr]
+
+
+function get_writer(obj)
+    crs = try; GI.crs(obj); catch; nothing; end
+
+    if GI.isgeometry(obj)
+        return Writer(obj, emptytable(1), crs)
+    elseif GI.trait(obj) isa GI.AbstractGeometryCollectionTrait
+        geoms = GI.getgeom(obj)
+        return Writer(geoms, emptytable(geoms), crs)
+    elseif GI.trait(obj) isa GI.AbstractFeatureCollectionTrait
+        geoms = GI.getgeom(obj)
+        feats = Tables.dictcolumntable(GI.properties(f) for f in GI.getfeature(obj))
+        return Writer(geoms, feats, crs)
+    elseif Tables.istable(obj)
+        tbl = getfield(Tables.dictcolumntable(obj), :values)  # an OrderedDict
+        geomfields = findall(tbl) do data
+            all(x -> ismissing(x) || GI.isgeometry(x), data) && any(!ismissing, data)
+        end
+        if length(geomfields) > 1
+            @warn "Multiple geometry columns detected: $geomfields. $(geomfields[1]) will be used " *
+                  "and the rest discarded."
+        end
+        geoms = pop!(tbl, geomfields[1])
+        foreach(x -> pop!(tbl), geomfields[2:end])  # drop unused geometry columns
+        tbl = isempty(tbl) ? emptytable(geoms) : tbl
+        return Writer(geoms, tbl, crs)
+    elseif all(x -> GI.isgeometry(x) || ismissing(x) || isnothing(x), obj)
+        return Writer(obj, emptytable(obj), crs)
+    else
+        error("Shapefile.jl cannot determine how to write data from `$(typeof(obj))`.")
+    end
+end
+
+#-----------------------------------------------------------------------------# write `Writer`
+"""
+    write(path::AbstractString, w::Shapefile.Writer; force=false)
+
+See `?Shapefile.Writer` for details.
+"""
+function write(path::AbstractString, o::Writer; force=false)
+    geoms, tbl, crs = o.geoms, o.features, o.crs
+
     paths = _shape_paths(path)
-
-    # File existance check
     if isfile(paths.shp)
         if force
             rm(paths.shp)
@@ -21,26 +96,6 @@ function write(path::AbstractString, obj; force=false)
             throw(ArgumentError("File already exists at `$(paths.shp)`. Use `force=true` to write anyway."))
         end
     end
-
-    if Tables.istable(obj)
-        sch = Tables.schema(obj)
-        tbl = Dict(field => Tables.getcolumn(obj, field) for field in sch.names)
-        # find first column that only contains geometries (and possibly missing)
-        geomcol = findfirst(tbl) do data
-            all(x -> ismissing(x) || GI.isgeometry(x), data) && any(!ismissing, data)
-        end
-        geoms = pop!(tbl, geomcol)
-    elseif GI.geomtrait(obj) isa GI.AbstractGeometryCollectionTrait
-        geoms = (GI.getgeom(obj, i) for i in 1:GI.ngeom(obj))
-        tbl = fill((;feature=missing), length(geoms))  # fill .dbf with missing so that it exists
-    elseif GI.geomtrait(obj) isa GI.AbstractFeatureCollectionTrait
-        tbl = [properties(f) for f in GI.getfeature(obj)]
-        geoms = GI.getgeom(obj)
-    else
-        geoms = obj
-        tbl = fill((;feature=missing), length(geoms))
-    end
-
     # Initialisation
     shx_indices = IndexRecord[]
     bytes = 0
@@ -178,11 +233,6 @@ function write(path::AbstractString, obj; force=false)
     DBFTables.write(paths.dbf, tbl)
 
     # Write .prj file
-    crs = try
-        GI.crs(obj)
-    catch
-        nothing
-    end
     if !isnothing(crs)
         try
             Base.write(paths.prj, convert(GFT.ESRIWellKnownText{GFT.CRS}, crs).val)
@@ -195,6 +245,22 @@ function write(path::AbstractString, obj; force=false)
 
     return bytes
 end
+
+"""
+    write(path::AbstractString, obj; force=false)
+
+Write `obj` in the shapefile (.shp, .shx, .dbf, and possibly .prj files) format.  `obj` must satisfy
+one of:
+
+1. `GeoInterface.isgeometry(obj)`.
+2. `GeoInterface.trait(obj) <: GeoInterface.AbstractGeometryCollectionTrait.`
+3. `GeoInterface.trait(obj) <: GeoInterface.AbstractFeatureCollectionTrait`.
+4. `Tables.istable(obj)` and one of the columns of `obj` is a geometry.
+5. An iterator of elements that satisfy `GeoInterface.isgeometry(element)`.
+"""
+
+write(path::AbstractString, obj; force=false) = write(path, get_writer(obj); force)
+
 
 # Geometry writing
 _write(io::IO, geom; kw...) = _write(io::IO, GI.geomtrait(geom), geom; kw...)
