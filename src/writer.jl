@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------------# Writer
 # Pre-processing for writing arbitrary objects as shapefile.
-# 1) Get `geoms` as iterator of geometry/missing/nothing
+# 1) Get `geoms` as iterator with missings removed.
 # 2) Get `features` (Tables.jl table) that matches `geoms`.
 # 3) Get CRS as GeoFormatTypes.ESRIWellKnownText
 """
@@ -12,9 +12,9 @@ Prepared data for writing as shapefile.
 - `crs` can be `nothing` or something that can be converted to `GeoFormatTypes.ESRI.WellKnownText{GeoFormatTypes.CRS}`.
 """
 struct Writer
-    geoms       # iterator of geometries, nothing, and missing (for .shp/.shx)
-    features    # Tables.jl table with same number of rows as geoms (for .dbf)
-    crs::Union{Nothing, GFT.ESRIWellKnownText{GFT.CRS}}  # (for .prj)
+    geoms       # iterator of geometries (.shp/.shx)
+    features    # Tables.jl table with same number of rows as geoms (.dbf)
+    crs::Union{Nothing, GFT.ESRIWellKnownText{GFT.CRS}}  # (.prj)
 
     function Writer(geoms, feats = emptytable(geoms), crs=nothing)
         crs = if isnothing(crs)
@@ -32,7 +32,14 @@ struct Writer
 
         Tables.istable(feats) || error("Provided feature table (of type $(typeof(feats))) is not a valid Tables.jl table.")
 
-        all(x -> ismissing(x) || isnothing(x) || GI.isgeometry(x), geoms) || error("Not all geoms satisfy `GeoInterface.isgeometry`.")
+        if any(ismissing, geoms)
+            @warn "Missing geometries cannot be written by Shapefile.jl.  Missing values will be dropped."
+            idx = Set(findall(ismissing, geoms))
+            geoms = (x for (i,x) in enumerate(geoms) if i ∉ idx)
+            feats = (x for (i,x) in enumerate(Tables.rows(feats)) if i ∉ idx)
+        end
+
+        all(GI.isgeometry, geoms) || error("Not all geoms satisfy `GeoInterface.isgeometry`.")
 
         ngeoms = sum(1 for _ in geoms)
         nfeats = sum(1 for _ in Tables.rows(feats))
@@ -51,13 +58,15 @@ function get_writer(obj)
     crs = try; GI.crs(obj); catch; nothing; end
 
     if GI.isgeometry(obj)
-        return Writer(obj, emptytable(1), crs)
+        return Writer([obj], emptytable(1), crs)
+    elseif GI.isfeature(obj)
+        return Writer([GI.geometry(obj)], [GI.properties(obj)], crs)
     elseif GI.trait(obj) isa GI.AbstractGeometryCollectionTrait
         geoms = GI.getgeom(obj)
         return Writer(geoms, emptytable(geoms), crs)
     elseif GI.trait(obj) isa GI.AbstractFeatureCollectionTrait
-        geoms = GI.getgeom(obj)
-        feats = Tables.dictcolumntable(GI.properties(f) for f in GI.getfeature(obj))
+        geoms = map(GI.geometry, GI.getfeature(obj))
+        feats = Tables.dictcolumntable(map(GI.properties, GI.getfeature(obj)))
         return Writer(geoms, feats, crs)
     elseif Tables.istable(obj)
         tbl = getfield(Tables.dictcolumntable(obj), :values)  # an OrderedDict
@@ -72,8 +81,10 @@ function get_writer(obj)
         foreach(x -> pop!(tbl), geomfields[2:end])  # drop unused geometry columns
         tbl = isempty(tbl) ? emptytable(geoms) : tbl
         return Writer(geoms, tbl, crs)
-    elseif all(x -> GI.isgeometry(x) || ismissing(x) || isnothing(x), obj)
+    elseif all(GI.isgeometry, obj)
         return Writer(obj, emptytable(obj), crs)
+    elseif all(GI.isfeature, obj)
+        return Writer(map(GI.geometry, obj), map(GI.properties, obj), crs)
     else
         error("Shapefile.jl cannot determine how to write data from `$(typeof(obj))`.")
     end
