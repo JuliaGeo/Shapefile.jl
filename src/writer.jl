@@ -70,8 +70,8 @@ function get_writer(obj)
             @warn "Multiple geometry columns detected: $geomfields. $(geomfields[1]) will be used " *
                   "and the rest discarded."
         end
-        geoms = pop!(tbl, geomfields[1])
-        foreach(x -> pop!(tbl), geomfields[2:end])  # drop unused geometry columns
+        geoms = :geometry in keys(tbl) ? tbl[:geometry] : tbl[geomfields[1]]
+        foreach(x -> delete!(tbl, x), geomfields)  # drop unused geometry columns
         tbl = isempty(tbl) ? emptytable(geoms) : tbl
         return Writer(geoms, tbl, crs)
     elseif all(GI.isgeometry, obj)
