@@ -41,11 +41,24 @@ ne_coastline = Shapefile.Table(path(natural_earth, "ne_coastline_shp"))
 ne_cities = Shapefile.Table(path(natural_earth, "ne_cities_shp"))
 
 @testset "write tables" begin
-    Shapefile.write("cities_write", ne_cities; force=true)
-    @test_throws ArgumentError Shapefile.Table("cities_write")
-    written = Shapefile.Handle("cities_write.shp")
-    shp = Shapefile.Handle(path(natural_earth, "ne_cities_shp"))
-    @test written.shapes == shp.shapes
+    for tbl in (ne_land, ne_coastline, ne_cities)
+        file = tempname()
+        Shapefile.write(file, tbl)
+        tbl2 = Shapefile.Table(file)
+        @test Tables.schema(tbl) == Tables.schema(tbl2)
+        for prop in propertynames(tbl)
+            a, b = getproperty(tbl, prop), getproperty(tbl2, prop)
+            if eltype(a) <: Union{Missing, String}
+                # ne_cities has non-ascii characters
+                @test all(isequal.(
+                    replace.(skipmissing(a), !isascii => x -> '_' ^ textwidth(x)),
+                    skipmissing(b)
+                ))
+            else
+                @test all(isequal.(a, b))
+            end
+        end
+    end
 end
 
 @testset "Create from parts" begin

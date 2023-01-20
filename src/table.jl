@@ -31,7 +31,7 @@ Get the geometry associated with a `Row` from a shapefile `Table`.
 shape(row::Row) = getfield(row, :geometry)
 
 """
-    Table 
+    Table
 
     Table(path::AbstractString)
     Table(shp::Handle{T}, dbf::DBFTables.Table)
@@ -84,6 +84,8 @@ Tables.rows(t::Table) = t
 Tables.columns(t::Table) = t
 Tables.rowaccess(::Type{<:Table}) = true
 Tables.columnaccess(::Type{<:Table}) = true
+
+
 
 """
     Base.iterate(t::Table)

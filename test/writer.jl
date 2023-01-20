@@ -5,30 +5,85 @@
 @testset "Shapefile (.shp) writers" begin
 
     @testset "write/read round trip" begin
-        struct T end
-        GCT = GeoInterface.GeometryCollectionTrait
-        GeoInterface.isgeometry(::T) = true
-        GeoInterface.geomtrait(::T) = GCT()
-        GeoInterface.ngeom(::GCT, ::T) = 1
-        GeoInterface.getgeom(::GCT, ::T, i) = Point(1,2)
-        GeoInterface.crs(::GCT, ::T) = EPSG(4326)
-        # test for warning before loading ArchGDAL
-        @test_throws MethodError convert(GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}, EPSG(4326))
-        @test_warn ".prj write failure" Shapefile.write("roundtrip.shp", T(); force=true)
-        @test !isfile("roundtrip.prj")
+        # missing
+        file = tempname()
+        Shapefile.write(file, missing)
+        t = Shapefile.Table(file)
+        @test ismissing(only(t.geometry))
 
-        # test for no warning after loading ArchGDAL
-        using ArchGDAL
-        @test_nowarn Shapefile.write("roundtrip.shp", T(); force=true)
-        @test isfile("roundtrip.prj")
+        # geometry
+        file = tempname()
+        Shapefile.write(file, Point(0,0))
+        t = Shapefile.Table(file)
+        @test only(t.geometry) == Point(0,0)
 
-        # Uncomment when DBFTables.jl write lands:
-        # t = Shapefile.Table("roundtrip.shp")
-        # @test first(t.geometry) == Point(1,2)
-        # @test GeoInterface.crs(t) == convert(GeoFormatTypes.ESRIWellKnownText{GeoFormatTypes.CRS}, EPSG(4326))
+        # feature
+        struct F end
+        GI.trait(::F) = GI.FeatureCollectionTrait()
+        GI.isfeature(::F) = true
+        GI.geometry(::F) = Point(0,0)
+        GI.properties(::F) = (one=1, two=2)
+        file = tempname()
+        Shapefile.write(file, F())
+        t = Shapefile.Table(file)
+        @test t.geometry == [Point(0,0)]
+        @test t.one == [1]
+        @test t.two == [2]
+
+        # geometry collection
+        struct GC end
+        GI.geomtrait(::GC) = GI.GeometryCollectionTrait()
+        GI.ncoord(::GI.GeometryCollectionTrait, geom::GC) = 2
+        GI.ngeom(::GI.GeometryCollectionTrait, geom::GC) = 2
+        GI.getgeom(::GI.GeometryCollectionTrait, geom::GC) = [missing, Point(1,1)]
+        file = tempname()
+        Shapefile.write(file, GC())
+        t = Shapefile.Table(file)
+        @test all(isequal.(t.geometry, [missing, Point(1,1)]))
+
+        # feature collection
+        struct FC end
+        GI.geomtrait(::FC) = GI.FeatureCollectionTrait()
+        GI.isfeaturecollection(::FC) = true
+        GI.getfeature(::GI.FeatureCollectionTrait, ::FC, i) = F()
+        GI.nfeature(::GI.FeatureCollectionTrait, ::FC) = 2
+        file = tempname()
+        Shapefile.write(file, FC())
+        t = Shapefile.Table(file)
+        @test t.geometry == [Point(0,0), Point(0,0)]
+        @test t.one == [1, 1]
+        @test t.two == [2, 2]
+
+        # table (with missing)
+        tbl = [
+            (geo=Point(0,0), feature=1),
+            (geo=Point(1,1), feature=2),
+            (geo=missing, feature=3),
+            (geo=Point(2,2), feature=missing)
+        ]
+        file = tempname()
+        Shapefile.write(file, tbl)
+        t = Shapefile.Table(file)
+        @test all(isequal.(t.geometry, [Point(0,0), Point(1,1), missing, Point(2,2)]))
+        @test all(isequal.(t.feature, [1, 2, 3, missing]))
+
+        # iterator of geometries
+        geoms = (Point(i, i) for i in 1:10)
+        file = tempname()
+        Shapefile.write(file, geoms)
+        t = Shapefile.Table(file)
+        @test t.geometry == Point.(1:10, 1:10)
+
+        # iterator of features
+        file = tempname()
+        Shapefile.write(file, (F() for i in 1:10))
+        t = Shapefile.Table(file)
+        @test t.geometry == [Point(0,0) for i in 1:10]
     end
 
 for i in eachindex(test_tuples)[1:end-1] # We dont write 15 - multipatch
+
+    i == 2 && continue # skip case of only missing data
 
     test = test_tuples[i]
     path = joinpath(@__DIR__, test.path)

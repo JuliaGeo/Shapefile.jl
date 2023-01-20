@@ -3,6 +3,8 @@ using Shapefile
 using GeoFormatTypes
 using Test
 
+GI = GeoInterface
+
 
 using Shapefile: Point, PointM, PointZ, Polygon, PolygonM, PolygonZ, Polyline,
     PolylineM, PolylineZ, MultiPoint, MultiPointM, MultiPointZ,
