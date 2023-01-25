@@ -23,7 +23,7 @@ function Base.getproperty(row::Row, name::Symbol)
         return getproperty(getfield(row, :record), name)
     end
 end
-Base.propertynames(row::Row) = propertynames(getfield(row, :record))
+Base.propertynames(row::Row) = [:geometry, propertynames(getfield(row, :record))...]
 
 GeoInterface.isfeature(t::Row) = true
 GeoInterface.geometry(t::Row) = getfield(t, :geometry)
