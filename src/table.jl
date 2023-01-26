@@ -16,8 +16,14 @@ struct Row{T}
 end
 
 
-Base.getproperty(row::Row, name::Symbol) = getproperty(getfield(row, :record), name)
-Base.propertynames(row::Row) = propertynames(getfield(row, :record))
+function Base.getproperty(row::Row, name::Symbol)
+    if name == :geometry
+        return getfield(row, :geometry)
+    else
+        return getproperty(getfield(row, :record), name)
+    end
+end
+Base.propertynames(row::Row) = [:geometry, propertynames(getfield(row, :record))...]
 
 GeoInterface.isfeature(t::Row) = true
 GeoInterface.geometry(t::Row) = getfield(t, :geometry)
