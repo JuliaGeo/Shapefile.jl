@@ -48,11 +48,6 @@ abstract type AbstractPolygon{T} <: AbstractShape end
 _hasparts(::GI.MultiPolygonTrait) = true
 _hasparts(::GI.PolygonTrait) = true
 
-_pointtype(::Type{<:AbstractPolygon{T}}) where T = T
-
-Base.convert(::Type{T}, ::GI.MultiPolygonTrait, geom) where T<:AbstractPolygon =
-    T(_convertparts(_pointtype(T), geom)...)
-
 # Shapefile polygons are OGC multipolygons
 GI.geomtrait(geom::AbstractPolygon) = GI.MultiPolygonTrait()
 GI.nring(::GI.MultiPolygonTrait, geom::AbstractPolygon) = length(geom.parts)

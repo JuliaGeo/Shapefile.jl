@@ -4,11 +4,6 @@ abstract type AbstractShape end
 GeoInterface.isgeometry(::Type{<:AbstractShape}) = true
 GeoInterface.ncoord(::GI.AbstractGeometryTrait, ::AbstractShape) = 2 # With specific methods when 3
 
-Base.convert(T::Type{<:AbstractShape}, geom) = Base.convert(T, GI.geomtrait(geom), geom)
-Base.convert(::Type{T}, geom::T) where {T<:AbstractShape} = geom
-Base.convert(::Type{<:AbstractShape}, ::Nothing, geom) =
-    throw(ArgumentError("object to convert is not a GeoInterface compatible geometry"))
-
 """
     Rect
 

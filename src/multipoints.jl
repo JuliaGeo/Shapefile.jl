@@ -1,11 +1,6 @@
 
 abstract type AbstractMultiPoint{T} <: AbstractShape end
 
-_pointtype(::Type{<:AbstractMultiPoint{T}}) where T = T
-
-Base.convert(::Type{T}, ::GI.MultiPointTrait, geom) where T<:AbstractMultiPoint =
-    T(_convert(_pointtype(T), geom)...)
-
 GI.geomtrait(::AbstractMultiPoint) = GI.MultiPointTrait()
 GI.ngeom(::GI.MultiPointTrait, geom::AbstractMultiPoint) = length(geom.points)
 GI.ncoord(::GI.MultiPointTrait, geom::AbstractMultiPoint{T}) where {T} = _ncoord(T)

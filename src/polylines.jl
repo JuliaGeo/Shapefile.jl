@@ -26,11 +26,6 @@ abstract type AbstractPolyline{T} <: AbstractShape end
 
 _hasparts(::GI.MultiLineStringTrait) = true
 
-_pointtype(::Type{<:AbstractPolyline{T}}) where T = T
-
-Base.convert(::Type{T}, ::GI.MultiLineStringTrait, geom) where T<:AbstractPolyline =
-    T(_convertparts(_pointtype(T), geom)...)
-
 GI.geomtrait(::AbstractPolyline) = GI.MultiLineStringTrait()
 GI.ngeom(::GI.MultiLineStringTrait, geom::AbstractPolyline) = length(geom.parts)
 GI.ncoord(::GI.MultiLineStringTrait, ::AbstractPolyline{T}) where {T} = _ncoord(T)

@@ -23,54 +23,6 @@ function _readfloats(io, n)
     return interval, values
 end
 
-# Most objects have similar structure, so we share conversion internals
-function _convert(pointmode::Type{<:Point}, geom)
-    n = GI.npoint(geom)
-    points = _pointvec(n)
-    for (i, point) in enumerate(GI.getpoint(geom))
-        points[i] = Point(GI.x(point), GI.y(point))
-    end
-    MBR = _getbounds(points)
-    return MBR, points
-end
-function _convert(::Type{<:PointM}, geom)
-    hasm = GI.ismeasured(first(GI.getpoint(geom)))
-    n = GI.npoint(geom)
-    points = _pointvec(n)
-    measures = _floatvec(n)
-    for (i, point) in enumerate(GI.getpoint(geom))
-        points[i] = Point(GI.x(point), GI.y(point))
-        measures[i] = hasm ? GI.m(point) : 0.0
-    end
-    mrange = Interval(extrema(measures)...)
-    MBR = _getbounds(points)
-    return MBR, points, mrange, measures
-end
-function _convert(::Type{<:PointZ}, geom)
-    hasz = GI.is3d(first(GI.getpoint(geom))) 
-    hasm = GI.ismeasured(first(GI.getpoint(geom)))
-    n = GI.npoint(geom)
-    points = _pointvec(n)
-    zvalues = _floatvec(n)
-    measures = _floatvec(n)
-    for (i, point) in enumerate(GI.getpoint(geom))
-        points[i] = Point(GI.x(point), GI.y(point))
-        zvalues[i] = hasz ? GI.z(point) : 0.0
-        measures[i] = hasm ? GI.m(point) : 0.0
-    end
-    mrange = Interval(extrema(measures)...)
-    zrange = Interval(extrema(zvalues)...)
-    MBR = _getbounds(points)
-    return MBR, points, zrange, zvalues, mrange, measures
-end
-
-# _convert with additional parts field
-function _convertparts(T, geom) 
-    MBR, args... = _convert(T, geom)
-    parts = _getparts(geom)
-    return (MBR, parts, args...)
-end
-
 _getparts(geom) = _getparts(GI.geomtrait(geom), geom)
 # Special-case multi polygons because we only store the rings
 function _getparts(::GI.MultiPolygonTrait, geom)
