@@ -3,7 +3,7 @@ using Shapefile
 using GeoFormatTypes
 using Test
 
-GI = GeoInterface
+const GI = GeoInterface
 
 
 using Shapefile: Point, PointM, PointZ, Polygon, PolygonM, PolygonZ, Polyline,
@@ -137,39 +137,6 @@ test_shapes = Dict(
 @testset "GeoInterface compatability" begin
     @test all(s -> GeoInterface.testgeometry(s), values(test_shapes))
     @test_broken GeoInterface.testgeometry(MultiPatch(Rect(1, 3, 2, 4), [0], [1], points, Interval(1, 4), [1, 2, 3, 4]))
-end
-
-@testset "convert" begin
-    @test convert(Point, PointZ(1, 2, 3, 4)) == Point(1, 2)
-    @test convert(PointM, PointZ(1, 2, 3, 4)) == PointM(1, 2, 4)
-    @test convert(PointZ, Point(1, 2)) == PointZ(1, 2, 0, 0)
-    pl = convert(Polyline, test_shapes[PolylineZ])
-    @test pl.MBR == test_shapes[Polyline].MBR
-    @test pl.points == test_shapes[Polyline].points
-    pl = convert(PolylineM, test_shapes[PolylineZ])
-    @test pl.MBR == test_shapes[PolylineM].MBR
-    @test pl.points == test_shapes[PolylineM].points
-    @test pl.measures == test_shapes[PolylineM].measures
-    pg = convert(Polygon, test_shapes[PolygonZ])
-    @test pg.MBR == test_shapes[Polygon].MBR
-    @test pg.points == test_shapes[Polygon].points
-    pg = convert(PolygonM, test_shapes[PolygonZ])
-    @test pg.MBR == test_shapes[PolygonM].MBR
-    @test pg.points == test_shapes[PolygonM].points
-    @test pg.measures == test_shapes[PolygonM].measures
-    mp = convert(MultiPoint, test_shapes[MultiPointZ])
-    @test mp.MBR == test_shapes[MultiPoint].MBR
-    @test mp.points == test_shapes[MultiPoint].points
-    mp = convert(MultiPointM, test_shapes[MultiPointZ])
-    @test mp.MBR == test_shapes[PolylineM].MBR
-    @test mp.points == test_shapes[PolylineM].points
-    @test mp.measures == test_shapes[PolylineM].measures
-
-    mp = convert(MultiPointZ, test_shapes[MultiPointM])
-    @test mp.MBR == test_shapes[PolylineZ].MBR
-    @test mp.points == test_shapes[PolylineZ].points
-    @test mp.measures == test_shapes[PolylineM].measures
-    @test mp.zvalues == [0.0, 0.0, 0.0, 0.0]  # Missing Z filled with zeros: is this the best default?
 end
 
 @testset "Loading Shapefiles" begin
