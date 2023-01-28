@@ -15,8 +15,10 @@ LinearRing{P}(xy, z::Z, m::M) where {P,Z,M} = LinearRing{P,Z,M}(xy, z, m)
 LinearRing{P}(xy; z=nothing, m=nothing) where {P} = LinearRing{P}(xy, z, m)
 
 GI.isgeometry(::Type{<:LinearRing}) = true
+GI.is3d(::GI.LinearRingTrait, lr::LinearRing) = !isnothing(lr.z)
+GI.ismeasured(::GI.LinearRingTrait, lr::LinearRing) = isnothing(lr.m)
 GI.geomtrait(::LinearRing) = GI.LinearRingTrait()
-GI.ncoord(lr::LinearRing{P}) where {P} = _ncoord(P)
+GI.ncoord(::GI.LinearRingTrait, lr::LinearRing{P}) where {P} = _ncoord(P)
 GI.ngeom(::GI.LinearRingTrait, lr::LinearRing) = length(lr)
 
 GI.getgeom(::GI.LinearRingTrait, lr::LinearRing, i::Integer) = lr[i]
@@ -32,6 +34,8 @@ struct SubPolygon{L<:LinearRing} <: AbstractVector{L}
 end
 GI.isgeometry(::Type{<:SubPolygon}) = true
 GI.geomtrait(::SubPolygon) = GI.PolygonTrait()
+GI.is3d(::GI.PolygonTrait, p::SubPolygon) = GI.is3d(first(p))
+GI.ismeasured(::GI.PolygonTrait, p::SubPolygon) = GI.measures(first(p))
 GI.ncoord(::GI.PolygonTrait, ::SubPolygon{<:LinearRing{P}}) where {P} = _ncoord(P)
 GI.ngeom(::GI.PolygonTrait, sp::SubPolygon) = length(sp)
 GI.getgeom(::GI.PolygonTrait, sp::SubPolygon, i::Integer) = getindex(sp, i)
@@ -75,7 +79,7 @@ function GI.getring(::GI.MultiPolygonTrait, geom::AbstractPolygon{P}, i::Integer
     LinearRing{P}(xy, z, m)
 end
 
-# Warning: getgeom is very slow for a Shapefile. 
+# Warning: getgeom is very slow for a Shapefile.
 # If you don't need exteriors and holes to be separated, use `getring`.
 GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon, i::Integer) = collect(GI.getgeom(geom))[i]
 function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon{T}) where {T}
