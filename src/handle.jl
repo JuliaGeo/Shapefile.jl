@@ -41,8 +41,12 @@ Base.length(shp::Handle) = length(shapes(shp))
 
 function Base.read(io::IO, ::Type{Handle}, index = nothing; path = nothing)
     header = read(io, Header)
-    jltype = SHAPETYPE[header.shapecode]
-    shapes = Vector{Union{jltype,Missing}}(undef, 0)
+    T = SHAPETYPE[header.shapecode]
+    _read_handle_inner(io::IO, T, header, shapes, index; path)
+end
+
+function _read_handle_inner(io::IO, ::Type{T}, header, shapes, index=nothing; path) where T
+    shapes = Vector{Union{T,Missing}}(undef, 0)
     num = Int32(0)
     while (!eof(io))
         seeknext(io, num, index)
@@ -52,7 +56,7 @@ function Base.read(io::IO, ::Type{Handle}, index = nothing; path = nothing)
         if shapecode === Int32(0)
             push!(shapes, missing)
         else
-            push!(shapes, read(io, jltype))
+            push!(shapes, read(io, T))
         end
     end
     crs = nothing
