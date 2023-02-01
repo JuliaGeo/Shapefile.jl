@@ -16,7 +16,7 @@ LinearRing{P}(xy; z=nothing, m=nothing) where {P} = LinearRing{P}(xy, z, m)
 
 GI.isgeometry(::Type{<:LinearRing}) = true
 GI.is3d(::GI.LinearRingTrait, lr::LinearRing) = !isnothing(lr.z)
-GI.ismeasured(::GI.LinearRingTrait, lr::LinearRing) = isnothing(lr.m)
+GI.ismeasured(::GI.LinearRingTrait, lr::LinearRing) = !isnothing(lr.m)
 GI.geomtrait(::LinearRing) = GI.LinearRingTrait()
 GI.ncoord(::GI.LinearRingTrait, lr::LinearRing{P}) where {P} = _ncoord(P)
 GI.ngeom(::GI.LinearRingTrait, lr::LinearRing) = length(lr)
