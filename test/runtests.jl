@@ -138,6 +138,7 @@ test_shapes = Dict(
     foreach(values(test_shapes)) do s
         @test GeoInterface.testgeometry(s)
         @test GeoInterface.extent(s) isa GeoInterface.Extent
+        plot(s)
     end
     @test_broken GeoInterface.testgeometry(MultiPatch(Rect(1, 3, 2, 4), [0], [1], points, Interval(1, 4), [1, 2, 3, 4]))
 
