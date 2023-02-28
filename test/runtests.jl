@@ -140,6 +140,13 @@ test_shapes = Dict(
         @test GeoInterface.extent(s) isa GeoInterface.Extent
     end
     @test_broken GeoInterface.testgeometry(MultiPatch(Rect(1, 3, 2, 4), [0], [1], points, Interval(1, 4), [1, 2, 3, 4]))
+
+    @test GeoInterface.extent(Shapefile.Point(1.0, 2.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0))
+    @test GeoInterface.extent(Shapefile.PointM(1.0, 2.0, 4.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0))
+    @test GeoInterface.extent(Shapefile.PointZ(1.0, 2.0, 3.0, 4.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0), Z=(3.0, 3.0))
+    @test GeoInterface.extent(test_shapes[Polygon]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
+    @test GeoInterface.extent(test_shapes[PolygonM]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
+    @test GeoInterface.extent(test_shapes[PolygonZ]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0), Z=(1.0, 4.0))
 end
 
 @testset "convert" begin
