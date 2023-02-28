@@ -17,7 +17,7 @@ GI.ismeasured(::GI.AbstractPointTrait, ::Union{PointM,PointZ}) = true
 GI.extent(::GI.PointTrait, p::Union{Point,PointM}) =
     Extents.Extent(X=(p.x, p.x), Y=(p.y, p.y))
 GI.extent(::GI.PointTrait, p::PointZ) =
-    Extents.Extent(X=(p.x, p.x), Y=(p.y, p.y), Z=(p.y, p.y))
+    Extents.Extent(X=(p.x, p.x), Y=(p.y, p.y), Z=(p.z, p.z))
 function GI.extent(::GI.AbstractGeometryTrait, x::AbstractShape)
     rect = x.MBR
     return Extents.Extent(X=(rect.left, rect.right), Y=(rect.bottom, rect.top))
