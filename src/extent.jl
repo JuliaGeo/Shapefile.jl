@@ -14,12 +14,20 @@ GI.ismeasured(::GI.AbstractPointTrait, ::Point) = false
 GI.ismeasured(::GI.AbstractPointTrait, ::Union{PointM,PointZ}) = true
 
 # extent
-function GI.extent(x::AbstractShape)
+GI.extent(::GI.PointTrait, p::Union{Point,PointM}) =
+    Extents.Extent(X=(p.x, p.x), Y=(p.y, p.y))
+GI.extent(::GI.PointTrait, p::PointZ) =
+    Extents.Extent(X=(p.x, p.x), Y=(p.y, p.y), Z=(p.z, p.z))
+function GI.extent(::GI.AbstractGeometryTrait, x::AbstractShape)
     rect = x.MBR
     return Extents.Extent(X=(rect.left, rect.right), Y=(rect.bottom, rect.top))
 end
+function GI.extent(::GI.AbstractGeometryTrait, x::ShapeZ)
+    rect = x.MBR
+    return Extents.Extent(X=(rect.left, rect.right), Y=(rect.bottom, rect.top), Z=(x.zrange.left, x.zrange.right))
+end
 GI.extent(x::Handle) = GI.extent(x.header)
-function GI.extent(x::Union{ShapeZ,Header})
+function GI.extent(x::Header)
     rect = x.MBR
     return Extents.Extent(X=(rect.left, rect.right), Y=(rect.bottom, rect.top), Z=(x.zrange.left, x.zrange.right))
 end
