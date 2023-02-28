@@ -135,7 +135,10 @@ test_shapes = Dict(
 )
 
 @testset "GeoInterface compatability" begin
-    @test all(s -> GeoInterface.testgeometry(s), values(test_shapes))
+    foreach(values(test_shapes)) do s
+        @test GeoInterface.testgeometry(s)
+        @test GeoInterface.extent(s) isa GeoInterface.Extent
+    end
     @test_broken GeoInterface.testgeometry(MultiPatch(Rect(1, 3, 2, 4), [0], [1], points, Interval(1, 4), [1, 2, 3, 4]))
 end
 
