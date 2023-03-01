@@ -3,7 +3,7 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaGeo.github.io/Shapefile.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaGeo.github.io/Shapefile.jl/dev)
 [![CI](https://github.com/JuliaGeo/Shapefile.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeo/Shapefile.jl/actions?query=workflow%3ACI)
-[![CI](https://github.com/JuliaGeo/Shapefile.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeo/Shapefile.jl/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/JuliaGeo/Shapefile.jl/branch/master/graph/badge.svg?token=pRKEwKkeTk)](https://codecov.io/gh/JuliaGeo/Shapefile.jl)
 
 This library supports reading and writing ESRI Shapefiles in pure Julia.
 
