@@ -27,8 +27,6 @@ function Base.read(io::IO, ::Type{Point})
     Point(x, y)
 end
 
-Base.convert(::Type{<:Point}, ::GI.PointTrait, geom) = Point(GI.x(geom), GI.y(geom))
-
 """
     PointM <: AbstractPoint
 
@@ -50,11 +48,6 @@ function Base.read(io::IO, ::Type{PointM})
     y = read(io, Float64)
     m = read(io, Float64)
     PointM(x, y, m)
-end
-
-function Base.convert(::Type{<:PointM}, ::GI.PointTrait, geom)
-    m = GI.ismeasured(geom) ? GI.m(geom) : 0.0
-    PointM(GI.x(geom), GI.y(geom), m)
 end
 
 GI.m(::GI.PointTrait, point::PointM) = point.m
@@ -82,12 +75,6 @@ function Base.read(io::IO, ::Type{PointZ})
     z = read(io, Float64)
     m = read(io, Float64)
     PointZ(x, y, z, m)
-end
-
-function Base.convert(::Type{<:PointZ}, ::GI.PointTrait, geom)
-    z = GI.is3d(geom) ? GI.z(geom) : 0.0
-    m = GI.ismeasured(geom) ? GI.m(geom) : 0.0
-    PointZ(GI.x(geom), GI.y(geom), z, m)
 end
 
 GI.m(::GI.PointTrait, point::PointZ) = point.m
