@@ -135,10 +135,15 @@ test_shapes = Dict(
 )
 
 @testset "GeoInterface compatibility" begin
-    foreach(values(test_shapes)) do s
+    foreach(test_shapes) do (k, s)
         @test GeoInterface.testgeometry(s)
         @test GeoInterface.extent(s) isa GeoInterface.Extent
-        plot(s)
+        # This test should be moved to GeoInterface `testgeometry`
+        @test GeoInterface.ncoord(s) ==
+            (2 + GeoInterface.is3d(s) + GeoInterface.ismeasured(s)) ==
+            length(GeoInterface.coordnames(s))
+        # TODO Plotting a single measured point fails, needs fixing in GeoInterfaceRecipes.jl
+        GeoInterface.ismeasured(s) && GeoInterface.trait(s) isa GeoInterface.PointTrait || plot(s)
     end
     @test_broken GeoInterface.testgeometry(MultiPatch(Rect(1, 3, 2, 4), [0], [1], points, Interval(1, 4), [1, 2, 3, 4]))
 
@@ -148,6 +153,12 @@ test_shapes = Dict(
     @test GeoInterface.extent(test_shapes[Polygon]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
     @test GeoInterface.extent(test_shapes[PolygonM]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
     @test GeoInterface.extent(test_shapes[PolygonZ]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0), Z=(1.0, 4.0))
+
+    subpolygon = getgeom(test_shapes[Polygon], 1)
+    @test GeoInterface.testgeometry(subpolygon)
+    linearring = getgeom(subpolygon, 1)
+    @test GeoInterface.testgeometry(linearring)
+    @test GeoInterface.extent(subpolygon) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
 end
 
 @testset "Loading Shapefiles" begin

@@ -15,8 +15,6 @@ LinearRing{P}(xy, z::Z, m::M) where {P,Z,M} = LinearRing{P,Z,M}(xy, z, m)
 LinearRing{P}(xy; z=nothing, m=nothing) where {P} = LinearRing{P}(xy, z, m)
 
 GI.isgeometry(::Type{<:LinearRing}) = true
-GI.is3d(::GI.LinearRingTrait, lr::LinearRing) = !isnothing(lr.z)
-GI.ismeasured(::GI.LinearRingTrait, lr::LinearRing) = !isnothing(lr.m)
 GI.geomtrait(::LinearRing) = GI.LinearRingTrait()
 GI.ncoord(::GI.LinearRingTrait, lr::LinearRing{P}) where {P} = _ncoord(P)
 GI.ngeom(::GI.LinearRingTrait, lr::LinearRing) = length(lr)
@@ -55,6 +53,7 @@ _hasparts(::GI.PolygonTrait) = true
 # Shapefile polygons are OGC multipolygons
 GI.geomtrait(geom::AbstractPolygon) = GI.MultiPolygonTrait()
 GI.nring(::GI.MultiPolygonTrait, geom::AbstractPolygon) = length(geom.parts)
+GI.ncoord(::GI.MultiPolygonTrait, geom::AbstractPolygon{T}) where {T} = _ncoord(T)
 GI.npoint(::GI.MultiPolygonTrait, geom::AbstractPolygon) = length(geom.points)
 function GI.ngeom(::GI.MultiPolygonTrait, geom::AbstractPolygon)
     n = 0
