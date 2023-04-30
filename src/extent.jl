@@ -5,12 +5,14 @@ const ShapeM = Union{PolylineM,PolygonM,MultiPointM,LinearRing{PointM},SubPolygo
 # 3d
 GI.is3d(::GI.AbstractGeometryTrait, ::Union{Shape,ShapeM}) = false
 GI.is3d(::GI.AbstractPointTrait, ::Union{Point,PointM}) = false
+GI.is3d(::GI.PolygonTrait, ::Union{SubPolygon{<:LinearRing{Point}}, SubPolygon{<:LinearRing{PointM}}}) = false
 GI.is3d(::GI.AbstractGeometryTrait, ::ShapeZ) = true
 GI.is3d(::GI.AbstractPointTrait, ::PointZ) = true
 
 # measured
 GI.ismeasured(::GI.AbstractGeometryTrait, ::Shape) = false
 GI.ismeasured(::GI.AbstractPointTrait, ::Point) = false
+GI.ismeasured(::GI.PolygonTrait, ::SubPolygon{<:LinearRing{Point}}) = false
 GI.ismeasured(::GI.AbstractGeometryTrait, ::Union{ShapeM,ShapeZ}) = true
 GI.ismeasured(::GI.AbstractPointTrait, ::Union{PointM,PointZ}) = true
 
