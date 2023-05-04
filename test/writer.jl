@@ -17,6 +17,23 @@
         t = Shapefile.Table(file)
         @test only(t.geometry) == Point(0,0)
 
+        ps = [Point(0,0), Point(0.5,2), Point(2.2,2.2), Point(0,0)]
+        box = Rect(0.0, 0.0, 2.2, 2.2)
+
+        # linestring as polyline
+        geom = LineString{Point}(view(ps, 1:3))
+        file = tempname()
+        Shapefile.write(file, geom)
+        t = Shapefile.Table(file)
+        @test only(t.geometry) == Polyline(box, [0], ps[1:3])
+
+        # subpolygon as polygon
+        geom = SubPolygon([LinearRing{Point}(view(ps, 1:4))])
+        file = tempname()
+        Shapefile.write(file, geom)
+        t = Shapefile.Table(file)
+        @test only(t.geometry) == Polygon(box, [0], ps)
+
         # feature
         struct F end
         GI.trait(::F) = GI.FeatureCollectionTrait()

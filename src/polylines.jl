@@ -9,7 +9,7 @@ LineString{P}(xy; z=nothing, m=nothing) where {P} = LineString{P}(xy, z, m)
 
 GI.isgeometry(::Type{<:LineString}) = true
 GI.geomtrait(::LineString) = GI.LineStringTrait()
-GI.ncoord(lr::LineString{T}) where {T} = _ncoord(T)
+GI.ncoord(::GI.LineStringTrait, ::LineString{T}) where {T} = _ncoord(T)
 GI.ngeom(::GI.LineStringTrait, lr::LineString) = length(lr)
 # GI.getgeom(::GI.LineStringTrait, lr::LineString) = (getindex(lr, i) for i in 1:ngeom(lr))
 GI.getgeom(::GI.LineStringTrait, lr::LineString, i::Integer) = getindex(lr, i)
