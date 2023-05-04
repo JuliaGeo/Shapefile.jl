@@ -41,6 +41,7 @@ const TRAITSHAPE = Dict{DataType,DataType}(
     GI.PointTrait => Point,
     GI.LineStringTrait => Polyline,
     GI.MultiLineStringTrait => Polyline,
+    GI.PolygonTrait => Polygon,
     GI.MultiPolygonTrait => Polygon,
     GI.MultiPointTrait => MultiPoint,
 )
