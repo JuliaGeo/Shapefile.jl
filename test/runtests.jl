@@ -134,7 +134,7 @@ test_shapes = Dict(
     SubPolygon => SubPolygon([LinearRing{Point}(view(points, 1:4))]),
 )
 
-@testset "GeoInterface compatability" begin
+@testset "GeoInterface compatibility" begin
     foreach(values(test_shapes)) do s
         @test GeoInterface.testgeometry(s)
         @test GeoInterface.extent(s) isa GeoInterface.Extent

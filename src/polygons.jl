@@ -32,7 +32,7 @@ struct SubPolygon{L<:LinearRing} <: AbstractVector{L}
 end
 GI.isgeometry(::Type{<:SubPolygon}) = true
 GI.geomtrait(::SubPolygon) = GI.PolygonTrait()
-GI.ncoord(::GI.PolygonTrait, ::SubPolygon{LinearRing{P}}) where {P} = _ncoord(P)
+GI.ncoord(::GI.PolygonTrait, ::SubPolygon{<:LinearRing{P}}) where {P} = _ncoord(P)
 GI.ngeom(::GI.PolygonTrait, sp::SubPolygon) = length(sp)
 GI.getgeom(::GI.PolygonTrait, sp::SubPolygon, i::Integer) = getindex(sp, i)
 

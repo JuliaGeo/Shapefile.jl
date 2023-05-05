@@ -382,6 +382,8 @@ end
 _nparts(trait, geom) = nothing
 _nparts(trait::Union{GI.MultiPolygonTrait,GI.PolygonTrait}, geom) = Int32(GI.nring(geom))
 _nparts(trait::GI.MultiLineStringTrait, geom) = Int32(GI.nlinestring(geom))
+_nparts(trait::GI.LineStringTrait, geom) = Int32(1)
 
 _get_parts(trait::Union{GI.MultiPolygonTrait,GI.PolygonTrait}, geom) = GI.getring(trait, geom)
 _get_parts(trait, geom) = GI.getgeom(trait, geom)
+_get_parts(trait::GI.LineStringTrait, geom) = (geom for i in 1:1)
