@@ -230,7 +230,9 @@ function write(path::AbstractString, o::Writer; force=false)
     close(io)
 
     # Write .shx file
-    index_handle = IndexHandle(header, shx_indices)
+    filesize = (100 + 8 * length(shx_indices)) ÷ 2  # Header: 100 bytes, IndexRecord: 8 bytes each
+    shx_header = Header(; filesize, shapecode, mbr, zrange, mrange)
+    index_handle = IndexHandle(shx_header, shx_indices)
     Base.write(paths.shx, index_handle)
 
     # Write .dbf file

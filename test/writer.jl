@@ -112,12 +112,32 @@ for i in eachindex(test_tuples)[1:end-1] # We dont write 15 - multipatch
         ih2 = read(Shapefile._shape_paths("testshape").shx, Shapefile.IndexHandle)
         @test ih1.indices == ih2.indices
     end
+    @testset "shx headers match" begin
+        h1 = read(Shapefile._shape_paths(path).shx, Shapefile.Header)
+        h2 = read(Shapefile._shape_paths("testshape").shx, Shapefile.Header)
+        if !haskey(test, :skip_check_mask)
+            @test h1 == h2
+        end
+    end
+    @testset "shx bytes match" begin
+        r1 = read("testshape.shx")
+        r2 = read(Shapefile._shape_paths(path).shx)
+        if haskey(test, :skip_check_mask)
+            inds = map(eachindex(r1)) do i
+                !(i in test.skip_check_mask)
+            end
+            @test r1[inds] == r2[inds]
+        else
+            findall(r1 .!= r2)
+            @test r1 == r2
+        end
+    end
+
     @testset "shp headers match" begin
         h1 = read("testshape.shp", Shapefile.Header)
         h2 = read(path, Shapefile.Header)
-        h3 = read(Shapefile._shape_paths("testshape").shx, Shapefile.Header)
         if !haskey(test, :skip_check_mask)
-            @test h1 == h2 == h3
+            @test h1 == h2
         end
     end
     @testset "shp bytes match" begin
@@ -127,7 +147,7 @@ for i in eachindex(test_tuples)[1:end-1] # We dont write 15 - multipatch
             inds = map(eachindex(r1)) do i
                 !(i in test.skip_check_mask)
             end
-            r1[inds] == r2[inds]
+            @test r1[inds] == r2[inds]
         else
             findall(r1 .!= r2)
             @test r1 == r2
