@@ -7,3 +7,5 @@ end
 end
 
 GeoInterfaceRecipes.@enable_geo_plots Shapefile.AbstractShape
+GeoInterfaceRecipes.@enable_geo_plots Shapefile.SubPolygon
+GeoInterfaceRecipes.@enable_geo_plots Shapefile.LinearRing

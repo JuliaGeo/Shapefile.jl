@@ -27,6 +27,8 @@ function Base.read(io::IO, ::Type{Point})
     Point(x, y)
 end
 
+_ncoord(::Type{<:Point}) = 2
+
 """
     PointM <: AbstractPoint
 
@@ -49,6 +51,8 @@ function Base.read(io::IO, ::Type{PointM})
     m = read(io, Float64)
     PointM(x, y, m)
 end
+
+_ncoord(::Type{<:PointM}) = 3
 
 GI.m(::GI.PointTrait, point::PointM) = point.m
 
@@ -77,7 +81,7 @@ function Base.read(io::IO, ::Type{PointZ})
     PointZ(x, y, z, m)
 end
 
+_ncoord(::Type{<:PointZ}) = 4
+
 GI.m(::GI.PointTrait, point::PointZ) = point.m
 GI.z(::GI.PointTrait, point::PointZ) = point.z
-
-_ncoord(::Type{PointZ}) = 3

@@ -1,19 +1,30 @@
-const ShapeZ = Union{PolylineZ,PolygonZ,MultiPointZ,MultiPatch}
-const ShapeM = Union{ShapeZ,PolylineM,PolygonM,MultiPointM}
+const Shape = Union{AbstractShape,LinearRing{Point},SubPolygon{<:LinearRing{Point}}}
+const ShapeZ = Union{PolylineZ,PolygonZ,MultiPointZ,MultiPatch,LinearRing{PointZ},SubPolygon{<:LinearRing{PointZ}}}
+const ShapeM = Union{PolylineM,PolygonM,MultiPointM,LinearRing{PointM},SubPolygon{<:LinearRing{PointM}}}
 
 # 3d
-GI.is3d(::GI.AbstractGeometryTrait, ::AbstractShape) = false
-GI.is3d(::GI.AbstractPointTrait, ::AbstractPoint) = false
+GI.is3d(::GI.AbstractGeometryTrait, ::Union{Shape,ShapeM}) = false
+GI.is3d(::GI.AbstractPointTrait, ::Union{Point,PointM}) = false
+GI.is3d(::GI.PolygonTrait, ::Union{SubPolygon{<:LinearRing{Point}}, SubPolygon{<:LinearRing{PointM}}}) = false
 GI.is3d(::GI.AbstractGeometryTrait, ::ShapeZ) = true
 GI.is3d(::GI.AbstractPointTrait, ::PointZ) = true
 
 # measured
-GI.ismeasured(::GI.AbstractGeometryTrait, ::AbstractShape) = false
-GI.ismeasured(::GI.AbstractGeometryTrait, ::ShapeM) = true
+GI.ismeasured(::GI.AbstractGeometryTrait, ::Shape) = false
 GI.ismeasured(::GI.AbstractPointTrait, ::Point) = false
+GI.ismeasured(::GI.PolygonTrait, ::SubPolygon{<:LinearRing{Point}}) = false
+GI.ismeasured(::GI.AbstractGeometryTrait, ::Union{ShapeM,ShapeZ}) = true
 GI.ismeasured(::GI.AbstractPointTrait, ::Union{PointM,PointZ}) = true
 
+GI.coordnames(t::GI.AbstractGeometryTrait, geom::Union{Point,Shape}) = (:X, :Y)
+GI.coordnames(t::GI.AbstractGeometryTrait, geom::Union{PointM,ShapeM}) = (:X, :Y, :M)
+GI.coordnames(t::GI.AbstractGeometryTrait, geom::Union{PointZ,ShapeZ}) = (:X, :Y, :Z, :M)
+
 # extent
+# Sub geometries have no known extent
+GI.extent(::GI.LinearRingTrait, p::LinearRing) = nothing
+GI.extent(::GI.PolygonTrait, p::SubPolygon) = nothing
+# Other geoms have precalculated extent
 GI.extent(::GI.PointTrait, p::Union{Point,PointM}) =
     Extents.Extent(X=(p.x, p.x), Y=(p.y, p.y))
 GI.extent(::GI.PointTrait, p::PointZ) =
