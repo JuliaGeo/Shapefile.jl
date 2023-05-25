@@ -159,7 +159,7 @@ test_shapes = Dict(
     @test GeoInterface.testgeometry(linearring)
     @test GeoInterface.extent(subpolygon) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
 
-    @test GeoInterface.trait(shp) isa GeoInterface.GeometryCollection
+    @test GeoInterface.trait(shp) isa GeoInterface.GeometryCollectionTrait
     @test GeoInterface.testgeometry(shp)
 end
 
