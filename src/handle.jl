@@ -15,7 +15,15 @@ mutable struct Handle{T<:Union{<:AbstractShape,Missing}}
     shapes::Vector{T}
     crs::Union{Nothing, GFT.ESRIWellKnownText{GFT.CRS}}
 end
-function Handle(path::AbstractString, index=nothing)
+function Handle(path::AbstractString)
+    shx = splitext(path)[1] * ".shx"
+    if isfile(shx)
+        Handle(path, shx)
+    else
+        Handle(path, nothing)
+    end
+end
+function Handle(path::AbstractString, index)
     open(path) do io
         read(io, Handle, index; path = path)
     end
