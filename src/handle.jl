@@ -30,12 +30,13 @@ end
 shapes(h::Handle) = h.shapes
 
 # GeoInterface
+GI.isgeometry(::Handle) = true
 GI.geomtrait(::Handle) = GI.GeometryCollectionTrait()
 GI.ncoord(::GI.GeometryCollectionTrait, h::Handle) = GI.ncoord(first(h.shapes))
 GI.ngeom(::GI.GeometryCollectionTrait, h::Handle) = length(h.shapes)
 GI.getgeom(::GI.GeometryCollectionTrait, h::Handle, i) = h.shapes[i]
+GI.getgeom(::GI.GeometryCollectionTrait, h::Handle) = h.shapes
 GI.crs(h::Handle) = h.crs
-
 
 Base.length(shp::Handle) = length(shapes(shp))
 

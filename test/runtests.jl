@@ -158,6 +158,9 @@ test_shapes = Dict(
     linearring = getgeom(subpolygon, 1)
     @test GeoInterface.testgeometry(linearring)
     @test GeoInterface.extent(subpolygon) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
+
+    @test GeoInterface.trait(shp) isa GeoInterface.GeometryCollection
+    @test GeoInterface.testgeometry(shp)
 end
 
 @testset "Loading Shapefiles" begin
