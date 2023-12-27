@@ -42,4 +42,4 @@ RemoteFiles = "cbe49d4c-5af1-5b60-bb70-0a60aa018e1b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["ArchGDAL", "DataFrames", "Plots", "RemoteFiles", "Test"]
+test = ["ArchGDAL", "DataFrames", "Makie", "Plots", "RemoteFiles", "Test"]
