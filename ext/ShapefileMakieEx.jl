@@ -1,4 +1,4 @@
-module ShapefileMakie
+module ShapefileMakieExt
 using GeoInterfaceMakie: GeoInterfaceMakie
 using Shapefile: Shapefile
 using Makie: Makie
