@@ -60,7 +60,8 @@ function get_writer(obj)
     elseif GI.trait(obj) isa GI.AbstractFeatureCollectionTrait
         geoms = map(GI.geometry, GI.getfeature(obj))
         feats = Tables.dictcolumntable(map(GI.properties, GI.getfeature(obj)))
-        return Writer(geoms, feats, crs)
+        tbl = isempty(feats) ? emptytable(geoms) : feats
+        return Writer(geoms, tbl, crs)
     elseif Tables.istable(obj)
         tbl = getfield(Tables.dictcolumntable(obj), :values)  # an OrderedDict
         geomfields = findall(tbl) do data

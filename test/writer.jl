@@ -71,6 +71,18 @@
         @test t.one == [1, 1]
         @test t.two == [2, 2]
 
+        # feature collection without properties
+        struct NoProps end
+        feats = [(; geometry=Point(0,0)), (; geometry=Point(1,1))]
+        GI.geomtrait(::NoProps) = GI.FeatureCollectionTrait()
+        GI.isfeaturecollection(::NoProps) = true
+        GI.getfeature(::GI.FeatureCollectionTrait, ::NoProps, i) = feats[i]
+        GI.nfeature(::GI.FeatureCollectionTrait, ::NoProps) = length(feats)
+        file = tempname()
+        Shapefile.write(file, NoProps())
+        t = Shapefile.Table(file)
+        @test t.geometry == [Point(0,0), Point(1,1)]
+
         # table (with missing)
         tbl = [
             (geo=Point(0,0), feature=1),
