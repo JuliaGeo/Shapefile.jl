@@ -21,6 +21,7 @@ jobs:
           - windows-latest
         arch:
           - x64
+        # tests are not working on Windows with Julia 1.9
         exclude:
           - os: windows-latest
             version: '1.9'
