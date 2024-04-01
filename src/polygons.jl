@@ -98,7 +98,7 @@ function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon{T}) where {T}
         _build_cache!(geom)
     end
     return map(geom.indexcache) do indices
-        SubPolygon(GI.getring.(Ref(geom), indices)) 
+        SubPolygon(GI.getring.((geom,), indices)) 
     end
 end
 
