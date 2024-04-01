@@ -86,79 +86,71 @@ end
 # Warning: getgeom is very slow for a Shapefile.
 # If you don't need exteriors and holes to be separated, use `getring`.
 function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon, i::Integer)
-    if length(geom.indexcache) > 0
-        indices = geom.indexcache[i]
-        rings = GI.getring.(Ref(GI.MultiPolygonTrait()), Ref(geom), indices)
-        SubPolygon(rings)
-    else
-        # Build the whole cache the first time
-        GI.getgeom(geom)[i]
+    if length(geom.indexcache) == 0
+        _build_cache!(geom)
     end
+    indices = geom.indexcache[i]
+    rings = GI.getring.(Ref(GI.MultiPolygonTrait()), Ref(geom), indices)
+    return SubPolygon(rings)
 end
 function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon{T}) where {T}
-    # Short-circuit if we already have a cache of ring indices
-    if length(geom.indexcache) > 0
-        return map(geom.indexcache) do indices
-            rings = GI.getring.(Ref(GI.MultiPolygonTrait()), Ref(geom), indices)
-            SubPolygon(rings)
-        end
+    if length(geom.indexcache) == 0
+        _build_cache!(geom)
     end
+    return map(geom.indexcache) do indices
+        SubPolygon(GI.getring.(Ref(geom), indices)) 
+    end
+end
 
-    # Otherwise calculate where the rings are
-    r1 = GI.getring(geom, 1)
-    polygons = SubPolygon{typeof(r1)}[]
-    holes = typeof(r1)[]
-    E = Extents.Extent{(:X, :Y),Tuple{Tuple{Float64,Float64},Tuple{Float64,Float64}}}
-    polygon_extents = E[]
-    hole_extents = E[]
+# Build the indexcache for a Polygon
+function _build_cache!(geom::AbstractPolygon)
+    hole_inds = Int[]
     indexcache = geom.indexcache
     for (i, ring) in enumerate(GI.getring(geom))
         if _isclockwise(ring)
-            push!(polygons, SubPolygon([ring])) # create new polygon
             push!(indexcache, [i]) # create new polygon
         else
-            push!(holes, ring)
+            push!(hole_inds, i)
         end
     end
-    for h in eachindex(holes)
-        hole = holes[h]
-        hole_extent = GI.extent(hole)
-        found = false
-        for i = 1:length(polygons)
-            polygon = polygons[i]
-            if length(polygon_extents) < i
-                polygon_extent = GI.extent(polygon[1])[(:X, :Y)]
-                push!(polygon_extents, polygon_extent)
-            else
-                polygon_extent = polygon_extents[i]
+    if length(hole_inds) > 0
+        # Ignore Z dimension for extents, this is 2.5D
+        extents = map(r -> GI.extent(r)[(:X, :Y)], GI.getring(geom))
+        for h in hole_inds
+            hole = GI.getring(geom, h)
+            length(hole) > 0 || continue
+            hole_extent = extents[h]
+            found = false
+            for ic in indexcache
+                e = ic[1]
+                exterior = GI.getring(geom, e)
+                if Extents.intersects(hole_extent, extents[e]) && _inring(hole[1], exterior)
+                    push!(ic, h)
+                    found = true
+                    break
+                end
             end
-            if Extents.intersects(hole_extent, polygon_extents[i]) && _inring(hole[1], polygons[i][1])
-                push!(polygon, hole)
-                push!(indexcache[i], h)
-                found = true
-                break
+            if !found
+                # The hole is not inside any ring, so make it a polygon.
+                # This is not intended behaviour but ESRI docs call it
+                # a "Dirty" ring. So it is a thing in the wild.
+                push!(indexcache, [h])
             end
-        end
-        if !found
-            # TODO: does this follow the spec? this should not happen with a correct file.
-            # ESRI docs call this a "Dirty" ring, so it is a thing in the wild.
-            push!(polygons, SubPolygon([hole])) # hole is not inside any ring; make it a polygon
         end
     end
-    return polygons
+    return geom
 end
 
 function _inring(pt::AbstractPoint, ring::LinearRing)
-    intersects(i, j) =
-        (i.y >= pt.y) != (j.y >= pt.y) &&
-        (pt.x <= (j.x - i.x) * (pt.y - i.y) / (j.y - i.y) + i.x)
-    isinside = intersects(ring[1], ring[end])
+    length(ring) > 2 || return false
+    isinside = @inbounds _intersects(pt, ring[1], ring[end])
+    # This loop is 80% of Polygon read time
     for k = 2:length(ring)
-        isinside = @inbounds intersects(ring[k], ring[k-1]) ? !isinside : isinside
+        intersects = @inbounds _intersects(pt, ring[k], ring[k-1])
+        isinside = intersects ? !isinside : isinside
     end
     return isinside
 end
-
 
 function _isclockwise(ring)
     clockwise_test = 0.0
@@ -168,6 +160,11 @@ function _isclockwise(ring)
         clockwise_test += (cur.x - prev.x) * (cur.y + prev.y)
     end
     clockwise_test > 0
+end
+
+function _intersects(pt, i, j)
+    (i.y >= pt.y) != (j.y >= pt.y) &&
+    (pt.x <= (j.x - i.x) * (pt.y - i.y) / (j.y - i.y) + i.x)
 end
 
 # TODO add this to `Extents.union` for any `Tuple/AbstractArray` point
