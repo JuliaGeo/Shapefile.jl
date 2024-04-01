@@ -94,7 +94,7 @@ function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon, i::Integer)
     return SubPolygon(rings)
 end
 function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon{T}) where {T}
-    if length(geom.indexcache) == 0
+    if isempty(geom.indexcache)
         _build_cache!(geom)
     end
     return map(geom.indexcache) do indices
