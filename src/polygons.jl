@@ -201,8 +201,7 @@ function Base.read(io::IO, ::Type{Polygon})
     numpoints = read(io, Int32)
     parts = _readparts(io, numparts)
     points = _readpoints(io, numpoints)
-    indexcache = Vector{Bool}[]
-    Polygon(box, parts, points, indexcache)
+    Polygon(box, parts, points)
 end
 
 Base.:(==)(p1::Polygon, p2::Polygon) = (p1.parts == p2.parts) && (p1.points == p2.points)
@@ -240,8 +239,7 @@ function Base.read(io::IO, ::Type{PolygonM})
     parts = _readparts(io, numparts)
     points = _readpoints(io, numpoints)
     mrange, measures = _readm(io, numpoints)
-    indexcache = Vector{Bool}[]
-    PolygonM(box, parts, points, mrange, measures, indexcache)
+    PolygonM(box, parts, points, mrange, measures)
 end
 
 """
@@ -280,6 +278,5 @@ function Base.read(io::IO, ::Type{PolygonZ})
     points = _readpoints(io, numpoints)
     zrange, zvalues = _readz(io, numpoints)
     mrange, measures = _readm(io, numpoints)
-    indexcache = Vector{Bool}[]
-    PolygonZ(box, parts, points, zrange, zvalues, mrange, measures, indexcache)
+    PolygonZ(box, parts, points, zrange, zvalues, mrange, measures)
 end
