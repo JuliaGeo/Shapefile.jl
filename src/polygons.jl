@@ -90,7 +90,7 @@ function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon, i::Integer)
         _build_cache!(geom)
     end
     indices = geom.indexcache[i]
-    rings = GI.getring.(Ref(GI.MultiPolygonTrait()), Ref(geom), indices)
+    rings = GI.getring.((GI.MultiPolygonTrait(),), (geom,), indices)
     return SubPolygon(rings)
 end
 function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon{T}) where {T}
