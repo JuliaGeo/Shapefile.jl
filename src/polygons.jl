@@ -83,8 +83,6 @@ function GI.getring(::GI.MultiPolygonTrait, geom::AbstractPolygon{P}, i::Integer
     LinearRing{P}(xy, z, m)
 end
 
-# Warning: getgeom is very slow for a Shapefile.
-# If you don't need exteriors and holes to be separated, use `getring`.
 function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon, i::Integer)
     if length(geom.indexcache) == 0
         _build_cache!(geom)
