@@ -189,6 +189,8 @@ for test in test_tuples
         # missing and MultiPatch are not covered by the GeoInterface
         if !(test.geomtype <: Union{Missing,Shapefile.MultiPatch})
             @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
+            # Run this a second time to test caching
+            @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
         end
         ext = test.extent
         @test shp.header.MBR == Shapefile.Rect(ext.X[1], ext.Y[1], ext.X[2], ext.Y[2])
