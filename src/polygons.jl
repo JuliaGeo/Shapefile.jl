@@ -21,9 +21,12 @@ GI.ngeom(::GI.LinearRingTrait, lr::LinearRing) = length(lr)
 
 GI.getgeom(::GI.LinearRingTrait, lr::LinearRing, i::Integer) = lr[i]
 
-Base.getindex(lr::LinearRing{Point}, i) = lr.xy[i]
-Base.getindex(lr::LinearRing{PointM}, i) = PointM(lr.xy[i], lr.m[i])
-Base.getindex(lr::LinearRing{PointZ}, i) = PointZ(lr.xy[i], lr.z[i], lr.m[i])
+Base.@propagate_inbounds Base.getindex(lr::LinearRing{Point}, i) =
+    lr.xy[i]
+Base.@propagate_inbounds Base.getindex(lr::LinearRing{PointM}, i) =
+    PointM(lr.xy[i], lr.m[i])
+Base.@propagate_inbounds Base.getindex(lr::LinearRing{PointZ}, i) =
+    PointZ(lr.xy[i], lr.z[i], lr.m[i])
 Base.size(lr::LinearRing) = (length(lr),)
 Base.length(lr::LinearRing) = length(lr.xy)
 
@@ -36,10 +39,12 @@ GI.is3d(::GI.PolygonTrait, p::SubPolygon) = GI.is3d(first(p))
 GI.ismeasured(::GI.PolygonTrait, p::SubPolygon) = GI.measures(first(p))
 GI.ncoord(::GI.PolygonTrait, ::SubPolygon{<:LinearRing{P}}) where {P} = _ncoord(P)
 GI.ngeom(::GI.PolygonTrait, sp::SubPolygon) = length(sp)
-GI.getgeom(::GI.PolygonTrait, sp::SubPolygon, i::Integer) = getindex(sp, i)
+Base.@propagate_inbounds GI.getgeom(::GI.PolygonTrait, sp::SubPolygon, i::Integer) =
+    getindex(sp, i)
 
 Base.parent(p::SubPolygon) = p.rings
-Base.getindex(p::SubPolygon, i) = getindex(parent(p), i)
+Base.@propagate_inbounds Base.getindex(p::SubPolygon, i) =
+    getindex(parent(p), i)
 Base.length(p::SubPolygon) = length(parent(p))
 Base.size(p::SubPolygon) = (length(p),)
 Base.push!(p::SubPolygon, x) = Base.push!(parent(p), x)
@@ -78,56 +83,93 @@ function GI.getring(::GI.MultiPolygonTrait, geom::AbstractPolygon{P}, i::Integer
     LinearRing{P}(xy, z, m)
 end
 
-# Warning: getgeom is very slow for a Shapefile.
-# If you don't need exteriors and holes to be separated, use `getring`.
-GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon, i::Integer) = collect(GI.getgeom(geom))[i]
+function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon, i::Integer)
+    if length(geom.indexcache) == 0
+        _build_cache!(geom)
+    end
+    indices = geom.indexcache[i]
+    rings = GI.getring.((GI.MultiPolygonTrait(),), (geom,), indices)
+    return SubPolygon(rings)
+end
 function GI.getgeom(::GI.MultiPolygonTrait, geom::AbstractPolygon{T}) where {T}
-    r1 = GI.getring(geom, 1)
-    polygons = SubPolygon{typeof(r1)}[]
-    holes = typeof(r1)[]
-    for ring in GI.getring(geom)
+    if isempty(geom.indexcache)
+        _build_cache!(geom)
+    end
+    return map(geom.indexcache) do indices
+        SubPolygon(GI.getring.((geom,), indices)) 
+    end
+end
+
+# Build the indexcache for a Polygon
+function _build_cache!(geom::AbstractPolygon)
+    hole_inds = Int[]
+    indexcache = geom.indexcache
+    for (i, ring) in enumerate(GI.getring(geom))
         if _isclockwise(ring)
-            push!(polygons, SubPolygon([ring])) # create new polygon
+            push!(indexcache, [i]) # create new polygon
         else
-            push!(holes, ring)
+            push!(hole_inds, i)
         end
     end
-    for hole in holes
-        found = false
-        for i = 1:length(polygons)
-            if _inring(hole[1], polygons[i][1])
-                push!(polygons[i], hole)
-                found = true
-                break
+    if length(hole_inds) > 0
+        # Ignore Z dimension for extents, this is 2.5D
+        extents = map(r -> GI.extent(r)[(:X, :Y)], GI.getring(geom))
+        for h in hole_inds
+            hole = GI.getring(geom, h)
+            length(hole) > 0 || continue
+            hole_extent = extents[h]
+            found = false
+            for ic in indexcache
+                e = ic[1]
+                exterior = GI.getring(geom, e)
+                if Extents.intersects(hole_extent, extents[e]) && _inring(hole[1], exterior)
+                    push!(ic, h)
+                    found = true
+                    break
+                end
+            end
+            if !found
+                # The hole is not inside any ring, so make it a polygon.
+                # This is not intended behaviour but ESRI docs call it
+                # a "Dirty" ring. So it is a thing in the wild.
+                push!(indexcache, [h])
             end
         end
-        if !found
-            # TODO: does this follow the spec? this should not happen with a correct file.
-            push!(polygons, SubPolygon([hole])) # hole is not inside any ring; make it a polygon
-        end
     end
-    return polygons
+    return geom
 end
 
 function _inring(pt::AbstractPoint, ring::LinearRing)
-    intersect(i, j) =
-        (i.y >= pt.y) != (j.y >= pt.y) &&
-        (pt.x <= (j.x - i.x) * (pt.y - i.y) / (j.y - i.y) + i.x)
-    isinside = intersect(ring[1], ring[end])
+    length(ring) > 2 || return false
+    isinside = @inbounds _intersects(pt, ring[1], ring[end])
+    # This loop is 80% of Polygon read time
     for k = 2:length(ring)
-        isinside = intersect(ring[k], ring[k-1]) ? !isinside : isinside
+        intersects = @inbounds _intersects(pt, ring[k], ring[k-1])
+        isinside = intersects ? !isinside : isinside
     end
     return isinside
 end
 
 function _isclockwise(ring)
     clockwise_test = 0.0
-    for i in 1:GI.npoint(ring)-1
-        prev = ring[i]
-        cur = ring[i + 1]
+    for i in 1:length(ring)-1
+        prev = @inbounds ring[i]
+        cur = @inbounds ring[i + 1]
         clockwise_test += (cur.x - prev.x) * (cur.y + prev.y)
     end
     clockwise_test > 0
+end
+
+function _intersects(pt, i, j)
+    (i.y >= pt.y) != (j.y >= pt.y) &&
+    (pt.x <= (j.x - i.x) * (pt.y - i.y) / (j.y - i.y) + i.x)
+end
+
+# TODO add this to `Extents.union` for any `Tuple/AbstractArray` point
+function _union(extent::Extents.Extent, point::Tuple)
+    X = min(extent.X[1], point[1]), max(extent.X[2], point[1])
+    Y = min(extent.Y[1], point[2]), max(extent.Y[2], point[2])
+    return Extents.Extent(; X, Y)
 end
 
 
@@ -145,7 +187,9 @@ struct Polygon <: AbstractPolygon{Point}
     MBR::Rect
     parts::Vector{Int32}
     points::Vector{Point}
+    indexcache::Vector{Vector{Int}}
 end
+Polygon(MBR, parts, points) = Polygon(MBR, parts, points, Vector{Int}[])
 
 Base.show(io::IO, p::Polygon) = print(io, "Polygon(", length(p.points), " Points)")
 
@@ -177,7 +221,11 @@ struct PolygonM <: AbstractPolygon{PointM}
     points::Vector{Point}
     mrange::Interval
     measures::Vector{Float64}
+    indexcache::Vector{Vector{Int}}
 end
+PolygonM(MBR, parts, points, mrange, measures) =
+    PolygonM(MBR, parts, points, mrange, measures, Vector{Int}[])
+
 
 Base.:(==)(p1::PolygonM, p2::PolygonM) =
     (p1.parts == p2.parts) && (p1.points == p2.points) && (p1.measures == p2.measures)
@@ -212,7 +260,10 @@ struct PolygonZ <: AbstractPolygon{PointZ}
     zvalues::Vector{Float64}
     mrange::Interval
     measures::Vector{Float64}
+    indexcache::Vector{Vector{Int}}
 end
+PolygonZ(MBR, parts, points, zrange, zvalues, mrange, measures) =
+    PolygonZ(MBR, parts, points, zrange, zvalues, mrange, measures, Vector{Int}[])
 
 Base.:(==)(p1::PolygonZ, p2::PolygonZ) =
     (p1.parts == p2.parts) && (p1.points == p2.points) && (p1.zvalues == p2.zvalues) && (p1.measures == p2.measures)

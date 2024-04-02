@@ -33,7 +33,8 @@ function GI.extent(::GI.AbstractGeometryTrait, x::AbstractShape)
     rect = x.MBR
     return Extents.Extent(X=(rect.left, rect.right), Y=(rect.bottom, rect.top))
 end
-function GI.extent(::GI.AbstractGeometryTrait, x::ShapeZ)
+# Need to remove LinearRing and SubPolygon from dispatch here to avoid ambiguity
+function GI.extent(::GI.AbstractGeometryTrait, x::Union{PolylineZ,PolygonZ,MultiPointZ,MultiPatch})
     rect = x.MBR
     return Extents.Extent(X=(rect.left, rect.right), Y=(rect.bottom, rect.top), Z=(x.zrange.left, x.zrange.right))
 end
