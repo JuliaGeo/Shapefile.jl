@@ -233,3 +233,23 @@ end
 end
 
 end  # testset "Tables interface"
+
+@testset "Reading with ZipFile" begin
+    using ZipFile
+    @test !isnothing(Base.get_extension(Shapefile, :ShapefileZipFileExt))
+    mktempdir() do dir
+        cd(dir) do
+            zipfile = download("https://ndownloader.figshare.com/files/20460645", "tracts.zip")
+            @test_nowarn Shapefile.Table(zipfile)
+            table = Shapefile.Table(zipfile)
+            # Test that the return type is correct
+            @test table isa Shapefile.Table
+            # Test that the table is read correctly
+            @test length(table) == 822
+            @test eltype(table.STATEFP) <: Union{Missing, String}
+            # Test that the projection was picked up
+            @test GeoInterface.crs(table) isa Shapefile.GeoFormatTypes.ESRIWellKnownText{Shapefile.GeoFormatTypes.CRS}
+        end
+    end
+end
+
