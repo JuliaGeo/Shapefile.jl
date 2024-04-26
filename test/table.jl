@@ -88,7 +88,7 @@ wkt = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",637813
     @test propertynames(ne_land) == [:geometry, :featurecla, :scalerank, :min_zoom]
     @test propertynames(first(ne_land)) == [:geometry, :featurecla, :scalerank, :min_zoom]
     @test first(ne_land).geometry isa Shapefile.Polygon
-    @test ne_land.featurecla isa Vector{String}
+    @test ne_land.featurecla isa Vector{Union{String,Missing}}
     @test length(ne_land.scalerank) == length(ne_land)
     @test GeoInterface.crs(ne_land) == GeoFormatTypes.ESRIWellKnownText(GeoFormatTypes.CRS(), wkt)
 
@@ -110,7 +110,7 @@ wkt = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",637813
     df_land = DataFrames.DataFrame(ne_land)
     @test size(df_land) == (127, 4)
     @test names(df_land) == ["geometry", "featurecla", "scalerank", "min_zoom"]
-    df_land.featurecla isa Vector{String}
+    df_land.featurecla isa Vector{Union{String,Missing}}
 end
 
 @testset "ne_coastline" begin
@@ -120,7 +120,7 @@ end
     @test propertynames(ne_coastline) == [:geometry, :scalerank, :featurecla, :min_zoom]
     @test propertynames(first(ne_coastline)) == [:geometry, :scalerank, :featurecla, :min_zoom]
     @test first(ne_coastline).geometry isa Shapefile.Polyline
-    @test ne_coastline.featurecla isa Vector{String}
+    @test ne_coastline.featurecla isa Vector{Union{String,Missing}}
     @test GeoInterface.crs(ne_coastline) == GeoFormatTypes.ESRIWellKnownText(GeoFormatTypes.CRS(), wkt)
     @test length(ne_coastline.scalerank) == length(ne_coastline)
     @test sum(ne_coastline.scalerank) == 59
@@ -141,7 +141,7 @@ end
     df_coastline = DataFrames.DataFrame(ne_coastline)
     @test size(df_coastline) == (134, 4)
     @test names(df_coastline) == ["geometry", "scalerank", "featurecla", "min_zoom"]
-    df_coastline.featurecla isa Vector{String}
+    df_coastline.featurecla isa Vector{Union{String,Missing}}
 end
 
 @testset "ne_cities" begin
@@ -158,7 +158,7 @@ end
     @test propertynames(ne_cities) == colnames
     @test propertynames(first(ne_cities)) == colnames
     @test first(ne_cities).geometry isa Shapefile.Point
-    @test ne_cities.featurecla isa Vector{String}
+    @test ne_cities.featurecla isa Vector{Union{String,Missing}}
     @test GeoInterface.crs(ne_coastline) == GeoFormatTypes.ESRIWellKnownText(GeoFormatTypes.CRS(), wkt)
     @test length(ne_cities.scalerank) == length(ne_cities)
     @test sum(ne_cities.scalerank) == 612
@@ -186,7 +186,7 @@ end
     df_cities = DataFrames.DataFrame(ne_cities)
     @test size(df_cities) == (243, 39)
     @test names(df_cities) == string.(colnames)
-    df_cities.featurecla isa Vector{String}
+    df_cities.featurecla isa Vector{Union{String,Missing}}
 end
 
 # no need to use shx in Shapefile.Tables since we read the shapes into a Vector and can thus index them
