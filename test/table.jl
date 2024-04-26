@@ -239,9 +239,10 @@ end  # testset "Tables interface"
     @test !isnothing(Base.get_extension(Shapefile, :ShapefileZipFileExt))
     mktempdir() do dir
         cd(dir) do
-            zipfile = download("https://ndownloader.figshare.com/files/20460645", "tracts.zip")
-            @test_nowarn Shapefile.Table(zipfile)
-            table = Shapefile.Table(zipfile)
+            zipfile = @RemoteFile "https://ndownloader.figshare.com/files/20460645" dir=datadir file="tracts.zip"
+            download(zipfile)
+            @test_nowarn Shapefile.Table(path(zipfile))
+            table = Shapefile.Table(path(zipfile))
             # Test that the return type is correct
             @test table isa Shapefile.Table
             # Test that the table is read correctly
