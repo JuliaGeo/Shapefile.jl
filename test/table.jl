@@ -111,6 +111,7 @@ wkt = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",637813
     @test size(df_land) == (127, 4)
     @test names(df_land) == ["geometry", "featurecla", "scalerank", "min_zoom"]
     df_land.featurecla isa Vector{Union{String,Missing}}
+    @test GeoInterface.trait(GeoInterface.getfeature(ne_land, 1)) isa GeoInterface.FeatureTrait
 end
 
 @testset "ne_coastline" begin

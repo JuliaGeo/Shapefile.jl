@@ -26,6 +26,7 @@ end
 Base.propertynames(row::Row) = [:geometry, propertynames(getfield(row, :record))...]
 
 GeoInterface.isfeature(t::Row) = true
+GeoInterface.trait(::Row) = GeoInterface.FeatureTrait()
 GeoInterface.geometry(t::Row) = getfield(t, :geometry)
 GeoInterface.properties(t::Row) = getfield(t, :record)
 
