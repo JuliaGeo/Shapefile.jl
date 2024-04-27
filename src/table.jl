@@ -67,6 +67,9 @@ function Table(shp::Handle{T}, dbf::DBFTables.Table) where {T}
     Table{T}(shp, dbf)
 end
 function Table(path::AbstractString)
+    if endswith(path, ".zip")
+        return _read_shp_from_zipfile(path)
+    end
     paths = _shape_paths(path)
     isfile(paths.shp) || throw(ArgumentError("File not found: $(paths.dbf)"))
     isfile(paths.dbf) || throw(ArgumentError("File not found: $(paths.dbf)"))
@@ -79,6 +82,8 @@ function Table(path::AbstractString)
     dbf = DBFTables.Table(paths.dbf)
     return Shapefile.Table(shp, dbf)
 end
+
+function _read_shp_from_zipfile end
 
 getshp(t::Table) = getfield(t, :shp)
 getdbf(t::Table) = getfield(t, :dbf)

@@ -70,4 +70,21 @@ include("extent.jl")
 include("plotrecipes.jl")
 include("writer.jl")
 
+function __init__()
+    # Register an error hint, so that if a user tries to read a zipfile and fails, they get a helpful error message
+    # that includes the ShapefileZipFileExt package.
+    Base.Experimental.register_error_hint(MethodError) do io, exc, argtypes, kwargs
+        if exc.f == _read_shp_from_zipfile
+            if isnothing(Base.get_extension(Shapefile, :ShapefileZipFileExt))
+                print(io, "\nPlease load the ")
+                printstyled(io, "ZipFile", color=:cyan)
+                println(io, " package to read zipfiles into Shapefile.Table objects.")
+                println(io, "You can do this by typing: ")
+                printstyled(io, "using ZipFile", color=:cyan, bold = true)
+                println(io, "\ninto your REPL or code.")
+            end
+        end
+    end
+end
+
 end # module
