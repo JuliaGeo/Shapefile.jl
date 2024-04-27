@@ -5,7 +5,7 @@
 [![CI](https://github.com/JuliaGeo/Shapefile.jl/workflows/CI/badge.svg)](https://github.com/JuliaGeo/Shapefile.jl/actions?query=workflow%3ACI)
 [![codecov](https://codecov.io/gh/JuliaGeo/Shapefile.jl/branch/master/graph/badge.svg?token=pRKEwKkeTk)](https://codecov.io/gh/JuliaGeo/Shapefile.jl)
 
-This library supports reading and writing ESRI Shapefiles in pure Julia.
+This library supports reading and writing ESRI Shapefiles in pure Julia, as well as `.zip` files that contain shapefiles.
 
 ## Quick Start
 Basic example of reading a shapefile from test cases:
@@ -48,6 +48,10 @@ julia> GeoInterface.coordinates(Shapefile.shape(first(table)))
  [[[20.0, 20.0], [20.0, 30.0], [30.0, 30.0], [20.0, 20.0]]]
  [[[0.0, 0.0], [100.0, 0.0], [100.0, 100.0], [0.0, 100.0], [0.0, 0.0]]]
 ```
+
+## Reading zipped shapefiles
+
+Shapefiles that are compressed into a `.zip` file can be read by `Shapefile.Table` if you load the `ZipFile` library first.
 
 ## Alternative packages
 
