@@ -7,7 +7,7 @@ import GeoInterface, DBFTables, Tables
 
 A struct representing a single record in a shapefile.
 
-Property names accessable by `row.x` are `geometry` for the
+Property names accessible by `row.x` are `geometry` for the
 geometry object, and the names of the columns in `record`.
 """
 struct Row{T}
@@ -49,7 +49,7 @@ compatible table, where each row is is a an object such as a (`Point`](@ref),
 The `Shapefile.Table` constructor can read either a `String` path to
 a shapefile, or a [`Shapefile.Handle`](@ref) and a `DBFTables.Table`.
 
-Property names accessable by `table.x` are `geometry` for the
+Property names accessible by `table.x` are `geometry` for the
 geometry object, and the names of the columns in `dbf`.
 """
 struct Table{T}

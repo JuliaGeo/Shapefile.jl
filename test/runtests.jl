@@ -230,7 +230,7 @@ for test in test_tuples
                 read(fd, jltype)
             end
 
-            # records the offest after this geometry record
+            # records the offset after this geometry record
             push!(offsets, position(fd))
         end
     end
