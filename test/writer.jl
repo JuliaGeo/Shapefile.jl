@@ -110,7 +110,7 @@
         @test t.geometry == [Point(0,0) for i in 1:10]
     end
 
-for i in eachindex(test_tuples)[1:end-1] # We dont write 15 - multipatch
+for i in eachindex(test_tuples)[1:end-1] # We don't write 15 - multipatch
 
     i == 2 && continue # skip case of only missing data
 

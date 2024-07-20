@@ -35,7 +35,7 @@ function GI.getgeom(::GI.MultiLineStringTrait, geom::AbstractPolyline{P}, i::Int
         # C integers start at zero so we add 1 to the range start
         (geom.parts[i]+1):(geom.parts[i+1])
     else
-        # For the last inestring use the vector lastindex as the last point
+        # For the last linestring use the vector lastindex as the last point
         (geom.parts[i]+1):lastindex(geom.points)
     end
     return LineString(geom, range)
