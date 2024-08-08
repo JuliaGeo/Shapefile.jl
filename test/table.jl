@@ -118,7 +118,7 @@ wkt = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",637813
     @test names(df_land) == ["geometry", "featurecla", "scalerank", "min_zoom"]
     df_land.featurecla isa Vector{Union{String,Missing}}
     @test DataAPI.metadata(df_land, "GEOINTERFACE:geometrycolumns"; style = false) == (:geometry,)
-    @test DataAPI.metadata(df_land, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(df_land)
+    @test DataAPI.metadata(df_land, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(ne_land)
 end
 
 @testset "ne_coastline" begin
@@ -151,7 +151,7 @@ end
     @test names(df_coastline) == ["geometry", "scalerank", "featurecla", "min_zoom"]
     df_coastline.featurecla isa Vector{Union{String,Missing}}
     @test DataAPI.metadata(df_coastline, "GEOINTERFACE:geometrycolumns"; style = false) == (:geometry,)
-    @test DataAPI.metadata(df_coastline, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(df_coastline)
+    @test DataAPI.metadata(df_coastline, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(ne_coastline)
 end
 
 @testset "ne_cities" begin
@@ -198,7 +198,7 @@ end
     @test names(df_cities) == string.(colnames)
     df_cities.featurecla isa Vector{Union{String,Missing}}
     @test DataAPI.metadata(df_cities, "GEOINTERFACE:geometrycolumns"; style = false) == (:geometry,)
-    @test DataAPI.metadata(df_cities, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(df_cities)
+    @test DataAPI.metadata(df_cities, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(ne_cities)
 end
 
 # no need to use shx in Shapefile.Tables since we read the shapes into a Vector and can thus index them
