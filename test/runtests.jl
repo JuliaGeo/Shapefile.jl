@@ -3,6 +3,8 @@ using Shapefile
 using GeoFormatTypes
 using Test
 
+import Aqua
+
 const GI = GeoInterface
 
 
@@ -255,3 +257,19 @@ include("table.jl")
 include("writer.jl")
 
 cleanup()
+
+import GeoInterfaceRecipes # for ambiguity ignore list only
+
+Aqua.test_all(
+    Shapefile; 
+    # Exclude ambiguities from imported packages as well as GeoInterfaceRecipes,
+    # since the ambiguities there are not the kind that would actually cause problems.
+    ambiguities = (; recursive = false, exclude = [GeoInterfaceRecipes.apply_recipe,]),
+    # GeoInterfaceRecipes and GeoInterfaceMakie are considered stale dependencies
+    # but are actually used in extensions on Plots and Makie respectively, so we need them!
+    stale_deps = (; ignore = [:GeoInterfaceRecipes, :GeoInterfaceMakie]), 
+    # too much headache for now - will go through this again if I'm sure 
+    # CompatHelper is working, but the tests are good flags for new versions with 
+    # suspicious behaviour.
+    deps_compat = false, 
+)
