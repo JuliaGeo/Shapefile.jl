@@ -52,7 +52,7 @@ ne_cities = Shapefile.Table(path(natural_earth, "ne_cities_shp"))
             if eltype(a) <: Union{Missing, String}
                 # ne_cities has non-ascii characters
                 @test all(isequal.(
-                    replace.(skipmissing(a), !isascii => x -> '_' ^ textwidth(x)),
+                    skipmissing(a),#replace.(skipmissing(a), !isascii => x -> '_' ^ textwidth(x)),
                     skipmissing(b)
                 ))
             else
@@ -105,7 +105,7 @@ wkt = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",637813
     )
     for r in ne_land
         @test Shapefile.shape(r) isa Shapefile.Polygon
-        @test r.featurecla === "Land"
+        @test r.featurecla == "Land"
     end
     df_land = DataFrames.DataFrame(ne_land)
     @test size(df_land) == (127, 4)

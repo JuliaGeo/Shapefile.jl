@@ -3,8 +3,11 @@ using Shapefile
 using GeoFormatTypes
 using Test
 
+import Aqua
+
 const GI = GeoInterface
 
+import GeoInterfaceRecipes # for ambiguity ignore list only
 
 using Shapefile: Point, PointM, PointZ, Polygon, PolygonM, PolygonZ, Polyline,
     PolylineM, PolylineZ, MultiPoint, MultiPointM, MultiPointZ,
@@ -133,6 +136,8 @@ test_shapes = Dict(
     SubPolygon => SubPolygon([LinearRing{Point}(view(points, 1:4))]),
 )
 
+@testset "Shapefile.jl" begin
+
 @testset "GeoInterface compatibility" begin
     foreach(test_shapes) do (k, s)
         @test GeoInterface.testgeometry(s)
@@ -255,3 +260,20 @@ include("table.jl")
 include("writer.jl")
 
 cleanup()
+
+@testset "Aqua.jl" begin
+    Aqua.test_all(
+        Shapefile; 
+        # Exclude ambiguities from imported packages as well as GeoInterfaceRecipes,
+        # since the ambiguities there are not the kind that would actually cause problems.
+        ambiguities = (; recursive = false, exclude = [GeoInterfaceRecipes.RecipesBase.apply_recipe,]),
+        # GeoInterfaceRecipes and GeoInterfaceMakie are considered stale dependencies
+        # but are actually used in extensions on Plots and Makie respectively, so we need them!
+        stale_deps = (; ignore = [:GeoInterfaceRecipes, :GeoInterfaceMakie]), 
+        # too much headache for now - will go through this again if I'm sure 
+        # CompatHelper is working, but the tests are good flags for new versions with 
+        # suspicious behaviour.
+        deps_compat = false, 
+    )
+end
+end
