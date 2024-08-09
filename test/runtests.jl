@@ -264,7 +264,7 @@ Aqua.test_all(
     Shapefile; 
     # Exclude ambiguities from imported packages as well as GeoInterfaceRecipes,
     # since the ambiguities there are not the kind that would actually cause problems.
-    ambiguities = (; recursive = false, exclude = [GeoInterfaceRecipes.apply_recipe,]),
+    ambiguities = (; recursive = false, exclude = [GeoInterfaceRecipes.RecipesBase.apply_recipe,]),
     # GeoInterfaceRecipes and GeoInterfaceMakie are considered stale dependencies
     # but are actually used in extensions on Plots and Makie respectively, so we need them!
     stale_deps = (; ignore = [:GeoInterfaceRecipes, :GeoInterfaceMakie]), 
