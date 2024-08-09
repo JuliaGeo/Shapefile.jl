@@ -138,142 +138,142 @@ test_shapes = Dict(
 
 @testset "Shapefile.jl" begin
 
-    @testset "GeoInterface compatibility" begin
-        foreach(test_shapes) do (k, s)
-            @test GeoInterface.testgeometry(s)
-            @test GeoInterface.extent(s) isa GeoInterface.Extent
-            # This test should be moved to GeoInterface `testgeometry`
-            @test GeoInterface.ncoord(s) ==
-                (2 + GeoInterface.is3d(s) + GeoInterface.ismeasured(s)) ==
-                length(GeoInterface.coordnames(s))
-            # TODO Plotting a single measured point fails, needs fixing in GeoInterfaceRecipes.jl
-            GeoInterface.ismeasured(s) && GeoInterface.trait(s) isa GeoInterface.PointTrait || plot(s)
-        end
-        @test_broken GeoInterface.testgeometry(MultiPatch(Rect(1, 3, 2, 4), [0], [1], points, Interval(1, 4), [1, 2, 3, 4]))
-
-        @test GeoInterface.extent(Shapefile.Point(1.0, 2.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0))
-        @test GeoInterface.extent(Shapefile.PointM(1.0, 2.0, 4.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0))
-        @test GeoInterface.extent(Shapefile.PointZ(1.0, 2.0, 3.0, 4.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0), Z=(3.0, 3.0))
-        @test GeoInterface.extent(test_shapes[Polygon]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
-        @test GeoInterface.extent(test_shapes[PolygonM]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
-        @test GeoInterface.extent(test_shapes[PolygonZ]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0), Z=(1.0, 4.0))
-
-        subpolygon = getgeom(test_shapes[Polygon], 1)
-        @test GeoInterface.testgeometry(subpolygon)
-        linearring = getgeom(subpolygon, 1)
-        @test GeoInterface.testgeometry(linearring)
-        @test GeoInterface.extent(subpolygon) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
-
-        @test GeoInterface.trait(shp) isa GeoInterface.GeometryCollectionTrait
-        @test GeoInterface.testgeometry(shp)
+@testset "GeoInterface compatibility" begin
+    foreach(test_shapes) do (k, s)
+        @test GeoInterface.testgeometry(s)
+        @test GeoInterface.extent(s) isa GeoInterface.Extent
+        # This test should be moved to GeoInterface `testgeometry`
+        @test GeoInterface.ncoord(s) ==
+            (2 + GeoInterface.is3d(s) + GeoInterface.ismeasured(s)) ==
+            length(GeoInterface.coordnames(s))
+        # TODO Plotting a single measured point fails, needs fixing in GeoInterfaceRecipes.jl
+        GeoInterface.ismeasured(s) && GeoInterface.trait(s) isa GeoInterface.PointTrait || plot(s)
     end
+    @test_broken GeoInterface.testgeometry(MultiPatch(Rect(1, 3, 2, 4), [0], [1], points, Interval(1, 4), [1, 2, 3, 4]))
 
-    @testset "Loading Shapefiles" begin
+    @test GeoInterface.extent(Shapefile.Point(1.0, 2.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0))
+    @test GeoInterface.extent(Shapefile.PointM(1.0, 2.0, 4.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0))
+    @test GeoInterface.extent(Shapefile.PointZ(1.0, 2.0, 3.0, 4.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0), Z=(3.0, 3.0))
+    @test GeoInterface.extent(test_shapes[Polygon]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
+    @test GeoInterface.extent(test_shapes[PolygonM]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
+    @test GeoInterface.extent(test_shapes[PolygonZ]) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0), Z=(1.0, 4.0))
 
-    for test in test_tuples
-        for shx in (:manual, :auto, :none)
-            shp = if shx == :manual
-                # this accesses .shp based on offsets in .shx
-                stempath, ext = splitext(test.path)
-                shxname = string(stempath, ".shx")
-                Shapefile.Handle(joinpath(@__DIR__, test.path), joinpath(@__DIR__, shxname))
-            elseif shx == :auto
-                Shapefile.Handle(joinpath(@__DIR__, test.path))
-            else
-                # use .shp only
-                open(joinpath(@__DIR__, test.path)) do fd
-                    read(fd, Shapefile.Handle)
-                end
+    subpolygon = getgeom(test_shapes[Polygon], 1)
+    @test GeoInterface.testgeometry(subpolygon)
+    linearring = getgeom(subpolygon, 1)
+    @test GeoInterface.testgeometry(linearring)
+    @test GeoInterface.extent(subpolygon) == Extents.Extent(X=(1.0, 2.0), Y=(3.0, 4.0))
+
+    @test GeoInterface.trait(shp) isa GeoInterface.GeometryCollectionTrait
+    @test GeoInterface.testgeometry(shp)
+end
+
+@testset "Loading Shapefiles" begin
+
+for test in test_tuples
+    for shx in (:manual, :auto, :none)
+        shp = if shx == :manual
+            # this accesses .shp based on offsets in .shx
+            stempath, ext = splitext(test.path)
+            shxname = string(stempath, ".shx")
+            Shapefile.Handle(joinpath(@__DIR__, test.path), joinpath(@__DIR__, shxname))
+        elseif shx == :auto
+            Shapefile.Handle(joinpath(@__DIR__, test.path))
+        else
+            # use .shp only
+            open(joinpath(@__DIR__, test.path)) do fd
+                read(fd, Shapefile.Handle)
             end
-            shapes = unique(map(typeof, shp.shapes))
-            @test GeoInterface.crs(shp) == nothing
-            @test length(shapes) == 1
-            @test length(shapes) == 1
-            @test shapes[1] == test.geomtype
-            @test eltype(shp.shapes) == Union{test.geomtype,Missing}
-            # missing and MultiPatch are not covered by the GeoInterface
-            if !(test.geomtype <: Union{Missing,Shapefile.MultiPatch})
-                @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
-                # Run this a second time to test caching
-                @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
-            end
-            ext = test.extent
-            @test shp.header.MBR == Shapefile.Rect(ext.X[1], ext.Y[1], ext.X[2], ext.Y[2])
-            @test GeoInterface.extent(shp) == test.extent
-            # Multipatch can't be plotted, but it's obscure anyway
-            test.geomtype == Shapefile.MultiPatch && continue
-            # Plots has no fallback recipe for a Vector{Missing}
-            length(collect(skipmissing(shp.shapes))) > 0 || continue
-            # Plots cant plot measures
-            GeoInterface.ismeasured(first(skipmissing(shp.shapes))) && continue
-            # plot(shp) # Just test that geometries actually plot
         end
+        shapes = unique(map(typeof, shp.shapes))
+        @test GeoInterface.crs(shp) == nothing
+        @test length(shapes) == 1
+        @test length(shapes) == 1
+        @test shapes[1] == test.geomtype
+        @test eltype(shp.shapes) == Union{test.geomtype,Missing}
+        # missing and MultiPatch are not covered by the GeoInterface
+        if !(test.geomtype <: Union{Missing,Shapefile.MultiPatch})
+            @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
+            # Run this a second time to test caching
+            @test GeoInterface.coordinates.(shp.shapes) == test.coordinates
+        end
+        ext = test.extent
+        @test shp.header.MBR == Shapefile.Rect(ext.X[1], ext.Y[1], ext.X[2], ext.Y[2])
+        @test GeoInterface.extent(shp) == test.extent
+        # Multipatch can't be plotted, but it's obscure anyway
+        test.geomtype == Shapefile.MultiPatch && continue
+        # Plots has no fallback recipe for a Vector{Missing}
+        length(collect(skipmissing(shp.shapes))) > 0 || continue
+        # Plots cant plot measures
+        GeoInterface.ismeasured(first(skipmissing(shp.shapes))) && continue
+        # plot(shp) # Just test that geometries actually plot
     end
+end
 
 
-    # Test all .shx files; the values in .shx must match the .shp offsets
-    test = test_tuples[1]
-    for test in test_tuples
+# Test all .shx files; the values in .shx must match the .shp offsets
+test = test_tuples[1]
+for test in test_tuples
 
-        offsets = Int32[]
-        contentlens = Int32[]
+    offsets = Int32[]
+    contentlens = Int32[]
 
-        # Get the shapefile's record offsets and contentlens
-        shp = open(joinpath(@__DIR__, test.path)) do fd
-            seek(fd, 32)
+    # Get the shapefile's record offsets and contentlens
+    shp = open(joinpath(@__DIR__, test.path)) do fd
+        seek(fd, 32)
+        shapeType = read(fd, Int32)
+        seek(fd, 100)
+        jltype = Shapefile.SHAPETYPE[shapeType]
+
+        push!(offsets, position(fd))
+        while (!eof(fd))
+
+            num = bswap(read(fd, Int32))
+            rlength = bswap(read(fd, Int32))
             shapeType = read(fd, Int32)
-            seek(fd, 100)
-            jltype = Shapefile.SHAPETYPE[shapeType]
+            if shapeType !== Int32(0)
+                read(fd, jltype)
+            end
 
+            # records the offset after this geometry record
             push!(offsets, position(fd))
-            while (!eof(fd))
+        end
+    end
+    contentlens = diff(offsets)
+    offsets = offsets[1:end-1]
 
-                num = bswap(read(fd, Int32))
-                rlength = bswap(read(fd, Int32))
-                shapeType = read(fd, Int32)
-                if shapeType !== Int32(0)
-                    read(fd, jltype)
-                end
-
-                # records the offset after this geometry record
-                push!(offsets, position(fd))
+    # Match the Index values to Shapefile offsets
+    shx =
+        open(joinpath(@__DIR__, replace(test.path, r".shp$" => ".shx"))) do fd
+            shx = read(fd, Shapefile.IndexHandle)
+            for sIdx = 1:lastindex(shx.indices)
+                @test shx.indices[sIdx].offset * 2 == offsets[sIdx]
+                @test shx.indices[sIdx].contentlen * 2 + 8 == contentlens[sIdx]
             end
         end
-        contentlens = diff(offsets)
-        offsets = offsets[1:end-1]
 
-        # Match the Index values to Shapefile offsets
-        shx =
-            open(joinpath(@__DIR__, replace(test.path, r".shp$" => ".shx"))) do fd
-                shx = read(fd, Shapefile.IndexHandle)
-                for sIdx = 1:lastindex(shx.indices)
-                    @test shx.indices[sIdx].offset * 2 == offsets[sIdx]
-                    @test shx.indices[sIdx].contentlen * 2 + 8 == contentlens[sIdx]
-                end
-            end
+end
 
-    end
+end  # @testset "Loading Shapefiles"
 
-    end  # @testset "Loading Shapefiles"
+include("table.jl")
+include("writer.jl")
 
-    include("table.jl")
-    include("writer.jl")
+cleanup()
 
-    cleanup()
-
-    @testset "Aqua.jl" begin
-        Aqua.test_all(
-            Shapefile; 
-            # Exclude ambiguities from imported packages as well as GeoInterfaceRecipes,
-            # since the ambiguities there are not the kind that would actually cause problems.
-            ambiguities = (; recursive = false, exclude = [GeoInterfaceRecipes.RecipesBase.apply_recipe,]),
-            # GeoInterfaceRecipes and GeoInterfaceMakie are considered stale dependencies
-            # but are actually used in extensions on Plots and Makie respectively, so we need them!
-            stale_deps = (; ignore = [:GeoInterfaceRecipes, :GeoInterfaceMakie]), 
-            # too much headache for now - will go through this again if I'm sure 
-            # CompatHelper is working, but the tests are good flags for new versions with 
-            # suspicious behaviour.
-            deps_compat = false, 
-        )
-    end
+@testset "Aqua.jl" begin
+    Aqua.test_all(
+        Shapefile; 
+        # Exclude ambiguities from imported packages as well as GeoInterfaceRecipes,
+        # since the ambiguities there are not the kind that would actually cause problems.
+        ambiguities = (; recursive = false, exclude = [GeoInterfaceRecipes.RecipesBase.apply_recipe,]),
+        # GeoInterfaceRecipes and GeoInterfaceMakie are considered stale dependencies
+        # but are actually used in extensions on Plots and Makie respectively, so we need them!
+        stale_deps = (; ignore = [:GeoInterfaceRecipes, :GeoInterfaceMakie]), 
+        # too much headache for now - will go through this again if I'm sure 
+        # CompatHelper is working, but the tests are good flags for new versions with 
+        # suspicious behaviour.
+        deps_compat = false, 
+    )
+end
 end
