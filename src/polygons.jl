@@ -35,10 +35,9 @@ struct SubPolygon{L<:LinearRing} <: AbstractVector{L}
 end
 GI.isgeometry(::Type{<:SubPolygon}) = true
 GI.geomtrait(::SubPolygon) = GI.PolygonTrait()
-GI.is3d(::GI.PolygonTrait, p::SubPolygon) = GI.is3d(first(p))
-GI.ismeasured(::GI.PolygonTrait, p::SubPolygon) = GI.measures(first(p))
 GI.ncoord(::GI.PolygonTrait, ::SubPolygon{<:LinearRing{P}}) where {P} = _ncoord(P)
 GI.ngeom(::GI.PolygonTrait, sp::SubPolygon) = length(sp)
+# `is3d` and `ismeasured` are defined in `extents.jl`
 Base.@propagate_inbounds GI.getgeom(::GI.PolygonTrait, sp::SubPolygon, i::Integer) =
     getindex(sp, i)
 

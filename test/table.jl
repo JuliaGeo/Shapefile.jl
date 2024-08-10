@@ -53,7 +53,7 @@ ne_cities = Shapefile.Table(path(natural_earth, "ne_cities_shp"))
             if eltype(a) <: Union{Missing, String}
                 # ne_cities has non-ascii characters
                 @test all(isequal.(
-                    replace.(skipmissing(a), !isascii => x -> '_' ^ textwidth(x)),
+                    skipmissing(a),#replace.(skipmissing(a), !isascii => x -> '_' ^ textwidth(x)),
                     skipmissing(b)
                 ))
             else
