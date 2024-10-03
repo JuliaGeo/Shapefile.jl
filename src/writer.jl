@@ -121,7 +121,7 @@ function write(path::AbstractString, o::Writer; force=false)
     # Detect the shape type code from the first available geometry
     # There can only be one shape type in the file.
     # If all values are missing, the shape type is Missing
-    if iterate(skipmissing(geoms)) == nothing
+    if isnothing(iterate(skipmissing(geoms)))
         trait = Missing
         hasz = hasm = false
     else
@@ -295,7 +295,7 @@ function _write(io::IO, trait::GI.AbstractGeometryTrait, geom; kw...)
     end
     # write x/y part of points
     for point in GI.getpoint(geom)
-        x, y = GI.x(point), GI.y(point)
+        x, y = Float64(GI.x(point)), Float64(GI.y(point))
         bytes += Base.write(io, x)
         bytes += Base.write(io, y)
     end
@@ -334,7 +334,7 @@ function _calc_mbr(geom)
     low_x = low_y = Inf
     high_x = high_y = -Inf
     for point in GI.getpoint(geom)
-        x, y = GI.x(point), GI.y(point)
+        x, y = Float64(GI.x(point)), Float64(GI.y(point))
         low_x = min(low_x, x)
         high_x = max(high_x, x)
         low_y = min(low_y, y)
@@ -350,14 +350,14 @@ function _write_others(io, geom;
     bytes = 0
     # TODO what to do when hasm == false but hasz == true
     if hasz
-        b, zrange = _write_others(GI.z, io, geom)
+        b, zrange = _write_others(p -> Float64(GI.z(p)), io, geom)
         bytes += b
     else
         zrange = Interval(0.0, 0.0)
     end
 
     if hasm
-        b, mrange = _write_others(GI.m, io, geom)
+        b, mrange = _write_others(p -> Float64(GI.m(p)), io, geom)
         bytes += b
     else
         mrange = Interval(0.0, 0.0)
