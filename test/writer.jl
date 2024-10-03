@@ -34,6 +34,39 @@
         t = Shapefile.Table(file)
         @test only(t.geometry) == Polygon(box, [0], ps)
 
+        # Float32 coordinates
+        struct Point32
+            x::Float32
+            y::Float32
+        end
+
+        struct LineString32
+            points::Vector{Point32}
+        end
+
+        # basic GI interface implementation
+        GI.isgeometry(::Type{Point32}) = true
+        GI.geomtrait(::Point32) = GI.PointTrait()
+        GI.ncoord(::GI.PointTrait, p::Point32) = 2
+        GI.getcoord(::GI.PointTrait, p::Point32, i) = getfield(p, i)
+
+        GI.isgeometry(::Type{LineString32}) = true
+        GI.geomtrait(::LineString32) = GI.LineStringTrait()
+        GI.ncoord(::GI.LineStringTrait, p::LineString32) = 2
+        GI.ngeom(::GI.LineStringTrait, l::LineString32) = length(l.points)
+        GI.getgeom(::GI.LineStringTrait, l::LineString32, i) = getindex(l.points, i)
+
+        file = tempname()
+        Shapefile.write(file, Point32(0,0))
+        t = Shapefile.Table(file)
+        @test only(t.geometry) == Point(0,0)
+
+        file = tempname()
+        geom = LineString32([Point32(0,0), Point32(1,0), Point32(1,1), Point32(0,1)])
+        Shapefile.write(file, geom)
+        t = Shapefile.Table(file)
+        @test only(t.geometry) == Polyline(Rect(0.0, 0.0, 1.0, 1.0), [0], [Point(0,0), Point(1,0), Point(1,1), Point(0,1)])
+
         # feature
         struct F end
         GI.trait(::F) = GI.FeatureCollectionTrait()
