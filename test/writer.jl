@@ -57,15 +57,15 @@
         GI.getgeom(::GI.LineStringTrait, l::LineString32, i) = getindex(l.points, i)
 
         file = tempname()
-        Shapefile.write(file, Point32(0,0))
+        Shapefile.write(file, Point32(0, 0))
         t = Shapefile.Table(file)
-        @test only(t.geometry) == Point(0,0)
+        @test only(t.geometry) == Point(0, 0)
 
         file = tempname()
-        geom = LineString32([Point32(0,0), Point32(1,0), Point32(1,1), Point32(0,1)])
+        geom = LineString32([Point32(0, 0), Point32(1, 0), Point32(1, 1), Point32(0, 1)])
         Shapefile.write(file, geom)
         t = Shapefile.Table(file)
-        @test only(t.geometry) == Polyline(Rect(0.0, 0.0, 1.0, 1.0), [0], [Point(0,0), Point(1,0), Point(1,1), Point(0,1)])
+        @test only(t.geometry) == Polyline(Rect(0, 0, 1, 1), [0], [Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1)])
 
         # feature
         struct F end
