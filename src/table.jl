@@ -68,7 +68,16 @@ function Table(shp::Handle{T}, dbf::DBFTables.Table) where {T}
 end
 function Table(path::AbstractString)
     if endswith(path, ".zip")
-        return _read_shp_from_zipfile(path)
+        if _is_ziparchives_loaded()
+            return _read_shp_from_ziparchive(path)
+        elseif _is_zipfiles_loaded()
+            return _read_shp_from_zipfile(path)
+        else
+            throw(ArgumentError("""
+            ZipFile.jl or ZipArchives.jl are not loaded, so Shapefile.jl cannot read zip files.  
+            Please run `using ZipArchives` or `using ZipFile` to enable reading zip files.
+            """))
+        end
     end
     paths = _shape_paths(path)
     isfile(paths.shp) || throw(ArgumentError("File not found: $(paths.dbf)"))
@@ -84,6 +93,10 @@ function Table(path::AbstractString)
 end
 
 function _read_shp_from_zipfile end
+function _read_shp_from_ziparchive end
+
+_is_zipfiles_loaded(args...) = false # these are set to true in extensions
+_is_ziparchives_loaded(args...) = false # these are set to true in extensions
 
 getshp(t::Table) = getfield(t, :shp)
 getdbf(t::Table) = getfield(t, :dbf)

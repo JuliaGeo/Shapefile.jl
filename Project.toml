@@ -10,16 +10,19 @@ GeoFormatTypes = "68eda718-8dee-11e9-39e7-89f7f65f511f"
 GeoInterface = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
 GeoInterfaceMakie = "0edc0954-3250-4c18-859d-ec71c1660c08"
 GeoInterfaceRecipes = "0329782f-3d07-4b52-b9f6-d3137cf03c7a"
+Mmap = "a63ad114-7e13-5084-954f-fe012c677804"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 
 [weakdeps]
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+ZipArchives = "49080126-0e18-4c2a-b176-c102e4b3760c"
 ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
 [extensions]
 ShapefileMakieExt = "Makie"
+ShapefileZipArchivesExt = "ZipArchives"
 ShapefileZipFileExt = "ZipFile"
 
 [compat]
@@ -30,15 +33,17 @@ GeoInterface = "1.0"
 GeoInterfaceMakie = "0.1"
 GeoInterfaceRecipes = "1.0"
 Makie = "0.20, 0.21, 0.22"
+Mmap = "1.11.0"
 OrderedCollections = "1"
 RecipesBase = "1"
 Tables = "0.2, 1"
+ZipArchives = "2"
 ZipFile = "0.9, 0.10"
 julia = "1.9"
 
 [extras]
-ArchGDAL = "c9ce4bd3-c3d5-55b8-8973-c0e20141b8c3"
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+ArchGDAL = "c9ce4bd3-c3d5-55b8-8973-c0e20141b8c3"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
