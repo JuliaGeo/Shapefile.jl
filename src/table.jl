@@ -28,6 +28,7 @@ Base.propertynames(row::Row) = [:geometry, propertynames(getfield(row, :record))
 GeoInterface.isfeature(t::Row) = true
 GeoInterface.geometry(t::Row) = getfield(t, :geometry)
 GeoInterface.properties(t::Row) = getfield(t, :record)
+GeoInterface.trait(::Row) = GeoInterface.FeatureTrait()
 
 """
     shape(row::Row)
@@ -153,3 +154,5 @@ shapes(t::Table) = shapes(getshp(t))
 
 GeoInterface.extent(t::Table) = GeoInterface.extent(getshp(t))
 GeoInterface.crs(t::Table) = GeoInterface.crs(getshp(t))
+GeoInterface.trait(::Table) = GeoInterface.FeatureCollectionTrait()
+GeoInterface.getfeature(t::Table) = t
