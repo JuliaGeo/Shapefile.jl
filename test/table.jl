@@ -109,7 +109,11 @@ wkt = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",637813
     @test DataAPI.metadata(ne_land; style = false) isa Dict
     @test DataAPI.metadata(ne_land, "GEOINTERFACE:geometrycolumns"; style = false) == (:geometry,)
     @test DataAPI.metadata(ne_land, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(ne_land)
+  
+    @test GeoInterface.trait(ne_land) === GeoInterface.FeatureCollectionTrait()
+    @test GeoInterface.getfeature(ne_land) === ne_land
     for r in ne_land
+        @test GeoInterface.trait(r) === GeoInterface.FeatureTrait()
         @test Shapefile.shape(r) isa Shapefile.Polygon
         @test r.featurecla == "Land"
     end
@@ -142,8 +146,11 @@ end
         (:geometry, :scalerank, :featurecla, :min_zoom),
         (Union{Missing, Shapefile.Polyline}, Union{Int,Missing}, Union{String,Missing}, Union{Float64,Missing}),
     )
+    @test GeoInterface.trait(ne_coastline) === GeoInterface.FeatureCollectionTrait()
+    @test GeoInterface.getfeature(ne_coastline) === ne_coastline
     for r in ne_coastline
         @test Shapefile.shape(r) isa Shapefile.Polyline
+        @test GeoInterface.trait(r) === GeoInterface.FeatureTrait()
         @test r.featurecla in ("Coastline", "Country")
     end
     df_coastline = DataFrames.DataFrame(ne_coastline)
@@ -181,8 +188,11 @@ end
     classes = ["Admin-0 capital", "Admin-0 capital alt", "Populated place",
         "Admin-1 capital", "Admin-1 region capital", "Admin-0 region capital"]
     @test unique(ne_cities.featurecla) == classes
+    @test GeoInterface.trait(ne_cities) === GeoInterface.FeatureCollectionTrait()
+    @test GeoInterface.getfeature(ne_cities) === ne_cities
     for r in ne_cities
         @test Shapefile.shape(r) isa Shapefile.Point
+        @test GeoInterface.trait(r) === GeoInterface.FeatureTrait()
         @test r.featurecla in classes
     end
     show_result = "Shapefile.Table{Union{Missing, Point}} with 243 rows and the following 39 columns:\n\t\ngeometry, scalerank, natscale, labelrank, featurecla, name, namepar, namealt, diffascii, nameascii, adm0cap, capalt, capin, worldcity, megacity, sov0name, sov_a3, adm0name, adm0_a3, adm1name, iso_a2, note, latitude, longitude, changed, namediff, diffnote, pop_max, pop_min, pop_other, rank_max, rank_min, geonameid, meganame, ls_name, ls_match, checkme, min_zoom, ne_id\n"

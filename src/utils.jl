@@ -58,7 +58,7 @@ function _shape_paths(path)
     elseif ext == ""
         shp = string(stempath, ".shp")
     else
-        throw(ArgumentError("Provide the shapefile with either `.shp` or no extension"))
+        throw(ArgumentError("Provide the shapefile with either `.shp` or no extension.\nFound `$ext`."))
     end
 
     shx = string(stempath, ".shx")
