@@ -27,7 +27,7 @@ Base.propertynames(row::Row) = [:geometry, propertynames(getfield(row, :record))
 
 GeoInterface.isfeature(t::Row) = true
 GeoInterface.geometry(t::Row) = getfield(t, :geometry)
-GeoInterface.properties(t::Row) = getfield(t, :record)
+GeoInterface.properties(t::Row) = NamedTuple(getfield(t, :record)) # convert to namedtuple, always
 GeoInterface.trait(::Row) = GeoInterface.FeatureTrait()
 
 """
@@ -97,8 +97,6 @@ Tables.columns(t::Table) = t
 Tables.rowaccess(::Type{<:Table}) = true
 Tables.columnaccess(::Type{<:Table}) = true
 
-
-
 """
     Base.iterate(t::Table)
 
@@ -152,7 +150,16 @@ Get a vector of the geometries in a shapefile `Table`, without any metadata.
 """
 shapes(t::Table) = shapes(getshp(t))
 
-GeoInterface.extent(t::Table) = GeoInterface.extent(getshp(t))
-GeoInterface.crs(t::Table) = GeoInterface.crs(getshp(t))
+GeoInterface.extent(::GeoInterface.FeatureCollectionTrait, t::Table) = GeoInterface.extent(getshp(t))
+GeoInterface.crs(::GeoInterface.FeatureCollectionTrait, t::Table) = GeoInterface.crs(getshp(t))
+
 GeoInterface.trait(::Table) = GeoInterface.FeatureCollectionTrait()
-GeoInterface.getfeature(t::Table) = t
+
+function GeoInterface.getfeature(::GeoInterface.FeatureCollectionTrait, t::Table, i::Integer)
+    geom = shapes(t)[i]
+    record = DBFTables.Row(getdbf(t), i)
+    return Row(geom, record)
+end
+GeoInterface.nfeature(::GeoInterface.FeatureCollectionTrait, t::Table) = length(shapes(t))
+
+
