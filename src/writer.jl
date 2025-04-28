@@ -35,7 +35,7 @@ struct Writer
         all(x -> GI.isgeometry(x) || ismissing(x), geoms) || error("Not all geoms satisfy `GeoInterface.isgeometry`.")
 
         # Try to get the CRS from the table if it exists
-        writable_crs = if isnothing(crs) && DataAPI.metadatasupport(feats).read && "GEOINTERFACE:crs" in DataAPI.metadatakeys(feats)
+        writable_crs = if isnothing(crs) && DataAPI.metadatasupport(typeof(feats)).read && "GEOINTERFACE:crs" in DataAPI.metadatakeys(feats)
             DataAPI.metadata(feats, "GEOINTERFACE:crs"; style = false)
         else
             crs
