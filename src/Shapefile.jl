@@ -1,6 +1,6 @@
 module Shapefile
 
-import GeoFormatTypes, GeoInterface, GeoInterfaceRecipes, DBFTables, Extents, Tables
+import GeoFormatTypes, GeoInterface, GeoInterfaceRecipes, DBFTables, Extents, Tables, DataAPI
 const GI = GeoInterface
 const GFT = GeoFormatTypes
 

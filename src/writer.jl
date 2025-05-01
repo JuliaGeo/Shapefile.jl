@@ -34,12 +34,19 @@ struct Writer
 
         all(x -> GI.isgeometry(x) || ismissing(x), geoms) || error("Not all geoms satisfy `GeoInterface.isgeometry`.")
 
+        # Try to get the CRS from the table if it exists
+        writable_crs = if isnothing(crs) && DataAPI.metadatasupport(typeof(feats)).read && "GEOINTERFACE:crs" in DataAPI.metadatakeys(feats)
+            DataAPI.metadata(feats, "GEOINTERFACE:crs"; style = false)
+        else
+            crs
+        end
+
         ngeoms = sum(1 for _ in geoms)
         nfeats = sum(1 for _ in Tables.rows(feats))
 
         ngeoms == nfeats || error("Number of geoms does not match number of features.  Found: $ngeoms ≠ $nfeats.")
 
-        new(geoms, feats, crs)
+        new(geoms, feats, writable_crs)
     end
 end
 

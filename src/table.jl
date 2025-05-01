@@ -91,12 +91,47 @@ getdbf(t::Table) = getfield(t, :dbf)
 
 Base.length(t::Table) = length(shapes(t))
 
+# Tables.jl interface
 Tables.istable(::Type{<:Table}) = true
 Tables.rows(t::Table) = t
 Tables.columns(t::Table) = t
 Tables.rowaccess(::Type{<:Table}) = true
 Tables.columnaccess(::Type{<:Table}) = true
 
+# DataAPI.jl interface
+# Note that DataAPI.jl metadata styles have meaning.
+# - `:default` style means that metadata is invalidated when the table is modified.
+# - `:note` style means that metadata is preserved when the table is modified.
+# Since the CRS and geometry column metadata are properties of the table, and Shapefile.jl 
+# structures are not meant to be mutable, we use the `:note` style, so that the metadata
+# is preserved and propagated correctly.
+# NOTE: any `reproject` implementation in e.g. GeometryOps will need to rewrite the CRS metadata 
+# to a table too, for example.
+DataAPI.metadatasupport(::Type{<:Table}) = (; read = true, write = false)
+DataAPI.metadatakeys(t::Table) = ("GEOINTERFACE:geometrycolumns", "GEOINTERFACE:crs")
+
+function DataAPI.metadata(t::Table; style = false)
+    if style
+        return Dict("GEOINTERFACE:geometrycolumns" => ((:geometry,), :note), "GEOINTERFACE:crs" => (GeoInterface.crs(t), :note))
+    else
+        return Dict("GEOINTERFACE:geometrycolumns" => (:geometry,), "GEOINTERFACE:crs" => GeoInterface.crs(t))
+    end
+end
+function DataAPI.metadata(t::Table, key::String; style = false)
+    result = if key == "GEOINTERFACE:geometrycolumns"
+        (:geometry,)
+    elseif key == "GEOINTERFACE:crs"
+        GeoInterface.crs(t)
+    else
+        nothing
+    end
+    # Check style and return the appropriate type
+    if style
+        return (result, :note)
+    else
+        return result
+    end
+end
 
 
 """

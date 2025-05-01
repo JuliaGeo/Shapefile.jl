@@ -4,6 +4,7 @@ using RemoteFiles
 using Plots
 using Makie
 import DBFTables
+import DataAPI
 import Tables
 import DataFrames
 import GeoInterface
@@ -103,6 +104,12 @@ wkt = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",637813
         (:geometry, :featurecla, :scalerank, :min_zoom),
         (Union{Missing, Shapefile.Polygon}, Union{String,Missing}, Union{Int,Missing}, Union{Float64,Missing}),
     )
+    # Test DataAPI implementation
+    @test isempty(setdiff(DataAPI.metadatakeys(ne_land), ("GEOINTERFACE:geometrycolumns", "GEOINTERFACE:crs")))
+    @test DataAPI.metadata(ne_land; style = false) isa Dict
+    @test DataAPI.metadata(ne_land, "GEOINTERFACE:geometrycolumns"; style = false) == (:geometry,)
+    @test DataAPI.metadata(ne_land, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(ne_land)
+  
     @test GeoInterface.trait(ne_land) === GeoInterface.FeatureCollectionTrait()
     @test GeoInterface.getfeature(ne_land) === ne_land
     for r in ne_land
@@ -114,6 +121,8 @@ wkt = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",637813
     @test size(df_land) == (127, 4)
     @test names(df_land) == ["geometry", "featurecla", "scalerank", "min_zoom"]
     df_land.featurecla isa Vector{Union{String,Missing}}
+    @test DataAPI.metadata(df_land, "GEOINTERFACE:geometrycolumns"; style = false) == (:geometry,)
+    @test DataAPI.metadata(df_land, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(ne_land)
 end
 
 @testset "ne_coastline" begin
@@ -148,6 +157,8 @@ end
     @test size(df_coastline) == (134, 4)
     @test names(df_coastline) == ["geometry", "scalerank", "featurecla", "min_zoom"]
     df_coastline.featurecla isa Vector{Union{String,Missing}}
+    @test DataAPI.metadata(df_coastline, "GEOINTERFACE:geometrycolumns"; style = false) == (:geometry,)
+    @test DataAPI.metadata(df_coastline, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(ne_coastline)
 end
 
 @testset "ne_cities" begin
@@ -196,6 +207,8 @@ end
     @test size(df_cities) == (243, 39)
     @test names(df_cities) == string.(colnames)
     df_cities.featurecla isa Vector{Union{String,Missing}}
+    @test DataAPI.metadata(df_cities, "GEOINTERFACE:geometrycolumns"; style = false) == (:geometry,)
+    @test DataAPI.metadata(df_cities, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(ne_cities)
 end
 
 # no need to use shx in Shapefile.Tables since we read the shapes into a Vector and can thus index them
