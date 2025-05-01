@@ -1,6 +1,9 @@
 module ShapefileZipFileExt
 import ZipFile, Shapefile
-import Shapefile: _read_shp_from_zipfile
+import Shapefile: _read_shp_from_zipfile, _is_zipfiles_loaded
+
+_is_zipfiles_loaded() = true
+
 function _read_shp_from_zipfile(zipfile)
   r = ZipFile.Reader(zipfile)
   # need to get dbx
