@@ -3,8 +3,7 @@
 
     Handle(path::AbstractString, [indexpath::AbstractString])
 
-Load a shapefile into GeoInterface compatible objects. This can be plotted
-with Plots.jl `plot`.
+Load a shapefile into GeoInterface compatible objects.
 
 The Vector of shape object can be accessed with `shapes(handle)`.
 
