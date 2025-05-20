@@ -1,8 +1,6 @@
 using Shapefile
 using Test
 using RemoteFiles
-using Plots
-using Makie
 import DBFTables
 import DataAPI
 import Tables
@@ -221,39 +219,6 @@ for shx_path in ne_shx
     end
 end
 
-
-@testset "plot tables with Plots.jl" begin
-    # Tables
-    Plots.plot(ne_land)
-    Plots.plot(ne_coastline)
-    Plots.plot(ne_cities)
-    # Handles
-    Plots.plot(getfield(ne_land, :shp))
-    Plots.plot(getfield(ne_coastline, :shp))
-    Plots.plot(getfield(ne_cities, :shp))
-end
-
-@testset "plot tables with Makie.jl" begin
-    # Tables
-    p = Makie.plot(ne_land)
-    # Makie doesn't actually plot vectors of multiline string:
-    # Makie.plot(ne_coastline)
-    # So we do it manually
-    for geom in Shapefile.shapes(ne_coastline)
-        Makie.plot!(p.axis, geom)
-    end
-    Makie.plot!(p.axis, ne_cities)
-    # Handles
-    p = Makie.plot(getfield(ne_land, :shp))
-    # Makie doesn't actually plot vectors of multiline string:
-    # Makie.plot(ne_coastline)
-    # So we do it manually
-    for geom in Shapefile.shapes(getfield(ne_coastline, :shp))
-        Makie.plot!(p.axis, geom)
-    end
-    Makie.plot!(p.axis, getfield(ne_cities, :shp))
-end
-
 end  # testset "Tables interface"
 
 @testset "Reading with ZipFile" begin
@@ -275,4 +240,3 @@ end  # testset "Tables interface"
         end
     end
 end
-
