@@ -4,8 +4,6 @@ import GeoFormatTypes, GeoInterface, DBFTables, Extents, Tables, DataAPI
 const GI = GeoInterface
 const GFT = GeoFormatTypes
 
-using RecipesBase
-
 include("common.jl")
 include("points.jl")
 include("polygons.jl")
@@ -67,7 +65,6 @@ include("shx.jl")
 include("handle.jl")
 include("table.jl")
 include("extent.jl")
-include("plotrecipes.jl")
 include("writer.jl")
 
 function __init__()

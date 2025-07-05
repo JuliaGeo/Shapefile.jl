@@ -1,14 +1,14 @@
 module ShapefileRecipesBaseExt
 
-import GeoJSON
+import GeoInterface
 import RecipesBase
 import Shapefile
 
-@recipe function f(t::Table)
+RecipesBase.@recipe function f(t::Shapefile.Table)
     getshp(t)
 end
 
-@recipe function f(shp::Handle)
+RecipesBase.@recipe function f(shp::Shapefile.Handle)
     shapes(shp)
 end
 
