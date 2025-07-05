@@ -5,11 +5,11 @@ import RecipesBase
 import Shapefile
 
 RecipesBase.@recipe function f(t::Shapefile.Table)
-    getshp(t)
+    Shapefile.getshp(t)
 end
 
 RecipesBase.@recipe function f(shp::Shapefile.Handle)
-    shapes(shp)
+    Shapefile.shapes(shp)
 end
 
 GeoInterface.@enable_plots RecipesBase Shapefile.AbstractShape
