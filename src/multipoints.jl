@@ -31,6 +31,10 @@ end
 
 GI.getgeom(::GI.MultiPointTrait, geom::MultiPoint, i::Integer) = geom.points[i]
 
+# coordtype implementation - Shapefile always uses Float64
+if :coordtype in names(GI; all = true)
+    GI.coordtype(::GI.MultiPointTrait, ::AbstractMultiPoint) = Float64
+end
 
 """
     MultiPointM <: AbstractMultiPoint
