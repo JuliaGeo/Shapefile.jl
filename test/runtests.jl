@@ -1,17 +1,21 @@
-using Shapefile, GeoInterface, Plots, Extents
 using Shapefile
+using GeoInterface
+using Plots
+using Extents
 using GeoFormatTypes
 using Test
 
-import Aqua
-
 const GI = GeoInterface
 
-import GeoInterfaceRecipes # for ambiguity ignore list only
+import Aqua
 
 using Shapefile: Point, PointM, PointZ, Polygon, PolygonM, PolygonZ, Polyline,
     PolylineM, PolylineZ, MultiPoint, MultiPointM, MultiPointZ,
     MultiPatch, LineString, LinearRing, SubPolygon, Rect, Interval
+
+@testset "Aqua.jl" begin
+    Aqua.test_all(Shapefile; deps_compat=false)
+end
 
 shp = Shapefile.Handle(joinpath("shapelib_testcases", "test.shp"))
 
@@ -146,7 +150,7 @@ test_shapes = Dict(
         @test GeoInterface.ncoord(s) ==
             (2 + GeoInterface.is3d(s) + GeoInterface.ismeasured(s)) ==
             length(GeoInterface.coordnames(s))
-        # TODO Plotting a single measured point fails, needs fixing in GeoInterfaceRecipes.jl
+        # TODO Plotting a single measured point fails, needs fixing in GeoInterface.jl
         GeoInterface.ismeasured(s) && GeoInterface.trait(s) isa GeoInterface.PointTrait || plot(s)
     end
     @test_broken GeoInterface.testgeometry(MultiPatch(Rect(1, 3, 2, 4), [0], [1], points, Interval(1, 4), [1, 2, 3, 4]))
@@ -206,7 +210,7 @@ for test in test_tuples
         length(collect(skipmissing(shp.shapes))) > 0 || continue
         # Plots cant plot measures
         GeoInterface.ismeasured(first(skipmissing(shp.shapes))) && continue
-        # plot(shp) # Just test that geometries actually plot
+        plot(shp) # Just test that geometries actually plot
     end
 end
 
@@ -261,19 +265,4 @@ include("writer.jl")
 
 cleanup()
 
-@testset "Aqua.jl" begin
-    Aqua.test_all(
-        Shapefile; 
-        # Exclude ambiguities from imported packages as well as GeoInterfaceRecipes,
-        # since the ambiguities there are not the kind that would actually cause problems.
-        ambiguities = (; recursive = false, exclude = [GeoInterfaceRecipes.RecipesBase.apply_recipe,]),
-        # GeoInterfaceRecipes and GeoInterfaceMakie are considered stale dependencies
-        # but are actually used in extensions on Plots and Makie respectively, so we need them!
-        stale_deps = (; ignore = [:GeoInterfaceRecipes, :GeoInterfaceMakie]), 
-        # too much headache for now - will go through this again if I'm sure 
-        # CompatHelper is working, but the tests are good flags for new versions with 
-        # suspicious behaviour.
-        deps_compat = false, 
-    )
-end
 end

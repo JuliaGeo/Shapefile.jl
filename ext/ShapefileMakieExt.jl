@@ -1,11 +1,12 @@
 module ShapefileMakieExt
-using GeoInterfaceMakie: GeoInterfaceMakie
-using Shapefile: Shapefile
-using Makie: Makie
 
-GeoInterfaceMakie.@enable Shapefile.AbstractShape
-GeoInterfaceMakie.@enable Shapefile.SubPolygon
-GeoInterfaceMakie.@enable Shapefile.LinearRing
+import GeoInterface
+import Shapefile
+import Makie
+
+GeoInterface.@enable_makie Makie Shapefile.AbstractShape
+GeoInterface.@enable_makie Makie Shapefile.SubPolygon
+GeoInterface.@enable_makie Makie Shapefile.LinearRing
 
 Makie.plottype(tbl::Shapefile.Table) = Makie.plottype(Shapefile.shapes(tbl))
 Makie.plottype(shp::Shapefile.Handle) = Makie.plottype(Shapefile.shapes(shp))

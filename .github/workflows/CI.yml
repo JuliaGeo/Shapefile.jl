@@ -13,7 +13,7 @@ jobs:
       fail-fast: true
       matrix:
         version:
-          - '1.9'
+          - 'lts'
           - '1'
         os:
           - ubuntu-latest
@@ -21,12 +21,8 @@ jobs:
           - windows-latest
         arch:
           - x64
-        # tests are not working on Windows with Julia 1.9
-        exclude:
-          - os: windows-latest
-            version: '1.9'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
@@ -43,7 +39,7 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: julia-actions/setup-julia@v2
         with:
           version: '1'
