@@ -191,6 +191,7 @@ GeoInterface.extent(::GeoInterface.FeatureCollectionTrait, t::Table) = GeoInterf
 GeoInterface.crs(::GeoInterface.FeatureCollectionTrait, t::Table) = GeoInterface.crs(getshp(t))
 
 GeoInterface.trait(::Table) = GeoInterface.FeatureCollectionTrait()
+GeoInterface.getfeature(t::Table) = t
 
 function GeoInterface.getfeature(::GeoInterface.FeatureCollectionTrait, t::Table, i::Integer)
     geom = shapes(t)[i]
