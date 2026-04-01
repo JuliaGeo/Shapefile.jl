@@ -21,6 +21,11 @@ Base.getindex(lr::LineString{Point}, i) = lr.xy[i]
 Base.getindex(lr::LineString{PointM}, i) = PointM(lr.xy[i], lr.m[i])
 Base.getindex(lr::LineString{PointZ}, i) = PointZ(lr.xy[i], lr.z[i], lr.m[i])
 
+# coordtype implementation - Shapefile always uses Float64
+if :coordtype in names(GI; all = true)
+    GI.coordtype(::GI.LineStringTrait, ::LineString) = Float64
+    GI.coordtype(::GI.MultiLineStringTrait, ::AbstractPolyline) = Float64
+end
 
 abstract type AbstractPolyline{T} <: AbstractShape end
 
