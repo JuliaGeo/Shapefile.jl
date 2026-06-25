@@ -151,6 +151,14 @@
         t = Shapefile.Table(file)
         @test t.geometry == [Point(0,0), Point(1,1), Point(2,2)]
         @test t.V == [10, 20, 30]
+
+        # A bogus geometrycolumn warns and falls back to auto-detecting the
+        # column that satisfies `GeoInterface.isgeometry`.
+        file = tempname()
+        @test_logs (:warn,) match_mode=:any Shapefile.write(file, table; geometrycolumn = :nope)
+        t = Shapefile.Table(file)
+        @test t.geometry == [Point(0,0), Point(1,1), Point(2,2)]
+        @test t.V == [10, 20, 30]
     end
 
 for i in eachindex(test_tuples)[1:end-1] # We don't write 15 - multipatch
