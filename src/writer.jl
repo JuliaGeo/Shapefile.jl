@@ -83,17 +83,19 @@ function get_writer(obj; geometrycolumn = nothing)
             end
             geometrycolumn = geomfields
         end
-        if (geometrycolumn isa Tuple || geometrycolumn isa Vector) 
+        if (geometrycolumn isa Tuple || geometrycolumn isa Vector)
             if length(geometrycolumn) > 1
-                @warn "Multiple geometry columns detected: $geometrycolumn. $(geometrycolumn[1]) will be used " *
+                @warn "Multiple geometry columns detected: $geometrycolumn. $(first(geometrycolumn)) will be used " *
                     "and the rest discarded."
-                geometrycolumn = geometrycolumn[1]
-            else
-                geometrycolumn = only(geometrycolumn)
             end
+            # Drop every detected geometry column, keeping only the first.
+            dropcols = (gicols..., geometrycolumn...)
+            geometrycolumn = first(geometrycolumn)
+        else
+            dropcols = (gicols..., geometrycolumn)
         end
         geoms = Tables.getcolumn(tbl, geometrycolumn)
-        foreach(x -> delete!(tbl, x), (gicols..., geometrycolumn))  # drop unused geometry columns
+        foreach(x -> delete!(tbl, x), dropcols)  # drop unused geometry columns
         tbl = isempty(tbl) ? emptytable(geoms) : tbl
         return Writer(geoms, tbl, crs)
     elseif all(GI.isgeometry, obj)
