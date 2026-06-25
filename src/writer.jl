@@ -47,7 +47,7 @@ emptytable(n::Integer) = [(;all_missing=missing) for _ in 1:n]
 emptytable(itr) = [(;all_missing=missing) for _ in itr]
 
 
-function get_writer(obj; geometrycolumn = first(GI.geometrycolumns(obj)))
+function get_writer(obj; geometrycolumn = nothing)
     crs = try; GI.crs(obj); catch; nothing; end
 
     if GI.isgeometry(obj) || ismissing(obj)
@@ -66,8 +66,18 @@ function get_writer(obj; geometrycolumn = first(GI.geometrycolumns(obj)))
         # Note: this transformation is done in DBFTables.jl anyway
         # so we lose nothing by doing it here.
         tbl = getfield(Tables.dictcolumntable(obj), :values)  # an OrderedDict
-        if !(geometrycolumn in Tables.columnnames(tbl))
-            @warn "No geometry column found in table, though $geometrycolumn was provided.  Using the first column that satisfies `GeoInterface.isgeometry`."
+        # GeoInterface's declared geometry columns.  Older versions of
+        # GeoInterface return `nothing` for objects that don't implement the
+        # trait, so guard against that.
+        gicols = something(GI.geometrycolumns(obj), ())
+        # If the caller didn't ask for a specific column, fall back to the
+        # first GeoInterface-declared one (if any).
+        userprovided = geometrycolumn !== nothing
+        if !userprovided && !isempty(gicols)
+            geometrycolumn = first(gicols)
+        end
+        if isnothing(geometrycolumn) || !(geometrycolumn in Tables.columnnames(tbl))
+            userprovided && @warn "Geometry column $geometrycolumn was provided but not found in the table.  Using the first column that satisfies `GeoInterface.isgeometry`."
             geomfields = findall(tbl) do data
                 all(x -> ismissing(x) || GI.isgeometry(x), data) && any(!ismissing, data)
             end
@@ -83,7 +93,7 @@ function get_writer(obj; geometrycolumn = first(GI.geometrycolumns(obj)))
             end
         end
         geoms = Tables.getcolumn(tbl, geometrycolumn)
-        foreach(x -> delete!(tbl, x), (GI.geometrycolumns(obj)..., geometrycolumn))  # drop unused geometry columns
+        foreach(x -> delete!(tbl, x), (gicols..., geometrycolumn))  # drop unused geometry columns
         tbl = isempty(tbl) ? emptytable(geoms) : tbl
         return Writer(geoms, tbl, crs)
     elseif all(GI.isgeometry, obj)
@@ -277,7 +287,7 @@ one of:
 5. An iterator of elements that satisfy `GeoInterface.isgeometry(element)`.
 """
 
-write(path::AbstractString, obj; force=false, geometrycolumn = first(GI.geometrycolumns(obj))) = write(path, get_writer(obj, geometrycolumn=geometrycolumn); force)
+write(path::AbstractString, obj; force=false, geometrycolumn = nothing) = write(path, get_writer(obj, geometrycolumn=geometrycolumn); force)
 
 
 # Geometry writing
