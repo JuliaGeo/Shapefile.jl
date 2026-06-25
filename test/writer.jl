@@ -143,6 +143,16 @@
         @test t.geometry == [Point(0,0) for i in 1:10]
     end
 
+    @testset "geometrycolumn kwarg" begin
+        # A table whose geometry column is not named `:geometry`.
+        table = (; G = [Point(0,0), Point(1,1), Point(2,2)], V = [10, 20, 30])
+        file = tempname()
+        Shapefile.write(file, table; geometrycolumn = :G)
+        t = Shapefile.Table(file)
+        @test t.geometry == [Point(0,0), Point(1,1), Point(2,2)]
+        @test t.V == [10, 20, 30]
+    end
+
 for i in eachindex(test_tuples)[1:end-1] # We don't write 15 - multipatch
 
     i == 2 && continue # skip case of only missing data
