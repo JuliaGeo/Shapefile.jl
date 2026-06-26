@@ -70,6 +70,11 @@ function get_writer(obj; geometrycolumn = nothing)
         # GeoInterface return `nothing` for objects that don't implement the
         # trait, so guard against that.
         gicols = something(GI.geometrycolumns(obj), ())
+        # Every column that holds geometries.  A shapefile stores a single
+        # geometry per record, so none of these belong in the .dbf.
+        geomcols = findall(tbl) do data
+            all(x -> ismissing(x) || GI.isgeometry(x), data) && any(!ismissing, data)
+        end
         # If the caller didn't ask for a specific column, fall back to the
         # first GeoInterface-declared one (if any).
         userprovided = geometrycolumn !== nothing
@@ -77,25 +82,13 @@ function get_writer(obj; geometrycolumn = nothing)
             geometrycolumn = first(gicols)
         end
         if isnothing(geometrycolumn) || !(geometrycolumn in Tables.columnnames(tbl))
-            userprovided && @warn "Geometry column $geometrycolumn was provided but not found in the table.  Using the first column that satisfies `GeoInterface.isgeometry`."
-            geomfields = findall(tbl) do data
-                all(x -> ismissing(x) || GI.isgeometry(x), data) && any(!ismissing, data)
-            end
-            geometrycolumn = geomfields
-        end
-        if (geometrycolumn isa Tuple || geometrycolumn isa Vector)
-            if length(geometrycolumn) > 1
-                @warn "Multiple geometry columns detected: $geometrycolumn. $(first(geometrycolumn)) will be used " *
-                    "and the rest discarded."
-            end
-            # Drop every detected geometry column, keeping only the first.
-            dropcols = (gicols..., geometrycolumn...)
-            geometrycolumn = first(geometrycolumn)
-        else
-            dropcols = (gicols..., geometrycolumn)
+            userprovided && @warn "Geometry column $geometrycolumn was provided but not found in the table.  Falling back to auto-detection."
+            length(geomcols) > 1 && error("Multiple geometry columns detected: $geomcols.  A shapefile " *
+                "can only store one geometry per record; pass `geometrycolumn` to `Shapefile.write` to choose which to write.")
+            geometrycolumn = only(geomcols)
         end
         geoms = Tables.getcolumn(tbl, geometrycolumn)
-        foreach(x -> delete!(tbl, x), dropcols)  # drop unused geometry columns
+        foreach(x -> delete!(tbl, x), unique((gicols..., geomcols..., geometrycolumn)))  # drop all geometry columns
         tbl = isempty(tbl) ? emptytable(geoms) : tbl
         return Writer(geoms, tbl, crs)
     elseif all(GI.isgeometry, obj)
@@ -287,6 +280,11 @@ one of:
 3. `GeoInterface.trait(obj) <: GeoInterface.AbstractFeatureCollectionTrait`.
 4. `Tables.istable(obj)` and one of the columns of `obj` is a geometry.
 5. An iterator of elements that satisfy `GeoInterface.isgeometry(element)`.
+
+For a table, the geometry column is taken from `GeoInterface.geometrycolumns(obj)`,
+or auto-detected when that isn't available.  Pass `geometrycolumn` (a column name)
+to select it explicitly.  If a table has more than one geometry column and none is
+specified, an error is raised, since a shapefile stores a single geometry per record.
 """
 
 write(path::AbstractString, obj; force=false, geometrycolumn = nothing) = write(path, get_writer(obj, geometrycolumn=geometrycolumn); force)
