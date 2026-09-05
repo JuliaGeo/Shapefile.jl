@@ -143,6 +143,38 @@
         @test t.geometry == [Point(0,0) for i in 1:10]
     end
 
+    @testset "geometrycolumn kwarg" begin
+        # A table whose geometry column is not named `:geometry`.
+        table = (; G = [Point(0,0), Point(1,1), Point(2,2)], V = [10, 20, 30])
+        file = tempname()
+        Shapefile.write(file, table; geometrycolumn = :G)
+        t = Shapefile.Table(file)
+        @test t.geometry == [Point(0,0), Point(1,1), Point(2,2)]
+        @test t.V == [10, 20, 30]
+
+        # A bogus geometrycolumn warns and falls back to auto-detecting the
+        # column that satisfies `GeoInterface.isgeometry`.
+        file = tempname()
+        @test_logs (:warn,) match_mode=:any Shapefile.write(file, table; geometrycolumn = :nope)
+        t = Shapefile.Table(file)
+        @test t.geometry == [Point(0,0), Point(1,1), Point(2,2)]
+        @test t.V == [10, 20, 30]
+
+        # Multiple geometry columns are ambiguous: error rather than silently
+        # dropping one.
+        multi = (; G1 = [Point(0,0), Point(1,1)], G2 = [Point(9,9), Point(8,8)], V = [1, 2])
+        @test_throws ErrorException Shapefile.write(tempname(), multi)
+
+        # ...but the caller can disambiguate, and the other geometry column is
+        # dropped rather than written into the .dbf.
+        file = tempname()
+        Shapefile.write(file, multi; geometrycolumn = :G2)
+        t = Shapefile.Table(file)
+        @test t.geometry == [Point(9,9), Point(8,8)]
+        @test t.V == [1, 2]
+        @test !hasproperty(t, :G1)  # other geometry column was not written
+    end
+
 for i in eachindex(test_tuples)[1:end-1] # We don't write 15 - multipatch
 
     i == 2 && continue # skip case of only missing data
