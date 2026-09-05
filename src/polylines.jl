@@ -96,13 +96,13 @@ Base.:(==)(p1::PolylineM, p2::PolylineM) =
 LineString(geom::PolylineM, range) =
     @views LineString{PointM}(geom.points[range]; m=geom.measures[range])
 
-function Base.read(io::IO, ::Type{PolylineM})
+function Base.read(io::IO, ::Type{PolylineM}; record_end=nothing)
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
     parts = _readparts(io, numparts)
     points = _readpoints(io, numpoints)
-    mrange, measures = _readm(io, numpoints)
+    mrange, measures = _readm(io, numpoints, record_end)
     PolylineM(box, parts, points, mrange, measures)
 end
 
@@ -134,13 +134,13 @@ Base.:(==)(p1::PolylineZ, p2::PolylineZ) =
 LineString(geom::PolylineZ, range) =
     @views LineString{PointZ}(geom.points[range]; z=geom.zvalues[range], m=geom.measures[range])
 
-function Base.read(io::IO, ::Type{PolylineZ})
+function Base.read(io::IO, ::Type{PolylineZ}; record_end=nothing)
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
     parts = _readparts(io, numparts)
     points = _readpoints(io, numpoints)
     zrange, zvalues = _readz(io, numpoints)
-    mrange, measures = _readm(io, numpoints)
+    mrange, measures = _readm(io, numpoints, record_end)
     PolylineZ(box, parts, points, zrange, zvalues, mrange, measures)
 end

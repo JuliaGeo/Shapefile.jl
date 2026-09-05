@@ -61,12 +61,17 @@ function _read_handle_inner(io::IO, ::Type{T}, header, shapes, index=nothing; pa
         seeknext(io, num, index)
         num = bswap(read(io, Int32))
         rlength = bswap(read(io, Int32))
+        rlength >= 2 || throw(ArgumentError("Invalid shape record length: $rlength words"))
+        record_end = position(io) + 2 * Int(rlength)
         shapecode = read(io, Int32)
         if shapecode === Int32(0)
             push!(shapes, missing)
         else
-            push!(shapes, read(io, T))
+            push!(shapes, _read_shape(io, T, record_end))
         end
+        position(io) <= record_end || throw(ArgumentError("Shape record $num exceeds its declared length"))
+        # Some shapes (currently MultiPatch) have unsupported trailing fields.
+        seek(io, record_end)
     end
     crs = nothing
     if path !== nothing
@@ -81,6 +86,10 @@ function _read_handle_inner(io::IO, ::Type{T}, header, shapes, index=nothing; pa
     end
     return Handle(header, shapes, crs)
 end
+
+_read_shape(io, T, record_end) = read(io, T)
+_read_shape(io, T::Type{<:Union{PointZ,MultiPointM,MultiPointZ,PolylineM,PolylineZ,PolygonM,PolygonZ}}, record_end) =
+    read(io, T; record_end)
 
 function seeknext(io, num, index::IndexHandle)
     seek(io, index.indices[num + 1].offset * 2)

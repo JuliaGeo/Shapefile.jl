@@ -56,11 +56,11 @@ end
 Base.:(==)(p1::MultiPointM, p2::MultiPointM) =
     (p1.points == p2.points) && (p1.measures == p2.measures)
 
-function Base.read(io::IO, ::Type{MultiPointM})
+function Base.read(io::IO, ::Type{MultiPointM}; record_end=nothing)
     box = read(io, Rect)
     numpoints = read(io, Int32)
     points = _readpoints(io, numpoints)
-    mrange, measures = _readm(io, numpoints)
+    mrange, measures = _readm(io, numpoints, record_end)
     MultiPointM(box, points, mrange, measures)
 end
 
@@ -97,11 +97,11 @@ Base.:(==)(p1::MultiPointZ, p2::MultiPointZ) =
 GI.getgeom(::GI.MultiPointTrait, geom::MultiPointZ, i::Integer) =
     PointZ(geom.points[i], geom.zvalues[i], geom.measures[i])
 
-function Base.read(io::IO, ::Type{MultiPointZ})
+function Base.read(io::IO, ::Type{MultiPointZ}; record_end=nothing)
     box = read(io, Rect)
     numpoints = read(io, Int32)
     points = _readpoints(io, numpoints)
     zrange, zvalues = _readz(io, numpoints)
-    mrange, measures = _readm(io, numpoints)
+    mrange, measures = _readm(io, numpoints, record_end)
     MultiPointZ(box, points, zrange, zvalues, mrange, measures)
 end

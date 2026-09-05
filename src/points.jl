@@ -73,11 +73,11 @@ struct PointZ <: AbstractPoint
 end
 PointZ(p::Point, z, m) = PointZ(p.x, p.y, z, m)
 
-function Base.read(io::IO, ::Type{PointZ})
+function Base.read(io::IO, ::Type{PointZ}; record_end=nothing)
     x = read(io, Float64)
     y = read(io, Float64)
     z = read(io, Float64)
-    m = read(io, Float64)
+    m = _hasm(io, 8, record_end) ? read(io, Float64) : M_NODATA
     PointZ(x, y, z, m)
 end
 

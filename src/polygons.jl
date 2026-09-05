@@ -229,13 +229,13 @@ PolygonM(MBR, parts, points, mrange, measures) =
 Base.:(==)(p1::PolygonM, p2::PolygonM) =
     (p1.parts == p2.parts) && (p1.points == p2.points) && (p1.measures == p2.measures)
 
-function Base.read(io::IO, ::Type{PolygonM})
+function Base.read(io::IO, ::Type{PolygonM}; record_end=nothing)
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
     parts = _readparts(io, numparts)
     points = _readpoints(io, numpoints)
-    mrange, measures = _readm(io, numpoints)
+    mrange, measures = _readm(io, numpoints, record_end)
     PolygonM(box, parts, points, mrange, measures)
 end
 
@@ -267,13 +267,13 @@ PolygonZ(MBR, parts, points, zrange, zvalues, mrange, measures) =
 Base.:(==)(p1::PolygonZ, p2::PolygonZ) =
     (p1.parts == p2.parts) && (p1.points == p2.points) && (p1.zvalues == p2.zvalues) && (p1.measures == p2.measures)
 
-function Base.read(io::IO, ::Type{PolygonZ})
+function Base.read(io::IO, ::Type{PolygonZ}; record_end=nothing)
     box = read(io, Rect)
     numparts = read(io, Int32)
     numpoints = read(io, Int32)
     parts = _readparts(io, numparts)
     points = _readpoints(io, numpoints)
     zrange, zvalues = _readz(io, numpoints)
-    mrange, measures = _readm(io, numpoints)
+    mrange, measures = _readm(io, numpoints, record_end)
     PolygonZ(box, parts, points, zrange, zvalues, mrange, measures)
 end
