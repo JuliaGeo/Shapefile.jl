@@ -54,7 +54,7 @@ emptytable(n::Integer) = [(;all_missing=missing) for _ in 1:n]
 emptytable(itr) = [(;all_missing=missing) for _ in itr]
 
 
-function get_writer(obj)
+function get_writer(obj; geometrycolumn = nothing)
     crs = try; GI.crs(obj); catch; nothing; end
 
     if GI.isgeometry(obj) || ismissing(obj)
@@ -70,16 +70,32 @@ function get_writer(obj)
         tbl = isempty(feats) ? emptytable(geoms) : feats
         return Writer(geoms, tbl, crs)
     elseif Tables.istable(obj)
+        # Note: this transformation is done in DBFTables.jl anyway
+        # so we lose nothing by doing it here.
         tbl = getfield(Tables.dictcolumntable(obj), :values)  # an OrderedDict
-        geomfields = findall(tbl) do data
+        # GeoInterface's declared geometry columns.  Older versions of
+        # GeoInterface return `nothing` for objects that don't implement the
+        # trait, so guard against that.
+        gicols = something(GI.geometrycolumns(obj), ())
+        # Every column that holds geometries.  A shapefile stores a single
+        # geometry per record, so none of these belong in the .dbf.
+        geomcols = findall(tbl) do data
             all(x -> ismissing(x) || GI.isgeometry(x), data) && any(!ismissing, data)
         end
-        if length(geomfields) > 1
-            @warn "Multiple geometry columns detected: $geomfields. $(geomfields[1]) will be used " *
-                  "and the rest discarded."
+        # If the caller didn't ask for a specific column, fall back to the
+        # first GeoInterface-declared one (if any).
+        userprovided = geometrycolumn !== nothing
+        if !userprovided && !isempty(gicols)
+            geometrycolumn = first(gicols)
         end
-        geoms = :geometry in keys(tbl) ? tbl[:geometry] : tbl[geomfields[1]]
-        foreach(x -> delete!(tbl, x), geomfields)  # drop unused geometry columns
+        if isnothing(geometrycolumn) || !(geometrycolumn in Tables.columnnames(tbl))
+            userprovided && @warn "Geometry column $geometrycolumn was provided but not found in the table.  Falling back to auto-detection."
+            length(geomcols) > 1 && error("Multiple geometry columns detected: $geomcols.  A shapefile " *
+                "can only store one geometry per record; pass `geometrycolumn` to `Shapefile.write` to choose which to write.")
+            geometrycolumn = only(geomcols)
+        end
+        geoms = Tables.getcolumn(tbl, geometrycolumn)
+        foreach(x -> delete!(tbl, x), unique((gicols..., geomcols..., geometrycolumn)))  # drop all geometry columns
         tbl = isempty(tbl) ? emptytable(geoms) : tbl
         return Writer(geoms, tbl, crs)
     elseif all(GI.isgeometry, obj)
@@ -261,7 +277,7 @@ function write(path::AbstractString, o::Writer; force=false)
 end
 
 """
-    write(path::AbstractString, obj; force=false)
+    write(path::AbstractString, obj; force=false, geometrycolumn)
 
 Write `obj` in the shapefile (.shp, .shx, .dbf, and possibly .prj files) format.  `obj` must satisfy
 one of:
@@ -271,9 +287,14 @@ one of:
 3. `GeoInterface.trait(obj) <: GeoInterface.AbstractFeatureCollectionTrait`.
 4. `Tables.istable(obj)` and one of the columns of `obj` is a geometry.
 5. An iterator of elements that satisfy `GeoInterface.isgeometry(element)`.
+
+For a table, the geometry column is taken from `GeoInterface.geometrycolumns(obj)`,
+or auto-detected when that isn't available.  Pass `geometrycolumn` (a column name)
+to select it explicitly.  If a table has more than one geometry column and none is
+specified, an error is raised, since a shapefile stores a single geometry per record.
 """
 
-write(path::AbstractString, obj; force=false) = write(path, get_writer(obj); force)
+write(path::AbstractString, obj; force=false, geometrycolumn = nothing) = write(path, get_writer(obj, geometrycolumn=geometrycolumn); force)
 
 
 # Geometry writing
