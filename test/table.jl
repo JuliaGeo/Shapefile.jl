@@ -9,6 +9,7 @@ import Tables
 import DataFrames
 import GeoInterface
 import GeoFormatTypes
+import Extents
 
 datadir = joinpath(@__DIR__, "data")
 url = "https://github.com/nvkelso/natural-earth-vector/raw/v4.1.0"
@@ -209,6 +210,15 @@ end
     df_cities.featurecla isa Vector{Union{String,Missing}}
     @test DataAPI.metadata(df_cities, "GEOINTERFACE:geometrycolumns"; style = false) == (:geometry,)
     @test DataAPI.metadata(df_cities, "GEOINTERFACE:crs"; style = false) == GeoInterface.crs(ne_cities)
+end
+
+@testset "GeoInterface" begin
+    @test GeoInterface.nfeature(ne_land) == length(ne_land)
+    feature = GeoInterface.getfeature(ne_land, 1)
+    @test feature.geometry == ne_land.geometry[1]
+    @test GeoInterface.properties(feature) == NamedTuple(first(Shapefile.getdbf(ne_land)))
+    @test GeoInterface.crs(ne_land) == GeoFormatTypes.ESRIWellKnownText(GeoFormatTypes.CRS(), wkt)
+    @test GeoInterface.extent(ne_land) isa Extents.Extent
 end
 
 # no need to use shx in Shapefile.Tables since we read the shapes into a Vector and can thus index them
