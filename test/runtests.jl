@@ -155,6 +155,13 @@ test_shapes = Dict(
     end
     @test_broken GeoInterface.testgeometry(MultiPatch(Rect(1, 3, 2, 4), [0], [1], points, Interval(1, 4), [1, 2, 3, 4]))
 
+    # Shapefile coordinates are always Float64, on every geometry type
+    if :coordtype in names(GeoInterface; all = true)
+        foreach(test_shapes) do (k, s)
+            @test GeoInterface.coordtype(s) === Float64
+        end
+    end
+
     @test GeoInterface.extent(Shapefile.Point(1.0, 2.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0))
     @test GeoInterface.extent(Shapefile.PointM(1.0, 2.0, 4.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0))
     @test GeoInterface.extent(Shapefile.PointZ(1.0, 2.0, 3.0, 4.0)) == Extents.Extent(X=(1.0, 1.0), Y=(2.0, 2.0), Z=(3.0, 3.0))

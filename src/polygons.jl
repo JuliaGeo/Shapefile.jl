@@ -30,13 +30,6 @@ Base.@propagate_inbounds Base.getindex(lr::LinearRing{PointZ}, i) =
 Base.size(lr::LinearRing) = (length(lr),)
 Base.length(lr::LinearRing) = length(lr.xy)
 
-# coordtype implementation - Shapefile always uses Float64
-if :coordtype in names(GI; all = true)
-    GI.coordtype(::GI.LinearRingTrait, ::LinearRing) = Float64
-    GI.coordtype(::GI.PolygonTrait, ::SubPolygon) = Float64
-    GI.coordtype(::GI.MultiPolygonTrait, ::AbstractPolygon) = Float64
-end
-
 struct SubPolygon{L<:LinearRing} <: AbstractVector{L}
     rings::Vector{L}
 end
@@ -57,6 +50,13 @@ Base.push!(p::SubPolygon, x) = Base.push!(parent(p), x)
 
 
 abstract type AbstractPolygon{T} <: AbstractShape end
+
+# coordtype implementation - Shapefile always uses Float64
+if :coordtype in names(GI; all = true)
+    GI.coordtype(::GI.LinearRingTrait, ::LinearRing) = Float64
+    GI.coordtype(::GI.PolygonTrait, ::SubPolygon) = Float64
+    GI.coordtype(::GI.MultiPolygonTrait, ::AbstractPolygon) = Float64
+end
 
 _hasparts(::GI.MultiPolygonTrait) = true
 _hasparts(::GI.PolygonTrait) = true

@@ -88,5 +88,5 @@ GI.z(::GI.PointTrait, point::PointZ) = point.z
 
 # coordtype implementation - Shapefile always uses Float64
 if :coordtype in names(GI; all = true)
-    GI.coordtype(::GI.AbstractGeometryTrait, ::AbstractPoint) = Float64
+    GI.coordtype(::GI.PointTrait, ::AbstractPoint) = Float64
 end
