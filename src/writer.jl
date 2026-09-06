@@ -155,7 +155,8 @@ function write(path::AbstractString, o::Writer; force=false)
             throw(ArgumentError("Geometry collections or `MultiPatch` cannot currently be written using Shapefile.jl"))
         end
         hasz = GI.is3d(geom1)
-        hasm = GI.ismeasured(geom1)
+        # Always write the M fields of Z records, using no-data for XYZ input.
+        hasm = hasz || GI.ismeasured(geom1)
         shapecode = if hasz
             SHAPECODE[TRAITSHAPE_Z[typeof(trait)]]
         elseif hasm
@@ -168,6 +169,10 @@ function write(path::AbstractString, o::Writer; force=false)
     # Write the geometry data into io
     for (num, geom) in enumerate(geoms)
         (ismissing(geom) || trait === GI.geomtrait(geom)) || throw(ArgumentError("Shapefiles can only contain geometries of the same type"))
+        if !ismissing(geom)
+            GI.is3d(geom) == hasz || throw(ArgumentError("Shapefiles can only contain geometries with the same Z dimension"))
+            (hasz || GI.ismeasured(geom) == hasm) || throw(ArgumentError("Shapefiles can only contain geometries with the same M dimension"))
+        end
 
         # One-based record number; Increment from 0, and increment after record.
         rec_bytes = 0
@@ -216,7 +221,7 @@ function write(path::AbstractString, o::Writer; force=false)
             # code
             rec_bytes += Base.write(io, shapecode)
             # geometry
-            geom_bytes, geom_mbr, geom_zrange, geom_mrange = _write(io, trait, geom)
+            geom_bytes, geom_mbr, geom_zrange, geom_mrange = _write(io, trait, geom; hasz, hasm)
             rec_bytes += geom_bytes
 
             if first_geom
@@ -227,7 +232,7 @@ function write(path::AbstractString, o::Writer; force=false)
             else
                 mbr = union(mbr, geom_mbr)
                 zrange = union(zrange, geom_zrange)
-                mrange = union(mrange, geom_mrange)
+                mrange = _unionm(mrange, geom_mrange)
             end
 
         end
@@ -292,6 +297,10 @@ For a table, the geometry column is taken from `GeoInterface.geometrycolumns(obj
 or auto-detected when that isn't available.  Pass `geometrycolumn` (a column name)
 to select it explicitly.  If a table has more than one geometry column and none is
 specified, an error is raised, since a shapefile stores a single geometry per record.
+
+Missing measures are written as a finite no-data sentinel below `-1e38`.
+Z geometries without measures are written with no-data M fields. Measure ranges
+exclude no-data values; if no valid measures exist, both bounds are no-data.
 """
 
 write(path::AbstractString, obj; force=false, geometrycolumn = nothing) = write(path, get_writer(obj, geometrycolumn=geometrycolumn); force)
@@ -334,7 +343,7 @@ function _write(io::IO, trait::GI.AbstractGeometryTrait, geom; kw...)
     return bytes, mbr, zrange, mrange
 end
 function _write(io::IO, ::GI.PointTrait, point;
-    hasz=GI.is3d(point), hasm=GI.ismeasured(point)
+    hasz=GI.is3d(point), hasm=hasz || GI.ismeasured(point)
 )
     bytes = Int64(0)
     x, y = Float64(GI.x(point)), Float64(GI.y(point))
@@ -348,9 +357,9 @@ function _write(io::IO, ::GI.PointTrait, point;
         zrange = Interval(0.0, 0.0)
     end
     if hasm
-        m = Float64(GI.m(point))
+        m = GI.ismeasured(point) ? _encodem(GI.m(point)) : M_NODATA
         bytes +=  Base.write(io, m)
-        mrange = Interval(m, m)
+        mrange = _isnodata(m) ? _nodata_mrange() : Interval(m, m)
     else
         mrange = Interval(0.0, 0.0)
     end
@@ -373,10 +382,9 @@ end
 
 # z and m values are written separately if they exist
 function _write_others(io, geom;
-    hasz=GI.is3d(geom), hasm=GI.ismeasured(geom)
+    hasz=GI.is3d(geom), hasm=hasz || GI.ismeasured(geom)
 )
     bytes = 0
-    # TODO what to do when hasm == false but hasz == true
     if hasz
         b, zrange = _write_others(p -> Float64(GI.z(p)), io, geom)
         bytes += b
@@ -385,28 +393,43 @@ function _write_others(io, geom;
     end
 
     if hasm
-        b, mrange = _write_others(p -> Float64(GI.m(p)), io, geom)
+        getm = GI.ismeasured(geom) ? p -> _encodem(GI.m(p)) : p -> M_NODATA
+        b, mrange = _write_others(getm, io, geom; measures=true)
         bytes += b
     else
         mrange = Interval(0.0, 0.0)
     end
     return bytes, zrange, mrange
 end
-function _write_others(f, io, geom)
+function _write_others(f, io, geom; measures=false)
     low = Inf
     high = -Inf
     for point in GI.getpoint(geom)
         m = f(point)
+        measures && _isnodata(m) && continue
         low = min(low, m)
         high = max(high, m)
     end
-    range = Interval(low, high)
+    range = measures && low == Inf ? _nodata_mrange() : Interval(low, high)
     bytes = Base.write(io, range)
     for point in GI.getpoint(geom)
         m = f(point)
         bytes += Base.write(io, m)
     end
     return bytes, range
+end
+
+_encodem(::Missing) = M_NODATA
+function _encodem(value)
+    m = Float64(value)
+    isfinite(m) || throw(ArgumentError("Measures must be finite numbers or missing"))
+    return m
+end
+
+function _unionm(a::Interval, b::Interval)
+    _isnodata(a.left) && return b
+    _isnodata(b.left) && return a
+    return union(a, b)
 end
 
 # Internal trait for shapes that track `parts` data

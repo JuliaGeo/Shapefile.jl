@@ -269,6 +269,7 @@ end  # @testset "Loading Shapefiles"
 
 include("table.jl")
 include("writer.jl")
+include("missing_measures.jl")
 
 cleanup()
 

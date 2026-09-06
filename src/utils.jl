@@ -14,7 +14,26 @@ function _readpoints(io, n)
     return points
 end
 
-_readm(io, n) = _readfloats(io, n)
+# ESRI reserves values strictly below -10^38 for measures with no data.
+const M_NODATA = -1.0e39
+_isnodata(m) = m < -1.0e38
+_nodata_mrange() = Interval(M_NODATA, M_NODATA)
+
+# Use the record boundary, not EOF: another shape may follow an omitted M block.
+function _hasm(io, bytes, record_end)
+    isnothing(record_end) && return !eof(io)
+    remaining = record_end - position(io)
+    remaining == 0 && return false
+    remaining == bytes || throw(ArgumentError("Invalid measure block: expected $bytes bytes or no measures, found $remaining bytes"))
+    return true
+end
+
+function _readm(io, n, record_end=nothing)
+    if _hasm(io, 16 + 8 * Int(n), record_end)
+        return _readfloats(io, n)
+    end
+    return _nodata_mrange(), fill(M_NODATA, n)
+end
 _readz(io, n) = _readfloats(io, n)
 function _readfloats(io, n)
     interval = read(io, Interval)
