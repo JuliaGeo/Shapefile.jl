@@ -72,7 +72,7 @@ function Table(path::AbstractString)
         return _read_shp_from_zipfile(path)
     end
     paths = _shape_paths(path)
-    isfile(paths.shp) || throw(ArgumentError("File not found: $(paths.dbf)"))
+    isfile(paths.shp) || throw(ArgumentError("File not found: $(paths.shp)"))
     isfile(paths.dbf) || throw(ArgumentError("File not found: $(paths.dbf)"))
 
     shp = if isfile(paths.shx)
