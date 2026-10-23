@@ -267,6 +267,7 @@ end
 
 end  # @testset "Loading Shapefiles"
 
+include("table_paths.jl")
 include("table.jl")
 include("writer.jl")
 
